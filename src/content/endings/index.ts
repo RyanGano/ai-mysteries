@@ -12,13 +12,13 @@ export const endings: Ending[] = [
   {
     code: "7BXK",
     culprit: "Elias Varga",
-    title: "Variance",
+    title: "Chapter 17 — The Real Ending",
     body: vargaVariance,
   },
   {
     code: "Q4NM",
     culprit: "SAM",
-    title: "All Rooms",
+    title: "Chapter 17 — The Real Ending",
     body: samAllRooms,
   },
 ];
