@@ -7,6 +7,9 @@ dist/
 # local-only source materials (never commit)
 source_materials/
 
+# internal planning docs (never commit)
+plans/
+
 # Vite / TypeScript build cache
 *.local
 node_modules/.tmp/
