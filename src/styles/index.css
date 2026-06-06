@@ -1,0 +1,74 @@
+/* Theme: clean lines, industrial cool — "too much glass" */
+:root {
+  --color-bg: #0e0f11;
+  --color-surface: #16181c;
+  --color-border: #2a2d35;
+  --color-text: #d4d6dc;
+  --color-text-muted: #6b7280;
+  --color-accent: #5b8fb9;
+  --color-accent-hover: #7aafd4;
+  --color-error: #c0392b;
+
+  --font-serif: "Georgia", "Times New Roman", serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
+
+  --max-prose: 68ch;
+  --page-pad: clamp(1.25rem, 5vw, 3rem);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 18px;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  min-height: 100dvh;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
+button {
+  cursor: pointer;
+}
+
+.cta-button {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0.65rem 1.4rem;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.cta-button:hover {
+  background: var(--color-accent-hover);
+  color: #fff;
+  text-decoration: none;
+}
