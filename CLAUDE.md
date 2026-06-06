@@ -37,6 +37,7 @@ final printed line is `www.therealending.com`. This site delivers the real, vari
    { code: "XXXX", culprit: "Name", title: "Title", body: myEnding }
    ```
 4. Use a unique canonical 4-char code. Canonical = uppercase, `O` not `0`, `I` not `1`/`L`.
+   **Do not let the code hint at the culprit** — use unrelated letters/digits (e.g. `7BXK`, `Q4NM`).
 5. Run `npm run build` — the uniqueness guard in `src/lib/endings.ts` catches collisions.
 
 ## Voice and style guide

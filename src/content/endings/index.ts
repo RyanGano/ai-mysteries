@@ -10,13 +10,13 @@ export interface Ending {
 
 export const endings: Ending[] = [
   {
-    code: "VRG7",
+    code: "7BXK",
     culprit: "Elias Varga",
     title: "Variance",
     body: vargaVariance,
   },
   {
-    code: "SAM4",
+    code: "Q4NM",
     culprit: "SAM",
     title: "All Rooms",
     body: samAllRooms,
