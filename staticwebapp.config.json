@@ -1,0 +1,12 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/*.webp", "/*.png", "/*.ico", "/*.svg"]
+  },
+  "globalHeaders": {
+    "X-Robots-Tag": "noindex, nofollow"
+  },
+  "mimeTypes": {
+    ".json": "text/json"
+  }
+}
