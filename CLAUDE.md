@@ -34,19 +34,23 @@ final printed line is `www.therealending.com`. This site delivers the real, vari
    ```ts
    import myEnding from "./my-ending.md?raw";
    // add to the endings array:
-   { code: "XXXX", culprit: "Name", title: "Title", body: myEnding }
+   { code: "XXXX", culprit: "Name", title: "Chapter 17 — The Real Ending", body: myEnding }
    ```
+   The `title` is always `"Chapter 17 — The Real Ending"` for every ending — it must never
+   vary or hint at the culprit.
 4. Use a unique canonical 4-char code. Canonical = uppercase, `O` not `0`, `I` not `1`/`L`.
    **Do not let the code hint at the culprit** — use unrelated letters/digits (e.g. `7BXK`, `Q4NM`).
 5. Run `npm run build` — the uniqueness guard in `src/lib/endings.ts` catches collisions.
 
 ## Voice and style guide
 
-See `docs/EndingStyleGuide.md` for the full reference:
+`docs/EndingStyleGuide.md` is the full reference — local-only, not committed (see `docs/` in
+`.gitignore`). Key rules:
 - Third-person past tense, restrained/literary register
 - Em-dashes, short sentences for weight, long ones for accumulation
 - Recurring motifs: _within tolerance_, _acceptable loss_, _the system made a decision_
 - No confession scenes, no explicit verdicts, no new characters
+- Every ending opens with the mandatory two-paragraph header (see step 2 above)
 
 ## Character reference
 
