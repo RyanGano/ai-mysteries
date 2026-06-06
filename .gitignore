@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# local-only source materials (never commit)
+source_materials/
+
+# Vite / TypeScript build cache
+*.local
+node_modules/.tmp/
+
+# editor
+.vscode/
+.idea/
+*.swp
+
+# env files
+.env
+.env.*
+!.env.example
