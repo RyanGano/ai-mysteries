@@ -10,8 +10,8 @@ export default function Landing() {
       <div className="landing-content">
         <h1 className="landing-title">Within Tolerance</h1>
         <p className="landing-blurb">
-          Michael Holloway, founder of Meridian Energy, is found dead inside the Charge Cage at
-          the company&rsquo;s battery-storage facility. Detective Mara Ellery investigates. Five
+          Michael Holloway, founder of Meridian Energy, is found dead inside the Charge Cage at the
+          company&rsquo;s battery-storage facility. Detective Mara Ellery investigates. Five
           suspects. One system. No shortage of reasons.
         </p>
         <p className="landing-blurb">

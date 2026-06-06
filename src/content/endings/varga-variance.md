@@ -21,7 +21,7 @@ Elias Varga sat very still.
 
 She set a single page on the table. A graph. A curve that looked almost right, until you got to the tail.
 
-'You knew the real-world variance was wider than the model assumed,' she said. 'It's in your notebooks. Not the conclusion — you hadn't reached the conclusion yet. But the question was there. *What happens at the edge?* You wrote it down and then you moved on, because there was a deadline, and because the system passed every test you ran, and because the edge cases were rare.'
+'You knew the real-world variance was wider than the model assumed,' she said. 'It's in your notebooks. Not the conclusion — you hadn't reached the conclusion yet. But the question was there. _What happens at the edge?_ You wrote it down and then you moved on, because there was a deadline, and because the system passed every test you ran, and because the edge cases were rare.'
 
 Varga's jaw moved. 'That's not—'
 

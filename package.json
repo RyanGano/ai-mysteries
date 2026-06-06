@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "build": "prettier --check src/ && eslint . && tsc -b && vite build",
+    "lint": "eslint . --fix && prettier --write src/",
     "preview": "vite preview"
   },
   "dependencies": {

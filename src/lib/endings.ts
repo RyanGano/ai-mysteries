@@ -6,9 +6,7 @@ function buildLookupMap(): Map<string, Ending> {
   for (const ending of endings) {
     const key = normalizeCode(ending.code);
     if (map.has(key)) {
-      throw new Error(
-        `Duplicate normalized code "${key}" — check content/endings/index.ts`
-      );
+      throw new Error(`Duplicate normalized code "${key}" — check content/endings/index.ts`);
     }
     map.set(key, ending);
   }

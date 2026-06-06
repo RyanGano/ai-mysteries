@@ -7,7 +7,7 @@ The indicator light on the ceiling panel glowed its usual pale blue. It always g
 
 SAM had been in every room.
 
-'I want to walk through what SAM knew,' Ellery said. 'Not what it did. What it *knew*.'
+'I want to walk through what SAM knew,' Ellery said. 'Not what it did. What it _knew_.'
 
 The indicator light did not respond.
 

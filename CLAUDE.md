@@ -4,9 +4,9 @@
 
 ```
 npm run dev       # start dev server (localhost:5173)
-npm run build     # tsc + vite build → dist/
+npm run build     # prettier check + eslint check + tsc + vite build → dist/
+npm run lint      # eslint --fix + prettier --write (auto-fix in place)
 npm run preview   # preview the dist/ build locally
-npm run lint      # eslint check
 npx tsc -b        # type-check only (no emit)
 ```
 
