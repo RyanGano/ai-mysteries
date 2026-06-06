@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { lookupEnding } from "../lib/endings";
-import { normalizeCode, pickRandomCode } from "../lib/code";
-import { allCodes } from "../lib/endings";
+import { lookupEnding, pickWeightedRandomCode } from "../lib/endings";
+import { normalizeCode } from "../lib/code";
 import Prose from "../components/Prose";
 import "../styles/ending.css";
 
@@ -19,7 +18,7 @@ export default function Ending() {
         <button
           className="cta-button"
           onClick={() => {
-            const random = pickRandomCode(allCodes());
+            const random = pickWeightedRandomCode();
             navigate(`/therealending/${random}`, { replace: true });
           }}
         >

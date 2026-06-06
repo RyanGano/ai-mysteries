@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { allCodes, lookupEnding } from "../lib/endings";
-import { normalizeCode, pickRandomCode } from "../lib/code";
+import { lookupEnding, pickWeightedRandomCode } from "../lib/endings";
+import { normalizeCode } from "../lib/code";
 import "../styles/find-ending.css";
 
 export default function FindEnding() {
@@ -10,7 +10,7 @@ export default function FindEnding() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const code = pickRandomCode(allCodes());
+    const code = pickWeightedRandomCode();
     navigate(`/therealending/${code}`, { replace: true });
   }, [navigate]);
 

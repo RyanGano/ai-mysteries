@@ -17,10 +17,29 @@ final printed line is `www.therealending.com`. This site delivers the real, vari
 
 ## How the ending mechanic works
 
-- `/therealending` — picks a random code from the registered endings, redirects (replace).
+- `/therealending` — picks a weighted-random code from the registered endings, redirects (replace).
 - `/therealending/:code` — permanent page. Always shows the same ending for that code.
 - Codes are 4-char uppercase. `O/0` and `I/1/L` are interchangeable on input (normalized).
 - Deep links work via SPA fallback in `staticwebapp.config.json`.
+
+### Weighted random selection
+
+Random selection is two-stage (see `src/lib/endings.ts`):
+
+1. **Pick a culprit group by weight:**
+
+   | Culprit group        | Weight |
+   |----------------------|--------|
+   | Each individual suspect (×5) | 17% each (85% total) |
+   | All of the team      | 10%    |
+   | SAM                  | 5%     |
+
+2. **Pick uniformly** among all registered endings for that culprit.
+
+**If you add a new individual suspect**, their default weight is 17%. You must rebalance
+`CULPRIT_WEIGHTS` (and `DEFAULT_INDIVIDUAL_WEIGHT` if needed) in `src/lib/endings.ts` so
+the weights still sum to 100. SAM and "All of the team" are special cases with explicit
+overrides in that map.
 
 ## How to add an ending
 
