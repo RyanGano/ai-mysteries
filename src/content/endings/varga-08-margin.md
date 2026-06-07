@@ -13,6 +13,10 @@ Elias Varga did not flinch at his own words.
 
 'Yes.'
 
+'You spend every other meeting demanding margin,' Ellery said. 'More slack, more caution, more time. This is the one place in two years you ever argued it down.'
+
+'Because this was the one place it was wrong,' Varga said. 'A margin without a basis isn't caution. It's superstition. I object to superstition wherever I find it.'
+
 'The half you removed,' she said. 'That was the half Michael Holloway was standing in.'
 
 Varga was silent.

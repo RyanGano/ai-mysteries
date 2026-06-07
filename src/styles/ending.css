@@ -87,25 +87,54 @@
 /* ── Special ending reveal overlay ─────────────────────────────────── */
 
 @keyframes reveal-overlay {
-  0%   { opacity: 0; }
-  4%   { opacity: 1; }
-  85%  { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes reveal-symbol {
-  from { opacity: 0; transform: scale(0.5); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes reveal-symbol-pulse {
-  0%, 100% { text-shadow: 0 0 30px rgba(201, 165, 78, 0.55), 0 0 70px rgba(201, 165, 78, 0.2); }
-  50%       { text-shadow: 0 0 55px rgba(201, 165, 78, 0.9), 0 0 120px rgba(201, 165, 78, 0.45); }
+  0%,
+  100% {
+    text-shadow:
+      0 0 30px rgba(201, 165, 78, 0.55),
+      0 0 70px rgba(201, 165, 78, 0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 55px rgba(201, 165, 78, 0.9),
+      0 0 120px rgba(201, 165, 78, 0.45);
+  }
 }
 
 @keyframes reveal-fade-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .ending-reveal-overlay {
@@ -162,7 +191,9 @@
   border-radius: 2px;
   cursor: pointer;
   animation: reveal-fade-up 0.5s ease 2.6s both;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .ending-reveal-skip:hover {
