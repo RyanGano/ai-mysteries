@@ -24,22 +24,28 @@ final printed line is `www.therealending.com`. This site delivers the real, vari
 
 ### Weighted random selection
 
-Random selection is two-stage (see `src/lib/endings.ts`):
+Each ending names a set of culprits via `culprits: string[]`. The **category** is derived
+from that set's size (`["SAM"]` is the special SAM category). Random selection is
+three-stage (see `src/lib/endings.ts`):
 
-1. **Pick a culprit group by weight:**
+1. **Pick a category by weight** (most → least common):
 
-   | Culprit group        | Weight |
-   |----------------------|--------|
-   | Each individual suspect (×5) | 17% each (85% total) |
-   | All of the team      | 10%    |
-   | SAM                  | 5%     |
+   | Category               | `culprits` size | Weight |
+   |------------------------|-----------------|--------|
+   | Single person          | 1               | 45%    |
+   | Two people             | 2               | 25%    |
+   | Three people           | 3               | 14%    |
+   | Four people            | 4               | 8%     |
+   | All of the team        | 5               | 5%     |
+   | SAM                    | `["SAM"]`       | 3%     |
 
-2. **Pick uniformly** among all registered endings for that culprit.
+2. **Pick a culprit combination uniformly** within the category (e.g. one of the 10 pairs).
+3. **Pick uniformly** among that combination's registered endings.
 
-**If you add a new individual suspect**, their default weight is 17%. You must rebalance
-`CULPRIT_WEIGHTS` (and `DEFAULT_INDIVIDUAL_WEIGHT` if needed) in `src/lib/endings.ts` so
-the weights still sum to 100. SAM and "All of the team" are special cases with explicit
-overrides in that map.
+Picking the combo before the ending keeps every combination equally likely regardless of how
+many endings it has. `CATEGORY_WEIGHTS` in `src/lib/endings.ts` must stay monotonically
+decreasing and sum to 100. To add a new suspect, the combinatorics change — revisit the
+weights, but the size-derived categories keep working automatically.
 
 ## How to add an ending
 
@@ -49,14 +55,17 @@ overrides in that map.
    No one asked why they were there this time.
    The meeting had been called without an agenda, without a subject line, without the small procedural courtesies that usually softened bad news. That alone told them this wasn't another reconstruction.
    ```
-3. Add an entry to `src/content/endings/index.ts`:
+3. Add an entry to `src/content/endings/index.ts` (or add the slug to
+   `scripts/gen-endings-index.cjs` and re-run it, which assigns a code and preserves all
+   existing ones):
    ```ts
    import myEnding from "./my-ending.md?raw";
-   // add to the endings array:
-   { code: "XXXX", culprit: "Name", title: "Chapter 17 — The Real Ending", body: myEnding }
+   // add to the endings array (culprits drives the selection category):
+   { code: "XXXX", culprits: ["Name"], title: "Chapter 17 — The Real Ending", body: myEnding }
    ```
-   The `title` is always `"Chapter 17 — The Real Ending"` for every ending — it must never
-   vary or hint at the culprit.
+   `culprits` lists everyone responsible — one name for a single, several for a combination,
+   all five for "all of the team", or `["SAM"]` for SAM. The `title` is always
+   `"Chapter 17 — The Real Ending"` — it must never vary or hint at the culprit(s).
 4. Use a unique canonical 4-char code. Canonical = uppercase, `O` not `0`, `I` not `1`/`L`.
    **Do not let the code hint at the culprit** — use unrelated letters/digits (e.g. `7BXK`, `Q4NM`).
 5. Run `npm run build` — the uniqueness guard in `src/lib/endings.ts` catches collisions.
