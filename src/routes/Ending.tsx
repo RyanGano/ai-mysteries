@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { lookupEnding, pickWeightedRandomCode } from "../lib/endings";
+import { lookupEnding, pickWeightedRandomCode, comboKey } from "../lib/endings";
 import { normalizeCode } from "../lib/code";
 import Prose from "../components/Prose";
 import "../styles/ending.css";
@@ -40,9 +40,7 @@ export default function Ending() {
   const canonical = normalizeCode(ending.code);
 
   function handleNewEnding() {
-    let next = pickWeightedRandomCode();
-    // Avoid handing back the same ending the reader is already on.
-    if (normalizeCode(next) === canonical) next = pickWeightedRandomCode();
+    const next = pickWeightedRandomCode(comboKey(ending!));
     navigate(`/therealending/${next}`);
   }
 
@@ -72,6 +70,11 @@ export default function Ending() {
 
   return (
     <main className="ending">
+      {import.meta.env.DEV && (
+        <div style={{ background: "#ff0", color: "#000", padding: "4px 8px", fontFamily: "monospace", fontSize: "12px" }}>
+          [DEV] {ending.culprits.join(", ")} — {canonical}
+        </div>
+      )}
       <header className="ending-header">
         <p className="ending-code">
           Your ending: <span>{canonical}</span>

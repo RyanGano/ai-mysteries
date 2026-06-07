@@ -47,6 +47,18 @@ many endings it has. `CATEGORY_WEIGHTS` in `src/lib/endings.ts` must stay monoto
 decreasing and sum to 100. To add a new suspect, the combinatorics change — revisit the
 weights, but the size-derived categories keep working automatically.
 
+### "Reveal another ending" exclusion rule
+
+When a reader clicks **Reveal another ending**, the next pick excludes any ending that shares
+the same culprit combination as the one currently displayed. For example, if you're reading a
+Rourke-solo ending you won't see another Rourke-solo; if you're reading a Rourke+Shah pair
+you won't see another Rourke+Shah ending. Endings that merely _include_ one of those people
+in a different combination are still eligible.
+
+This is enforced by `pickWeightedRandomCode(excludeComboKey?)` in `src/lib/endings.ts` — the
+combo key is the sorted culprit names joined by ` & `. It applies automatically to every
+ending, including newly added ones. No extra steps needed when authoring an ending.
+
 ## How to add an ending
 
 1. Write `src/content/endings/<slug>.md` in the book's voice (see style guide below).

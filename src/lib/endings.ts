@@ -33,7 +33,7 @@ function categoryOf(ending: Ending): Category {
 }
 
 // Stable key identifying a specific combination of culprits within a category.
-function comboKey(ending: Ending): string {
+export function comboKey(ending: Ending): string {
   return [...ending.culprits].sort().join(" & ");
 }
 
@@ -81,7 +81,7 @@ const SPECIAL_ODDS = 1 / 1000;
 //   Stage 3 — pick uniformly among that combination's registered endings.
 // Picking the combo before the ending keeps each combination equally likely
 // regardless of how many endings it happens to have.
-export function pickWeightedRandomCode(): string {
+export function pickWeightedRandomCode(excludeComboKey?: string): string {
   // Stage 0 — the super special ending. On the other 999-in-1000 we fall
   // through to the normal weighted path below.
   const special = endings.find((e) => e.special);
@@ -97,6 +97,13 @@ export function pickWeightedRandomCode(): string {
     const key = comboKey(e);
     if (!combos.has(key)) combos.set(key, []);
     combos.get(key)!.push(e.code);
+  }
+
+  if (excludeComboKey) {
+    for (const [cat, combos] of byCategory) {
+      combos.delete(excludeComboKey);
+      if (combos.size === 0) byCategory.delete(cat);
+    }
   }
 
   const categories = Array.from(byCategory.keys());
