@@ -10,6 +10,7 @@ export default function Ending() {
   const navigate = useNavigate();
   const ending = lookupEnding(code);
   const [shareNote, setShareNote] = useState("");
+  const [revealDone, setRevealDone] = useState(false);
 
   // A fresh ending should start from the top, even if the previous one was
   // scrolled down when "Reveal another ending" was tapped.
@@ -19,6 +20,7 @@ export default function Ending() {
     if (ending?.special) {
       window.history.replaceState(null, "", "/therealending");
     }
+    setRevealDone(false);
     window.scrollTo(0, 0);
     setShareNote("");
   }, [code]);
@@ -102,8 +104,19 @@ export default function Ending() {
           [DEV] {ending.culprits.join(", ")} — {canonical}
         </div>
       )}
-      {ending.special && (
-        <p className="ending-special-badge">One in a thousand.</p>
+      {ending.special && !revealDone && (
+        <div
+          className="ending-reveal-overlay"
+          onClick={() => setRevealDone(true)}
+          onAnimationEnd={(e) => {
+            if (e.target === e.currentTarget) setRevealDone(true);
+          }}
+        >
+          <span className="ending-reveal-symbol" aria-hidden="true">✦</span>
+          <p className="ending-reveal-headline">One in a thousand.</p>
+          <p className="ending-reveal-sub">You found it.</p>
+          <button className="ending-reveal-skip">Continue reading &rarr;</button>
+        </div>
       )}
       <header className="ending-header">
         {!ending.special && (
