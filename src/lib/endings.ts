@@ -69,16 +69,28 @@ function pickWeighted<T>(items: T[], weightOf: (item: T) => number): T {
   return items[items.length - 1];
 }
 
-// Three-stage weighted selection:
+// Odds of the rare "super special" ending (the detective herself) on any given
+// visit to /therealending. Rolled before the normal selection below.
+const SPECIAL_ODDS = 1 / 1000;
+
+// Selection:
+//   Stage 0 — a 1-in-1000 roll for the "super special" ending. It lives outside
+//             the culprit categories and is never reachable any other way.
 //   Stage 1 — pick a category by weight (single > two > three > four > all > sam).
 //   Stage 2 — pick a specific culprit combination uniformly within the category.
 //   Stage 3 — pick uniformly among that combination's registered endings.
 // Picking the combo before the ending keeps each combination equally likely
 // regardless of how many endings it happens to have.
 export function pickWeightedRandomCode(): string {
+  // Stage 0 — the super special ending. On the other 999-in-1000 we fall
+  // through to the normal weighted path below.
+  const special = endings.find((e) => e.special);
+  if (special && Math.random() < SPECIAL_ODDS) return special.code;
+
   // category -> comboKey -> codes
   const byCategory = new Map<Category, Map<string, string[]>>();
   for (const e of endings) {
+    if (e.special) continue; // never reachable via category weighting
     const cat = categoryOf(e);
     if (!byCategory.has(cat)) byCategory.set(cat, new Map());
     const combos = byCategory.get(cat)!;

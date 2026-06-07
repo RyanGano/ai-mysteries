@@ -113,6 +113,7 @@ import quadVRSC from "./quad-VRSC.md?raw";
 import quadVRPC from "./quad-VRPC.md?raw";
 import quadVSPC from "./quad-VSPC.md?raw";
 import quadRSPC from "./quad-RSPC.md?raw";
+import elleryHerself from "./ellery-herself.md?raw";
 
 export interface Ending {
   code: string;
@@ -121,6 +122,10 @@ export interface Ending {
   culprits: string[];
   title: string;
   body: string;
+  // The rare "super special" ending — the detective herself. Excluded from the
+  // normal weighted category selection; reachable only by the 1-in-1000 roll in
+  // pickWeightedRandomCode (or by visiting its code directly). See endings.ts.
+  special?: boolean;
 }
 
 export const endings: Ending[] = [
@@ -813,5 +818,12 @@ export const endings: Ending[] = [
     culprits: ["Marcus Rourke", "Priya Shah", "Jonah Pike", "Renée Calder"],
     title: "Chapter 17 — The Real Ending",
     body: quadRSPC,
+  },
+  {
+    code: "Q8YF",
+    culprits: ["Mara Ellery"],
+    title: "Chapter 17 — The Real Ending",
+    body: elleryHerself,
+    special: true,
   },
 ];
