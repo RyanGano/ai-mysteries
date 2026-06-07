@@ -13,7 +13,12 @@ export default function Ending() {
 
   // A fresh ending should start from the top, even if the previous one was
   // scrolled down when "Reveal another ending" was tapped.
+  // For the special ending, hide the code from the URL so readers can't share
+  // it directly — we stay at /therealending instead of /therealending/CODE.
   useEffect(() => {
+    if (ending?.special) {
+      window.history.replaceState(null, "", "/therealending");
+    }
     window.scrollTo(0, 0);
     setShareNote("");
   }, [code]);
@@ -44,7 +49,29 @@ export default function Ending() {
     navigate(`/therealending/${next}`);
   }
 
+  const SPECIAL_SHARE_TEXT =
+    "I found the one-in-a-thousand ending in Within Tolerance. therealending.com";
+
   async function handleShare() {
+    if (ending!.special) {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: "Within Tolerance", text: SPECIAL_SHARE_TEXT });
+        } catch {
+          // Share sheet dismissed — nothing to do.
+        }
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(SPECIAL_SHARE_TEXT);
+        setShareNote("Copied to clipboard");
+      } catch {
+        setShareNote(SPECIAL_SHARE_TEXT);
+      }
+      window.setTimeout(() => setShareNote(""), 3000);
+      return;
+    }
+
     const url = `${window.location.origin}/therealending/${canonical}`;
     const shareData = {
       title: "Within Tolerance — The Real Ending",
@@ -69,16 +96,21 @@ export default function Ending() {
   }
 
   return (
-    <main className="ending">
+    <main className={`ending${ending.special ? " ending--special" : ""}`}>
       {import.meta.env.DEV && (
         <div style={{ background: "#ff0", color: "#000", padding: "4px 8px", fontFamily: "monospace", fontSize: "12px" }}>
           [DEV] {ending.culprits.join(", ")} — {canonical}
         </div>
       )}
+      {ending.special && (
+        <p className="ending-special-badge">One in a thousand.</p>
+      )}
       <header className="ending-header">
-        <p className="ending-code">
-          Your ending: <span>{canonical}</span>
-        </p>
+        {!ending.special && (
+          <p className="ending-code">
+            Your ending: <span>{canonical}</span>
+          </p>
+        )}
         <h1 className="ending-title">{ending.title}</h1>
       </header>
       <article className="ending-body">

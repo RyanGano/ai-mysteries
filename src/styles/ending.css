@@ -72,6 +72,31 @@
   color: var(--color-accent);
 }
 
+.ending--special {
+  --color-special: #c9a54e;
+}
+
+.ending-special-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-special);
+  border: 1px solid var(--color-special);
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  border-radius: 2px;
+  margin-bottom: 2rem;
+}
+
+.ending--special .ending-header {
+  border-bottom-color: var(--color-special);
+}
+
+.ending--special .ending-title {
+  color: var(--color-special);
+}
+
 .ending--notfound {
   display: flex;
   flex-direction: column;
