@@ -100,7 +100,15 @@ export default function Ending() {
   return (
     <main className={`ending${ending.special ? " ending--special" : ""}`}>
       {import.meta.env.DEV && (
-        <div style={{ background: "#ff0", color: "#000", padding: "4px 8px", fontFamily: "monospace", fontSize: "12px" }}>
+        <div
+          style={{
+            background: "#ff0",
+            color: "#000",
+            padding: "4px 8px",
+            fontFamily: "monospace",
+            fontSize: "12px",
+          }}
+        >
           [DEV] {ending.culprits.join(", ")} — {canonical}
         </div>
       )}
@@ -112,7 +120,9 @@ export default function Ending() {
             if (e.target === e.currentTarget) setRevealDone(true);
           }}
         >
-          <span className="ending-reveal-symbol" aria-hidden="true">✦</span>
+          <span className="ending-reveal-symbol" aria-hidden="true">
+            ✦
+          </span>
           <p className="ending-reveal-headline">One in a thousand.</p>
           <p className="ending-reveal-sub">You found it.</p>
           <button className="ending-reveal-skip">Continue reading &rarr;</button>
