@@ -20,6 +20,10 @@ export default function Landing() {
         <Link to="/therealending" className="cta-button">
           Already read the book? Find your ending &rarr;
         </Link>
+        <p className="landing-secret">
+          Most readers find an ending. They say there is a rarer one still &mdash; hidden so well
+          that only the most relentless detectives ever turn it up.
+        </p>
       </div>
     </main>
   );

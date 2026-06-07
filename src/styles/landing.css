@@ -49,3 +49,14 @@
   color: var(--color-text);
   margin-bottom: 1em;
 }
+
+.landing-secret {
+  margin-top: 1.5rem;
+  max-width: 38ch;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+}

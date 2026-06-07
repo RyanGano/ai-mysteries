@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { lookupEnding, pickWeightedRandomCode } from "../lib/endings";
 import { normalizeCode } from "../lib/code";
@@ -8,6 +9,14 @@ export default function Ending() {
   const { code = "" } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const ending = lookupEnding(code);
+  const [shareNote, setShareNote] = useState("");
+
+  // A fresh ending should start from the top, even if the previous one was
+  // scrolled down when "Reveal another ending" was tapped.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setShareNote("");
+  }, [code]);
 
   if (!ending) {
     return (
@@ -30,6 +39,37 @@ export default function Ending() {
 
   const canonical = normalizeCode(ending.code);
 
+  function handleNewEnding() {
+    let next = pickWeightedRandomCode();
+    // Avoid handing back the same ending the reader is already on.
+    if (normalizeCode(next) === canonical) next = pickWeightedRandomCode();
+    navigate(`/therealending/${next}`);
+  }
+
+  async function handleShare() {
+    const url = `${window.location.origin}/therealending/${canonical}`;
+    const shareData = {
+      title: "Within Tolerance — The Real Ending",
+      text: "My ending to Within Tolerance.",
+      url,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // Share sheet dismissed — nothing to do.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareNote("Link copied to clipboard");
+    } catch {
+      setShareNote(url);
+    }
+    window.setTimeout(() => setShareNote(""), 3000);
+  }
+
   return (
     <main className="ending">
       <header className="ending-header">
@@ -41,6 +81,19 @@ export default function Ending() {
       <article className="ending-body">
         <Prose>{ending.body}</Prose>
       </article>
+      <div className="ending-actions">
+        <button className="cta-button" onClick={handleNewEnding}>
+          Reveal another ending &rarr;
+        </button>
+        <button className="ending-action-secondary" onClick={handleShare}>
+          Share
+        </button>
+        {shareNote && (
+          <span className="ending-share-note" role="status">
+            {shareNote}
+          </span>
+        )}
+      </div>
     </main>
   );
 }
