@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { lookupEnding, pickWeightedRandomCode, comboKey } from "../lib/endings";
 import { normalizeCode } from "../lib/code";
 import Prose from "../components/Prose";
@@ -40,6 +40,9 @@ export default function Ending() {
         >
           Reveal a random ending &rarr;
         </button>
+        <Link to="/" className="ending-home">
+          &larr; Back to Within Tolerance
+        </Link>
       </main>
     );
   }
@@ -128,6 +131,11 @@ export default function Ending() {
           <button className="ending-reveal-skip">Continue reading &rarr;</button>
         </div>
       )}
+      <div className="ending-bar">
+        <Link to="/" className="ending-home">
+          &larr; Within Tolerance
+        </Link>
+      </div>
       <header className="ending-header">
         {!ending.special && (
           <p className="ending-code">
