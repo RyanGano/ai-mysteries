@@ -8,7 +8,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const ENDINGS_DIR = path.join(__dirname, "..", "src", "content", "endings");
+const ENDINGS_DIR = path.join(__dirname, "..", "ai-mysteries-web", "src", "content", "endings");
 
 // Canonical culprit names.
 const V = "Elias Varga";

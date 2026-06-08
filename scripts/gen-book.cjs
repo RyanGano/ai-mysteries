@@ -15,7 +15,7 @@ const { execSync } = require("child_process");
 
 const ROOT = path.join(__dirname, "..");
 const DOCX = path.join(ROOT, "source_materials", "Within_Tolerance_Clean.docx");
-const OUT_DIR = path.join(ROOT, "src", "content", "book");
+const OUT_DIR = path.join(ROOT, "ai-mysteries-web", "src", "content", "book");
 
 // --- Unzip document.xml from the .docx (a zip archive) -----------------------
 function readDocumentXml() {

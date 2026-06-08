@@ -2,6 +2,8 @@
 
 ## Commands
 
+Run from the `ai-mysteries-web/` directory:
+
 ```
 npm run dev       # start dev server (localhost:5173)
 npm run build     # prettier check + eslint check + tsc + vite build → dist/
@@ -20,13 +22,13 @@ final printed line is `www.therealending.com`. This site delivers the real, vari
 - `/therealending` — picks a weighted-random code from the registered endings, redirects (replace).
 - `/therealending/:code` — permanent page. Always shows the same ending for that code.
 - Codes are 4-char uppercase. `O/0` and `I/1/L` are interchangeable on input (normalized).
-- Deep links work via SPA fallback in `staticwebapp.config.json`.
+- Deep links work via SPA fallback in `ai-mysteries-web/staticwebapp.config.json`.
 
 ### Weighted random selection
 
 Each ending names a set of culprits via `culprits: string[]`. The **category** is derived
 from that set's size (`["SAM"]` is the special SAM category). Random selection is
-three-stage (see `src/lib/endings.ts`):
+three-stage (see `ai-mysteries-web/src/lib/endings.ts`):
 
 1. **Pick a category by weight** (most → least common):
 
@@ -43,7 +45,7 @@ three-stage (see `src/lib/endings.ts`):
 3. **Pick uniformly** among that combination's registered endings.
 
 Picking the combo before the ending keeps every combination equally likely regardless of how
-many endings it has. `CATEGORY_WEIGHTS` in `src/lib/endings.ts` must stay monotonically
+many endings it has. `CATEGORY_WEIGHTS` in `ai-mysteries-web/src/lib/endings.ts` must stay monotonically
 decreasing and sum to 100. To add a new suspect, the combinatorics change — revisit the
 weights, but the size-derived categories keep working automatically.
 
@@ -55,19 +57,19 @@ Rourke-solo ending you won't see another Rourke-solo; if you're reading a Rourke
 you won't see another Rourke+Shah ending. Endings that merely _include_ one of those people
 in a different combination are still eligible.
 
-This is enforced by `pickWeightedRandomCode(excludeComboKey?)` in `src/lib/endings.ts` — the
+This is enforced by `pickWeightedRandomCode(excludeComboKey?)` in `ai-mysteries-web/src/lib/endings.ts` — the
 combo key is the sorted culprit names joined by ` & `. It applies automatically to every
 ending, including newly added ones. No extra steps needed when authoring an ending.
 
 ## How to add an ending
 
-1. Write `src/content/endings/<slug>.md` in the book's voice (see style guide below).
+1. Write `ai-mysteries-web/src/content/endings/<slug>.md` in the book's voice (see style guide below).
 2. Every ending must open with these exact two paragraphs:
    ```
    No one asked why they were there this time.
    The meeting had been called without an agenda, without a subject line, without the small procedural courtesies that usually softened bad news. That alone told them this wasn't another reconstruction.
    ```
-3. Add an entry to `src/content/endings/index.ts` (or add the slug to
+3. Add an entry to `ai-mysteries-web/src/content/endings/index.ts` (or add the slug to
    `scripts/gen-endings-index.cjs` and re-run it, which assigns a code and preserves all
    existing ones):
    ```ts
@@ -80,7 +82,7 @@ ending, including newly added ones. No extra steps needed when authoring an endi
    `"Chapter 17 — The Real Ending"` — it must never vary or hint at the culprit(s).
 4. Use a unique canonical 4-char code. Canonical = uppercase, `O` not `0`, `I` not `1`/`L`.
    **Do not let the code hint at the culprit** — use unrelated letters/digits (e.g. `7BXK`, `Q4NM`).
-5. Run `npm run build` — the uniqueness guard in `src/lib/endings.ts` catches collisions.
+5. Run `npm run build` — the uniqueness guard in `ai-mysteries-web/src/lib/endings.ts` catches collisions.
 
 ## Voice and style guide
 
@@ -100,14 +102,14 @@ Contains full character details for all suspects. Use it when writing new ending
 ## Spoiler rules
 
 - **Never** build a public index of endings or codes.
-- The site is `noindex` via `staticwebapp.config.json` global headers and `public/robots.txt`.
+- The site is `noindex` via `ai-mysteries-web/staticwebapp.config.json` global headers and `ai-mysteries-web/public/robots.txt`.
 - Do not log or display which code a user landed on in any analytics or public-facing context.
 
 ## Deployment (Azure Static Web Apps)
 
 - Hosting: Azure Static Web Apps (Free tier).
 - The `staticwebapp.config.json` handles SPA fallback and `noindex` headers.
-- Build output is `dist/`. App location is `/`.
+- Build output is `ai-mysteries-web/dist/`. App location is `/ai-mysteries-web`.
 - Azure GitHub Actions workflow auto-deploys on push to `main`.
 - Domain to configure: `therealending.com` (printed in the book — register this first).
 
