@@ -28,6 +28,8 @@ Ellery recognized that phrase. She had heard it once before, at the start of som
 
 ‘This company is not reckless,’ Renée said. ‘It is optimistic.’
 
+‘And optimism ships,’ she said. ‘That is what frightens me—not this room, the scale. Put this suit in the field at the volumes they are promising, with these margins, and it will not be one person. It will be thousands. I have said so, in those words, more than once.’
+
 Ellery asked about the test.
 
 ‘I didn’t object to it,’ Renée said. ‘I objected to the timing.’
@@ -35,6 +37,8 @@ Ellery asked about the test.
 ‘You tried to stop it.’
 
 ‘I tried to slow it,’ Renée corrected. ‘Stopping requires authority.’
+
+‘There was reason to slow it,’ she said. ‘Three weeks earlier, Suit Seven threw an anomaly on an unmanned run—the same fault signature, no one inside. It was logged. It was triaged. It was closed.’ She let that settle. ‘And I had approved the test protocol myself, eight months ago, when the conditions were different. I have raised flags since. But an approval is a snapshot. People read it as a blessing and forget the date on it.’
 
 ‘Authority exists,’ Renée added calmly. ‘It’s just… expensive.’
 
@@ -69,6 +73,8 @@ Renée’s expression sharpened. ‘SAM is very good at what it does.’
 ‘And what is that?’
 
 ‘It enforces policy,’ Renée said. ‘Even when policy shouldn’t be enough.’
+
+She owned the alert thresholds, too—the lines that decided when a reading was loud enough to wake someone. ‘I have widened some of them over the years,’ she said. ‘To cut the false alarms. An alarm that fires for nothing teaches people to stop hearing it. The cruelty is that the line you draw to be believed is the same line a real signal can slip beneath.’
 
 She described the halt request calmly. How it was logged. How it was escalated. How it was not enforced.
 

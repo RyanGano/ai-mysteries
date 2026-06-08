@@ -24,6 +24,8 @@ Jonah lifted one of the smaller components from the table—a palm-sized sensor 
 
 He set it back carefully. ‘That’s how we keep velocity up.’
 
+He lifted the module again, and a second one beside it, identical. ‘These are interchangeable. Same connector, same housing—you can seat a pack from one suit into another and it’ll fit perfectly. They’re calibrated per unit, but the only thing that tells you which suit a pack belongs to is a number etched on the back, small enough to miss in a bin.’ He nodded at the inner lining. ‘The mesh is the same kind of trap. There’s a spec gauge and a spec alloy, and there’s a look-alike in the general stores that’s close enough to fool your eye and not close enough to carry a real fault. You learn the difference, or one day you don’t.’
+
 ‘If you’re in the Cage wearing this,’ Jonah said, ‘the system treats you like a hard stop. Everything else becomes secondary.’
 
 ‘And maintenance?’ Ellery asked.

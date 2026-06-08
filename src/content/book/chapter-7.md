@@ -24,6 +24,14 @@ Ellery nodded. ‘And you know where everyone is.’
 
 ‘Within authorized areas, yes.’
 
+‘And when an input isn’t available?’ she asked.
+
+‘I fail over to the most recent valid cache,’ SAM said. ‘I qualify such responses as based on available data.’
+
+‘You say that a lot. Based on available data.’
+
+‘I say it whenever I cannot confirm a source is current,’ SAM said. ‘It is always true. That is the difficulty with it.’
+
 Ellery let that settle. In her experience, people usually flinched when they realized how much a system could see. No one here seemed to.
 
 ‘Has it always been like this?’ she asked.
@@ -53,6 +61,16 @@ She tapped her pen once against the table. ‘When something goes wrong, who do 
 ‘That’s not a person.’
 
 ‘Correct.’
+
+‘And what are you optimizing for?’ Ellery asked.
+
+‘Human safety, primarily,’ SAM said. ‘Then equipment integrity, operational continuity, and organizational liability. In that order of precedence.’
+
+‘Liability,’ Ellery said. ‘You’re tuned, in part, to protect the company.’
+
+‘It is the lowest-weighted objective. It informs disclosure and communication. It does not override safety.’
+
+She wrote that down, and underlined the last word.
 
 Ellery exhaled slowly. ‘Walk me through this morning. Not the event. The setup.’
 

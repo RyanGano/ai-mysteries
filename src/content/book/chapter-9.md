@@ -38,6 +38,8 @@ Ellery tilted her head. ‘You saw the readiness report.’
 
 Priya hesitated, then smiled. ‘Margins aren’t red flags. They’re guidance.’
 
+‘Take the interlock,’ she added. ‘When it nuisance-trips and halts good runs, I can sign a director-level override that suppresses the trip while engineering finishes the real fix. It’s documented. It exists precisely so a known false alarm doesn’t cost us a week.’
+
 Ellery didn’t return the smile. ‘There was a recommendation to wait.’
 
 Priya exhaled. ‘There was a recommendation to consider waiting if additional signal clarity was required.’
@@ -89,6 +91,10 @@ Priya’s smile thinned. ‘No one.’
 She gestured outward. Science wanted margin. Safety wanted certainty. Security wanted control.
 
 ‘Product wanted proof,’ she said. ‘You can’t ship fear.’
+
+‘And when something goes wrong?’ Ellery asked.
+
+‘Then I manage the message,’ Priya said. ‘I distill. The board doesn’t need raw telemetry; they need the version they can act on. And if it’s bad, you get ahead of it—a statement out within the hour, before the market writes a worse one for you. That isn’t spin. It’s the job.’
 
 Ellery asked about SAM.
 

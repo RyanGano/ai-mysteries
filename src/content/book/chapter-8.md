@@ -12,6 +12,8 @@ He started with access.
 
 Security logs. Badge telemetry. Camera coverage. He spoke in timestamps and zones, drawing an invisible map of the building as it had existed that morning. Who entered which corridor. Which doors opened. Which ones didn’t.
 
+Everything on that map ran through him. The relay panel that could override a door interlock when a run had armed and locked the bay. The camera feeds, which rolled to a storage cycle he could start by hand from the console. The proximity alerts, with their nuisance filter—he muted the ones that cried wolf, by feel, so the board stayed readable. He’d even carved the Charge Cage out as its own alarm sub-zone, so staging a pallet of cells wouldn’t throw the whole wing into alarm; he armed it and disarmed it as the work required. And twice a shift he walked the floor himself and logged what he saw. None of it was hidden. All of it was his.
+
 ‘No forced access,’ he said. ‘No anomalies. Nobody tailgated. Nobody piggybacked.’
 
 Ellery turned a page. ‘Any credentials re-issued in the run-up? Replacements, temporary cards, dormant badges brought back online?’
@@ -25,6 +27,8 @@ Ellery turned a page. ‘Any credentials re-issued in the run-up? Replacements, 
 Ellery wrote it down. It was the kind of detail that would matter to no one until, all at once, it mattered to everyone.
 
 Ellery let him talk. This was how Rourke protected himself—by narrowing the world until only procedures fit inside it.
+
+She had already noticed how clean his records were—cleaner than anyone’s. When she asked about it, he didn’t flinch. He pruned them, he said. Pulled the stray badge reads, the visitor sign-ins that led nowhere, the noise that made a log hard to read. A tidy log was a usable log. It did not seem to occur to him that an investigator might come looking for the noise, or that a record with the inconvenient parts trimmed away looks, from the outside, exactly like one that’s been cleaned.
 
 ‘The test window was scheduled,’ he continued. ‘Authorized. All access matched the manifest.’
 
@@ -43,6 +47,8 @@ He stopped there, as if the sentence had ended somewhere he didn’t want to fol
 Ellery’s pen paused. ‘Keeping quiet about what, Marcus?’
 
 Marcus’s gaze lifted for the first time and met hers directly. ‘About the past,’ he said. ‘And about what investors don’t need to hear before a demo.’
+
+He turned the old badge over in his hand. ‘Years back—before the funding, before any of this—there was an incident in the first test bay. Someone got hurt. It should have gone to the regulator. It didn’t. I was the officer of record. Michael asked, and I filed it internal and let the external window close.’ He stopped. ‘You do a thing like that for a man, it doesn’t stay done. It sits between you.’
 
 ‘Did you clear him?’ Ellery asked.
 

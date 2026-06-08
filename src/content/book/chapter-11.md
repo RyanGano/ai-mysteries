@@ -18,6 +18,8 @@ Ellery looked up. ‘That’s allowed?’
 
 Jonah shrugged. ‘It’s normal. As long as the final inspection passes.’
 
+He warmed to it, the way he did whenever the talk stayed technical and away from him. ‘Same idea with a jumper. You bridge across the interlock so it stops cutting power while you take a reading, then you pull it before you button up. First thing you pull. Everybody knows that.’ He turned a glove over in his hands. ‘Or torque—every bolt’s got a spec. You hit the number and you trust the wrench, and the wrench is supposed to go out for calibration once a year, and’—he shrugged—‘it’s always the one you use most that’s most overdue. You can’t spare it. Same with the single-use seals. You pull one and it looks brand new, and throwing it out feels like setting money on fire, so there’s a drawer. People pull from the drawer when stores is slow.’
+
 ‘The suit’s got layers,’ Jonah said. ‘Physical, electrical, logical. If one layer starts to drift, another compensates. That’s the design.’
 
 Ellery asked him to walk through the suit inspection step by step. Jonah did, naming each stage. Mesh continuity checks. Grounding node resistance. Firmware integrity hashes. He spoke faster as he went, confidence growing with familiarity.

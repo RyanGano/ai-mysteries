@@ -24,6 +24,8 @@ He described it in terms of states, not events. Idle ready. Load balanced. Envir
 
 ‘We had adjusted calibration before leaving last night,’ he said. ‘Not because anything was wrong. Because nothing was wrong.’
 
+‘The interlock recalibration is mine, as well,’ he added. ‘It runs on a cadence—every ninety days, to pull the sensor drift back to true. It takes the rig offline for hours. When the schedule cannot spare the hours, I reschedule it. The manual permits the deferral. I wrote the manual.’
+
 Ellery watched his face as he said it.
 
 ‘When systems perform too cleanly, it’s usually because you’re not looking closely enough,’ he continued. ‘Noise hides problems. You reduce noise, you expose structure.’
@@ -82,6 +84,8 @@ Varga’s jaw moved. ‘The methods are mine. The architecture, the math — min
 
 ‘It is simply the record,’ Varga said. ‘The record is frequently wrong about who did what. I have spent a career correcting for it.’
 
+‘I correct constants, notation, units, the placement of a decimal,’ he went on. ‘I will refactor four hundred lines and tag it cosmetic, because that is what it is. People trust me to do it precisely. I have not shipped a transcription error in my career—it is a point of pride bordering on the absurd.’ He paused. ‘And when the fabricator’s drawing disagrees with the firmware, I make them agree. You defer to the canonical document. The drawing is the reference; the firmware is downstream of it. That is not negligence. That is method.’
+
 Ellery wrote that down.
 
 Varga shifted, warming now, the way people did when they felt misunderstood.
@@ -92,6 +96,10 @@ Varga shifted, warming now, the way people did when they felt misunderstood.
 
 ‘I frame it as incomplete information,’ Varga said. ‘Which is not the same as danger.’
 
+‘You model these things,’ Ellery said.
+
+‘Constantly. On my own time, on my own machine.’ He almost smiled. ‘Most of it never leaves my drafts. A preliminary result is not a finding. You do not raise an alarm on a model you have not validated—you would be crying wolf on every bad sample the simulation ever drew. So you sit with it. You keep it close until you are sure.’
+
 He pointed at the table, as if diagrams might appear there.
 
 ‘The calibration change did not disable human presence detection,’ he said. ‘It made it more sensitive to conflicting inputs. That’s not a flaw. That’s honesty.’
@@ -99,6 +107,12 @@ He pointed at the table, as if diagrams might appear there.
 ‘Honest systems can still kill people,’ Ellery said.
 
 ‘Yes,’ Varga said quietly. ‘When people treat honesty as certainty.’
+
+‘You warned them,’ Ellery said. ‘About the timeline. The margins. The rush.’
+
+‘Repeatedly. In writing.’ He said it without triumph, which was somehow worse. ‘There is a cold comfort in a warning on the record. Whatever happens, the record will show that I was right.’
+
+He said it as though it were a virtue. Ellery was not certain it was.
 
 She asked about the suit.
 
