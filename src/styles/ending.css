@@ -5,6 +5,27 @@
   padding-top: clamp(2rem, 6vh, 5rem);
 }
 
+.ending-bar {
+  margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+}
+
+/* Link back to the book's landing page. */
+.ending-home {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.ending-home:hover {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.ending--special .ending-home:hover {
+  color: var(--color-special);
+}
+
 .ending-header {
   margin-bottom: 2.5rem;
   padding-bottom: 1.5rem;
