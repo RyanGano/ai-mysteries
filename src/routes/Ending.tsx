@@ -23,7 +23,7 @@ export default function Ending() {
     setRevealDone(false);
     window.scrollTo(0, 0);
     setShareNote("");
-  }, [code]);
+  }, [code, ending?.special]);
 
   if (!ending) {
     return (
