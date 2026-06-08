@@ -109,7 +109,7 @@ Contains full character details for all suspects. Use it when writing new ending
 
 - Hosting: Azure Static Web Apps (Free tier).
 - The `staticwebapp.config.json` handles SPA fallback and `noindex` headers.
-- Build output is `ai-mysteries-web/dist/`. App location is `/ai-mysteries-web`.
+- Build output is `ai-mysteries-web/dist/`. App location is `ai-mysteries-web`.
 - Azure GitHub Actions workflow auto-deploys on push to `main`.
 - Domain to configure: `therealending.com` (printed in the book — register this first).
 
