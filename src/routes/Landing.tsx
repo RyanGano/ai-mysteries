@@ -34,9 +34,14 @@ export default function Landing() {
         <p className="landing-blurb">
           The book ends where it ends. But the truth has more than one shape.
         </p>
-        <Link to="/therealending" className="cta-button">
-          Already read the book? Reveal your ending &rarr;
-        </Link>
+        <div className="landing-ctas">
+          <Link to="/read" className="cta-button cta-button--primary">
+            Start reading the book &rarr;
+          </Link>
+          <Link to="/therealending" className="cta-button cta-button--ghost">
+            Already read the book? Reveal your ending &rarr;
+          </Link>
+        </div>
         <form onSubmit={handleSubmit} className="code-form">
           <label htmlFor="code-input">Have a code? Enter it here:</label>
           <div className="code-form-row">
