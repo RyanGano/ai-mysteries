@@ -1,0 +1,214 @@
+.read {
+  max-width: calc(var(--max-prose) + 2 * var(--page-pad));
+  margin: 0 auto;
+  padding: var(--page-pad);
+}
+
+/* ── Top bar: Contents button + home link ──────────────────────────── */
+
+.read-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: clamp(1.5rem, 4vh, 3rem);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.read-toc-button {
+  padding: 0.45rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.read-toc-button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
+}
+
+.read-home {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.read-home:hover {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* ── Chapter header + body ─────────────────────────────────────────── */
+
+.read-header {
+  margin-bottom: 2.5rem;
+}
+
+.read-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--color-text);
+}
+
+/* ── End-of-book payoff (Epilogue only) ────────────────────────────── */
+
+.read-payoff {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.read-payoff-text {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--color-text);
+  margin-bottom: 1em;
+  max-width: var(--max-prose);
+}
+
+/* ── Prev / Next ───────────────────────────────────────────────────── */
+
+.read-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.read-nav-link {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  max-width: 45%;
+}
+
+.read-nav-link:hover {
+  color: var(--color-accent-hover);
+  text-decoration: none;
+}
+
+.read-nav-next {
+  text-align: right;
+  margin-left: auto;
+}
+
+/* ── Table of contents drawer ──────────────────────────────────────── */
+
+.toc {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.toc-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.toc-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: min(20rem, 82vw);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
+  padding: 1.5rem 0;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+}
+
+.toc--open {
+  pointer-events: auto;
+}
+
+.toc--open .toc-overlay {
+  opacity: 1;
+}
+
+.toc--open .toc-panel {
+  transform: translateX(0);
+}
+
+.toc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem 1rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.toc-head-title {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.toc-close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0 0.25rem;
+  transition: color 0.15s;
+}
+
+.toc-close:hover {
+  color: var(--color-text);
+}
+
+.toc-list {
+  list-style: none;
+}
+
+.toc-link {
+  display: block;
+  padding: 0.6rem 1.5rem;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--color-text);
+  border-left: 2px solid transparent;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+
+.toc-link:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-accent-hover);
+  text-decoration: none;
+}
+
+.toc-link--active {
+  border-left-color: var(--color-accent);
+  color: var(--color-accent);
+}
