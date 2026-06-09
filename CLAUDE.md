@@ -83,6 +83,29 @@ ending, including newly added ones. No extra steps needed when authoring an endi
 4. Use a unique canonical 4-char code. Canonical = uppercase, `O` not `0`, `I` not `1`/`L`.
    **Do not let the code hint at the culprit** — use unrelated letters/digits (e.g. `7BXK`, `Q4NM`).
 5. Run `npm run build` — the uniqueness guard in `ai-mysteries-web/src/lib/endings.ts` catches collisions.
+6. (Optional) Wire up the ending's **cross-references** (the in-ending "spot the clue"
+   binoculars). See *Cross-references* below — this is driven entirely from
+   `docs/EndingClueMap.md`, never by editing the ending `.md`.
+
+## Cross-references (in-ending "spot the clue")
+
+Endings render a small binoculars glyph at each reveal; hovering/clicking shows the
+foreshadowing manuscript passage and deep-links to it (`/read/<slug>?clue=<ID>`). The data is
+**generated** from `docs/EndingClueMap.md` (gitignored) into two committed artifacts:
+
+- `ai-mysteries-web/src/content/endings/clues.ts` — from the **Clue Library** section
+  (clue id → chapter + the verbatim passage(s) to show).
+- `ai-mysteries-web/src/content/endings/xref-markers.ts` — from the **Marker placement
+  (annotated reveal excerpts)** section (ending code → resolved glyph offsets).
+
+To add/update cross-references for an ending: edit those two sections of `EndingClueMap.md`
+(add a clue to the Clue Library if new; add the ending's annotated excerpt with `[CLUE-ID]`
+markers to the Marker-placement section), then run `npm run gen-xrefs` (from
+`ai-mysteries-web/`) and commit the regenerated files. `npm run build` runs
+`scripts/check-xrefs.cjs`, which fails if a marker drifted off its anchor or a clue passage no
+longer matches the manuscript. Runtime lives in `src/lib/remark-xref.ts`,
+`src/components/XrefMarker.tsx`, and `src/styles/xref.css`; the deep-link highlight is in
+`src/routes/Read.tsx`. See `docs/cross_reference.md` for the full design.
 
 ## Voice and style guide
 
@@ -104,6 +127,10 @@ Contains full character details for all suspects. Use it when writing new ending
 - **Never** build a public index of endings or codes.
 - The site is `noindex` via `ai-mysteries-web/staticwebapp.config.json` global headers and `ai-mysteries-web/public/robots.txt`.
 - Do not log or display which code a user landed on in any analytics or public-facing context.
+- Cross-references are per-ending and point only *backward* into the manuscript. Never add a
+  UI that lists clues across endings. Only the minimal `clues.ts` / `xref-markers.ts` data is
+  shipped (derived from text already bundled); the analytical `EndingClueMap.md` (culprit
+  attributions, gap notes) stays gitignored.
 
 ## Deployment (Azure Static Web Apps)
 

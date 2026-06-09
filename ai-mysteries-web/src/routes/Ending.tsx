@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { lookupEnding, pickWeightedRandomCode, comboKey } from "../lib/endings";
 import { normalizeCode } from "../lib/code";
+import { xrefMarkers } from "../content/endings/xref-markers";
 import Prose from "../components/Prose";
 import "../styles/ending.css";
 
@@ -145,7 +146,7 @@ export default function Ending() {
         <h1 className="ending-title">{ending.title}</h1>
       </header>
       <article className="ending-body">
-        <Prose>{ending.body}</Prose>
+        <Prose markers={xrefMarkers[canonical]?.markers}>{ending.body}</Prose>
       </article>
       <div className="ending-actions">
         <button className="cta-button" onClick={handleNewEnding}>

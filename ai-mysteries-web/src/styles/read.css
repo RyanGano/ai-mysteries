@@ -212,3 +212,21 @@
   border-left-color: var(--color-accent);
   color: var(--color-accent);
 }
+
+/* Transient highlight when arriving from an ending's cross-reference (/read/...?clue=ID). */
+.read-body p.clue-highlight {
+  animation: clue-flash 2.6s ease-out;
+  border-radius: 3px;
+}
+
+@keyframes clue-flash {
+  0%,
+  60% {
+    background: rgba(91, 143, 185, 0.22);
+    box-shadow: 0 0 0 6px rgba(91, 143, 185, 0.22);
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
