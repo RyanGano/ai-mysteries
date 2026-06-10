@@ -2,7 +2,8 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkXref from "../lib/remark-xref";
 import XrefMarker from "./XrefMarker";
-import type { XrefMarker as XrefMarkerData } from "../content/endings/xref-markers";
+import { CluesContext } from "../lib/clues-context";
+import type { XrefMarker as XrefMarkerData, Clue } from "../lib/types";
 import "../styles/prose.css";
 
 interface ProseProps {
@@ -10,6 +11,8 @@ interface ProseProps {
   // Cross-reference markers for an ending body; injected as tokens before rendering. Omitted
   // for chapters (the reader) and the special ending.
   markers?: XrefMarkerData[];
+  // The clues those markers reference, so each glyph can resolve its popover content.
+  clues?: Record<string, Clue>;
 }
 
 // Splice `{{xref:ID}}` tokens into the body at each marker's resolved offset. A marker whose
@@ -31,13 +34,15 @@ const components = {
   xref: ({ node }: any) => <XrefMarker clueId={node?.properties?.dataClue} />,
 } as Components;
 
-export default function Prose({ children, markers }: ProseProps) {
+export default function Prose({ children, markers, clues }: ProseProps) {
   const body = markers && markers.length ? injectMarkers(children, markers) : children;
   return (
-    <div className="prose">
-      <ReactMarkdown remarkPlugins={[remarkGfm, remarkXref]} components={components}>
-        {body}
-      </ReactMarkdown>
-    </div>
+    <CluesContext.Provider value={clues ?? {}}>
+      <div className="prose">
+        <ReactMarkdown remarkPlugins={[remarkGfm, remarkXref]} components={components}>
+          {body}
+        </ReactMarkdown>
+      </div>
+    </CluesContext.Provider>
   );
 }

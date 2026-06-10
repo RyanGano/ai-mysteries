@@ -1,16 +1,23 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { chapters } from "../lib/book";
+import type { TocEntry } from "../lib/types";
 
 interface TableOfContentsProps {
   open: boolean;
   onClose: () => void;
   currentSlug: string;
+  // The chapter list, fetched by the parent (Read).
+  entries: TocEntry[];
 }
 
 // Left-sliding drawer listing every chapter. Selecting an entry navigates and
 // closes the drawer (handled by the parent via onClose).
-export default function TableOfContents({ open, onClose, currentSlug }: TableOfContentsProps) {
+export default function TableOfContents({
+  open,
+  onClose,
+  currentSlug,
+  entries,
+}: TableOfContentsProps) {
   // Close on Escape while open.
   useEffect(() => {
     if (!open) return;
@@ -32,7 +39,7 @@ export default function TableOfContents({ open, onClose, currentSlug }: TableOfC
           </button>
         </div>
         <ul className="toc-list">
-          {chapters.map((ch) => (
+          {entries.map((ch) => (
             <li key={ch.slug}>
               <Link
                 to={`/read/${ch.slug}`}

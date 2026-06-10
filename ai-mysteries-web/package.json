@@ -5,9 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node ../scripts/check-xrefs.cjs && prettier --check src/ && eslint . && tsc -b && vite build",
+    "build": "prettier --check src/ && eslint . && tsc -b && vite build",
     "lint": "eslint . --fix && prettier --write src/",
-    "gen-xrefs": "node ../scripts/gen-xrefs.cjs",
     "preview": "vite preview"
   },
   "dependencies": {

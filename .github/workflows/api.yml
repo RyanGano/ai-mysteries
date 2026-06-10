@@ -1,0 +1,43 @@
+name: Deploy API (App Service)
+
+# Builds the .NET 10 minimal API self-contained (so the F1 web app doesn't need the runtime
+# preinstalled) and deploys it to Azure App Service. Book content is NOT in the repo (it lives
+# in Cosmos), so the artifact never carries book data; -p:PublishBookContent=false is belt-and-
+# suspenders for any locally-present Content/.
+#
+# Setup required once (see infra/azure-setup.ps1):
+#   - an App Service web app (Linux F1) with system-assigned managed identity + Cosmos RBAC
+#   - app settings: ContentSource=Cosmos, Cosmos__Endpoint/Database/Container, Cors__AllowedOrigins__0
+#   - repo secrets: AZURE_WEBAPP_NAME, AZURE_WEBAPP_PUBLISH_PROFILE
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ai-mysteries-api/**'
+      - '.github/workflows/api.yml'
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish (self-contained, no book content)
+        run: >
+          dotnet publish ai-mysteries-api/AiMysteries.Api.csproj
+          -c Release -r linux-x64 --self-contained true
+          -p:PublishBookContent=false
+          -o publish
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: publish

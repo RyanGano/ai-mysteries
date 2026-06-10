@@ -1,9 +1,9 @@
-// Build-time guard for the cross-reference data. Runs from `npm run build`. Validates the
-// committed generated artifacts against the committed content WITHOUT needing the gitignored
-// docs/EndingClueMap.md (so it works in CI where that file is absent).
+// Guard for the cross-reference data. Run from the repo root: `node scripts/check-xrefs.cjs`.
+// Validates the committed generated artifacts against the committed content WITHOUT needing
+// the gitignored docs/EndingClueMap.md (so it works in CI where that file is absent).
 //
 // Checks:
-//   1. Every marker's clueId exists in clues.ts.
+//   1. Every marker's clueId exists in clues.json.
 //   2. Every marker's snippet still matches the ending body at its offset (no prose drift).
 //   3. Every clue passage is still a verbatim substring of its chapter (no manuscript drift).
 
@@ -11,22 +11,12 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-const ENDINGS_DIR = path.join(ROOT, "ai-mysteries-web", "src", "content", "endings");
-const BOOK_DIR = path.join(ROOT, "ai-mysteries-web", "src", "content", "book");
+const CONTENT = path.join(ROOT, "ai-mysteries-api", "Content", "within-tolerance");
+const ENDINGS_DIR = path.join(CONTENT, "endings");
+const BOOK_DIR = path.join(CONTENT, "book");
 
-// The generated files end with a single `export const <name> = <JSON>;`, so the JSON is
-// everything between that `=` and the trailing `;`.
-function loadExport(file, name) {
-  const text = fs.readFileSync(file, "utf8");
-  const decl = `export const ${name}`;
-  const start = text.indexOf(decl);
-  if (start === -1) throw new Error(`${path.basename(file)}: no "${decl}"`);
-  const eq = text.indexOf("=", start);
-  const json = text
-    .slice(eq + 1)
-    .trim()
-    .replace(/;\s*$/, "");
-  return JSON.parse(json);
+function loadJson(file) {
+  return JSON.parse(fs.readFileSync(file, "utf8"));
 }
 
 function readBody(dir, slug) {
@@ -35,8 +25,8 @@ function readBody(dir, slug) {
 }
 
 function main() {
-  const clues = loadExport(path.join(ENDINGS_DIR, "clues.ts"), "clues");
-  const xrefMarkers = loadExport(path.join(ENDINGS_DIR, "xref-markers.ts"), "xrefMarkers");
+  const clues = loadJson(path.join(CONTENT, "clues.json"));
+  const xrefMarkers = loadJson(path.join(CONTENT, "xref-markers.json"));
   const errors = [];
 
   for (const [code, entry] of Object.entries(xrefMarkers)) {

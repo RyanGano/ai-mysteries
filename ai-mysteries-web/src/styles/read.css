@@ -4,6 +4,24 @@
   padding: var(--page-pad);
 }
 
+/* Loading / error placeholder shown while a chapter is being fetched. */
+.read--status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  min-height: 100dvh;
+  text-align: center;
+}
+
+.read-status-text {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 /* ── Top bar: Contents button + home link ──────────────────────────── */
 
 .read-bar {

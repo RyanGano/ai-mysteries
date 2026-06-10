@@ -2,8 +2,8 @@
 // custom mdast `xref` nodes. remark-rehype renders them as <xref data-clue="…"> via the
 // data.hName / hProperties below, and Prose maps that element to the <XrefMarker> component.
 //
-// Tokens are inserted programmatically (see src/content/endings/xref-markers.ts + Prose), not
-// authored by hand, so the syntax only has to survive markdown parsing — curly braces are not
+// Tokens are inserted programmatically (Prose injects them from the API's per-ending markers),
+// not authored by hand, so the syntax only has to survive markdown parsing — curly braces are not
 // markdown-special, so the token stays in a single text node.
 
 const TOKEN = /\{\{xref:([A-Z0-9-]+)\}\}/g;

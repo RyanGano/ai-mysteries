@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AiMysteries.Tools</RootNamespace>
+    <!-- This project never deploys; it's a local content pipeline (seed/pull/diff). -->
+    <IsPublishable>false</IsPublishable>
+  </PropertyGroup>
+
+  <!-- Reuse the API's FileBookSource / CosmosBookSource / document contract so there is one
+       definition of how content maps to Cosmos. -->
+  <ItemGroup>
+    <ProjectReference Include="..\ai-mysteries-api\AiMysteries.Api.csproj" />
+    <!-- Cosmos SDK needs Newtonsoft.Json at runtime (see the API csproj note). -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

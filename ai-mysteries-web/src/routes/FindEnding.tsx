@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { pickWeightedRandomCode } from "../lib/endings";
+import { fetchRandomCode } from "../lib/api";
 import "../styles/find-ending.css";
 
 // /therealending always resolves straight to a weighted-random ending.
@@ -9,8 +9,13 @@ export default function FindEnding() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const code = pickWeightedRandomCode();
-    navigate(`/therealending/${code}`, { replace: true });
+    let active = true;
+    fetchRandomCode()
+      .then((code) => active && navigate(`/therealending/${code}`, { replace: true }))
+      .catch(() => active && navigate("/", { replace: true }));
+    return () => {
+      active = false;
+    };
   }, [navigate]);
 
   return (

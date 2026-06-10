@@ -1,22 +1,31 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { lookupEnding } from "../lib/endings";
-import { normalizeCode } from "../lib/code";
+import { checkCode } from "../lib/api";
 import "../styles/landing.css";
 
 export default function Landing() {
   const navigate = useNavigate();
   const [codeInput, setCodeInput] = useState("");
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const normalized = normalizeCode(codeInput);
-    if (!lookupEnding(normalized)) {
-      setError("That code didn't match any ending. Check the code and try again.");
-      return;
+    const code = codeInput.trim();
+    if (!code) return;
+    setChecking(true);
+    try {
+      const exists = await checkCode(code);
+      if (!exists) {
+        setError("That code didn't match any ending. Check the code and try again.");
+        return;
+      }
+      navigate(`/therealending/${code}`);
+    } catch {
+      setError("Couldn't reach the endings right now. Please try again in a moment.");
+    } finally {
+      setChecking(false);
     }
-    navigate(`/therealending/${normalized}`);
   }
 
   return (
@@ -58,7 +67,9 @@ export default function Landing() {
               autoComplete="off"
               spellCheck={false}
             />
-            <button type="submit">Go</button>
+            <button type="submit" disabled={checking}>
+              Go
+            </button>
           </div>
           {error && <p className="code-error">{error}</p>}
         </form>

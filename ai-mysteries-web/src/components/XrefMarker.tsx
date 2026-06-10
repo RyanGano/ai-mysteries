@@ -1,6 +1,6 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { clues } from "../content/endings/clues";
+import { CluesContext } from "../lib/clues-context";
 import "../styles/xref.css";
 
 // Strip light markdown markers so the popover shows clean prose and fragment matching works.
@@ -33,6 +33,7 @@ function renderPassage(passage: string, fragments: string[]) {
 }
 
 export default function XrefMarker({ clueId }: { clueId: string }) {
+  const clues = useContext(CluesContext);
   const clue = clues[clueId];
   const [open, setOpen] = useState(false);
   // Why it's open: a hover auto-closes on leave; a click pins it open until dismissed.

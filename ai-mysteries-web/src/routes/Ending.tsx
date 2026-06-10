@@ -1,42 +1,77 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { lookupEnding, pickWeightedRandomCode, comboKey } from "../lib/endings";
-import { normalizeCode } from "../lib/code";
-import { xrefMarkers } from "../content/endings/xref-markers";
+import { fetchEnding, fetchRandomCode } from "../lib/api";
+import type { Ending as EndingData } from "../lib/types";
 import Prose from "../components/Prose";
 import "../styles/ending.css";
+
+type Status = "loading" | "ready" | "notfound" | "error";
 
 export default function Ending() {
   const { code = "" } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const ending = lookupEnding(code);
+  const [ending, setEnding] = useState<EndingData | null>(null);
+  const [status, setStatus] = useState<Status>("loading");
   const [shareNote, setShareNote] = useState("");
   const [revealDone, setRevealDone] = useState(false);
 
-  // A fresh ending should start from the top, even if the previous one was
-  // scrolled down when "Reveal another ending" was tapped.
-  // For the special ending, hide the code from the URL so readers can't share
-  // it directly — we stay at /therealending instead of /therealending/CODE.
+  // Fetch the ending for this code. A fresh ending starts from the top, even if the previous
+  // one was scrolled down when "Reveal another ending" was tapped. For the special ending we
+  // hide the code from the URL so readers can't share it directly; otherwise we normalize the
+  // URL to the canonical code the API returned.
   useEffect(() => {
-    if (ending?.special) {
-      window.history.replaceState(null, "", "/therealending");
-    }
+    let active = true;
+    setStatus("loading");
     setRevealDone(false);
-    window.scrollTo(0, 0);
     setShareNote("");
-  }, [code, ending?.special]);
+    window.scrollTo(0, 0);
+    fetchEnding(code)
+      .then((e) => {
+        if (!active) return;
+        if (!e) {
+          setEnding(null);
+          setStatus("notfound");
+          return;
+        }
+        setEnding(e);
+        setStatus("ready");
+        if (e.special) {
+          window.history.replaceState(null, "", "/therealending");
+        } else if (e.code !== code) {
+          window.history.replaceState(null, "", `/therealending/${e.code}`);
+        }
+      })
+      .catch(() => active && setStatus("error"));
+    return () => {
+      active = false;
+    };
+  }, [code]);
 
-  if (!ending) {
+  if (status === "loading") {
+    return (
+      <main className="ending ending--status">
+        <p className="ending-status-text">Revealing your ending&hellip;</p>
+      </main>
+    );
+  }
+
+  if (status !== "ready" || !ending) {
+    const message =
+      status === "error"
+        ? "The ending couldn't be loaded right now. Maybe try again in a moment."
+        : "That code didn’t match any ending. Maybe the letters shifted in transit.";
     return (
       <main className="ending ending--notfound">
-        <p className="ending-notfound-text">
-          That code didn&rsquo;t match any ending. Maybe the letters shifted in transit.
-        </p>
+        <p className="ending-notfound-text">{message}</p>
         <button
           className="cta-button"
-          onClick={() => {
-            const random = pickWeightedRandomCode();
-            navigate(`/therealending/${random}`, { replace: true });
+          onClick={async () => {
+            try {
+              const random = await fetchRandomCode();
+              navigate(`/therealending/${random}`, { replace: true });
+            } catch {
+              /* leave the message in place */
+            }
           }}
         >
           Reveal a random ending &rarr;
@@ -48,11 +83,15 @@ export default function Ending() {
     );
   }
 
-  const canonical = normalizeCode(ending.code);
+  const canonical = ending.code;
 
-  function handleNewEnding() {
-    const next = pickWeightedRandomCode(comboKey(ending!));
-    navigate(`/therealending/${next}`);
+  async function handleNewEnding() {
+    try {
+      const next = await fetchRandomCode(ending!.code);
+      navigate(`/therealending/${next}`);
+    } catch {
+      /* keep the current ending on a transient failure */
+    }
   }
 
   const SPECIAL_SHARE_TEXT =
@@ -146,7 +185,9 @@ export default function Ending() {
         <h1 className="ending-title">{ending.title}</h1>
       </header>
       <article className="ending-body">
-        <Prose markers={xrefMarkers[canonical]?.markers}>{ending.body}</Prose>
+        <Prose markers={ending.markers} clues={ending.clues}>
+          {ending.body}
+        </Prose>
       </article>
       <div className="ending-actions">
         <button className="cta-button" onClick={handleNewEnding}>
