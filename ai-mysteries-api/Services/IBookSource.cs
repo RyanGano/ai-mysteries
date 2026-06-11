@@ -80,8 +80,15 @@ public sealed record SpecialReveal(string Headline, string Sub);
 public sealed record XrefEntry(string Slug, IReadOnlyList<XrefMarkerDto> Markers);
 
 // Where book content comes from. FileBookSource reads Content/ on disk (dev + authoring);
-// CosmosBookSource reads the Cosmos container (prod). Loaded once at startup, then cached.
+// CosmosBookSource reads the Cosmos container (prod). Loaded once at startup, then cached by
+// BookStore, which periodically re-checks GetVersion() and reloads when it changes.
 public interface IBookSource
 {
     IEnumerable<RawBook> LoadAll();
+
+    // A cheap token for the current content version. BookStore polls this and only does a full
+    // LoadAll when it differs from the cached value, so steady-state cost stays tiny. The Cosmos
+    // source point-reads a single version doc that the seeder bumps on every real change; the
+    // File source content is static for the process, so it returns a constant (no reload).
+    string GetVersion();
 }

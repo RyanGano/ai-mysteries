@@ -61,6 +61,18 @@ public sealed class ContentDoc
     public List<XrefMarkerDto>? Markers { get; set; }
 }
 
+// The single global content-version doc. Lives in its own partition (not any book's), so the API
+// reads it with one cheap point read that never touches a book partition, and book/manifest
+// queries never see it. The seeder bumps Value on every real content change; the API reloads when
+// the value it last saw no longer matches.
+public sealed class VersionDoc
+{
+    public string Id { get; set; } = CosmosContent.VersionId;
+    public string BookId { get; set; } = CosmosContent.SystemPartition;
+    public string Type { get; set; } = CosmosContent.VersionType;
+    public long Value { get; set; }
+}
+
 // Maps RawBook <-> Cosmos documents. Shared by CosmosBookSource (read) and the Tools seeder
 // (write) so there is exactly one storage contract.
 public static class CosmosContent
@@ -70,6 +82,12 @@ public static class CosmosContent
     public const string Ending = "ending";
     public const string Clue = "clue";
     public const string Xref = "xref";
+
+    // The content-version doc (see VersionDoc) and the dedicated partition it lives in. The
+    // partition holds no book content, so it stays out of every per-book query.
+    public const string SystemPartition = "_system";
+    public const string VersionId = "version";
+    public const string VersionType = "version";
 
     // Deterministic ids so re-seeding upserts in place rather than duplicating.
     public static string ChapterId(string slug) => $"chapter:{slug}";

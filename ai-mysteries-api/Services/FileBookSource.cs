@@ -25,6 +25,10 @@ public sealed class FileBookSource : IBookSource
             yield return LoadBook(Path.GetFileName(dir), dir);
     }
 
+    // On-disk content is static for the life of the process (dev restarts to pick up edits), so
+    // the version never changes and BookStore never reloads in File mode.
+    public string GetVersion() => "file";
+
     private static RawBook LoadBook(string id, string dir)
     {
         // Book-level metadata (title, marketing copy, cover URL, payoff, share strings) plus the

@@ -7,19 +7,24 @@ namespace AiMysteries.Api.Services;
 // Program.cs — BookStore itself doesn't care where the raw data came from.
 public sealed class BookStore
 {
-    private readonly Dictionary<string, Book> _books = new(StringComparer.OrdinalIgnoreCase);
+    private readonly IBookSource _source;
+    private readonly ILogger<BookStore> _logger;
+    private readonly object _refreshLock = new();
+
+    // Swapped atomically by Refresh(): readers grab the reference once, so an in-flight reload
+    // never exposes a half-built dictionary. Marked volatile so a swap on the poller thread is
+    // visible to request threads.
+    private volatile IReadOnlyDictionary<string, Book> _books;
+
+    // The source version the cached _books were built from. Only the poller thread touches it.
+    private string _version;
 
     public BookStore(IBookSource source, ILogger<BookStore> logger)
     {
-        foreach (var raw in source.LoadAll())
-        {
-            var book = Build(raw);
-            _books[raw.Id] = book;
-            logger.LogInformation("Loaded book \"{BookId}\" ({Endings} endings)", raw.Id, book.Endings.Count);
-        }
-
-        if (_books.Count == 0)
-            throw new InvalidOperationException("No books found from the configured content source");
+        _source = source;
+        _logger = logger;
+        _books = Load(source, logger);
+        _version = SafeGetVersion();
     }
 
     public bool TryGetBook(string bookId, out Book book) => _books.TryGetValue(bookId, out book!);
@@ -30,6 +35,74 @@ public sealed class BookStore
             .OrderBy(b => b.Id, StringComparer.Ordinal)
             .Select(b => b.GetMeta())
             .ToList();
+
+    // Cheap version check first; only a changed version triggers a full reload + atomic swap. On
+    // any failure the cached content is kept serving, so a transient source hiccup can't take the
+    // catalog down. Called on a timer by BookRefreshService.
+    public void Refresh()
+    {
+        string version;
+        try
+        {
+            version = _source.GetVersion();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Content version check failed; keeping cached content");
+            return;
+        }
+
+        if (version == _version)
+            return;
+
+        lock (_refreshLock)
+        {
+            if (version == _version)
+                return;
+
+            try
+            {
+                var books = Load(_source, _logger);
+                _books = books;          // atomic reference swap — readers see old or new, never partial
+                _version = version;
+                _logger.LogInformation(
+                    "Reloaded content to version {Version} ({Count} book(s))", version, books.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Content reload to version {Version} failed; keeping cached content", version);
+            }
+        }
+    }
+
+    // Build the full book index from the source. Used at startup and on every reload.
+    private static IReadOnlyDictionary<string, Book> Load(IBookSource source, ILogger logger)
+    {
+        var books = new Dictionary<string, Book>(StringComparer.OrdinalIgnoreCase);
+        foreach (var raw in source.LoadAll())
+        {
+            var book = Build(raw);
+            books[raw.Id] = book;
+            logger.LogInformation("Loaded book \"{BookId}\" ({Endings} endings)", raw.Id, book.Endings.Count);
+        }
+
+        if (books.Count == 0)
+            throw new InvalidOperationException("No books found from the configured content source");
+
+        return books;
+    }
+
+    // Never let a version-read failure abort startup — fall back to a sentinel so the first poll
+    // detects the real version and reloads.
+    private string SafeGetVersion()
+    {
+        try { return _source.GetVersion(); }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Initial content version read failed; will retry on next refresh");
+            return "";
+        }
+    }
 
     // Turn the source-agnostic RawBook into the indexed, immutable Book. The xref map is keyed by
     // canonical code in RawBook; Book wants it keyed by normalized code. Public so the Tools

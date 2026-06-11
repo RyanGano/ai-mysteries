@@ -1,3 +1,4 @@
+using System.Net;
 using AiMysteries.Api.Services;
 using Microsoft.Azure.Cosmos;
 
@@ -29,6 +30,28 @@ public sealed class CosmosStore
 
     public Task DeleteAsync(string bookId, string id) =>
         _container.DeleteItemAsync<ContentDoc>(id, new PartitionKey(bookId));
+
+    // Increment the global content version so the running API reloads on its next poll. Called by
+    // seed only after a real change. Read-then-write is fine here — the seeder is single-runner.
+    public async Task<long> BumpVersionAsync()
+    {
+        long current = 0;
+        try
+        {
+            var resp = await _container.ReadItemAsync<VersionDoc>(
+                CosmosContent.VersionId, new PartitionKey(CosmosContent.SystemPartition));
+            current = resp.Resource.Value;
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            // First seed — start the counter at 0 and bump to 1 below.
+        }
+
+        var next = current + 1;
+        await _container.UpsertItemAsync(
+            new VersionDoc { Value = next }, new PartitionKey(CosmosContent.SystemPartition));
+        return next;
+    }
 
     private sealed record IdOnly(string Id);
 }

@@ -57,19 +57,30 @@ catch (CosmosException ex)
     return 1;
 }
 
-// seed: local files -> Cosmos. Validates each book (dup-code check via BookStore.Build) before
-// writing, upserts all docs, then deletes any Cosmos docs no longer present locally so the
-// partition exactly mirrors the files.
+// seed: local files -> Cosmos. Validates each book (dup-code check via BookStore.Build), then —
+// only if the files actually differ from Cosmos — upserts all docs, deletes any Cosmos docs no
+// longer present locally, and bumps the content version so the running API reloads. A re-run on
+// unchanged content writes nothing and leaves the version alone, so the API never reloads for it.
 static async Task<int> Seed(string contentRoot, Container container)
 {
     var store = new CosmosStore(container);
     var books = new FileBookSource(contentRoot).LoadAll().ToList();
-    Console.WriteLine($"Seeding {books.Count} book(s) from {contentRoot}");
 
     foreach (var raw in books)
-    {
         BookStore.Build(raw); // throws on duplicate normalized code, missing data, etc.
 
+    // Compare against what's live before writing — an in-sync seed is a no-op (no version bump).
+    var cosmosBooks = new CosmosBookSource(container).LoadAll().ToList();
+    Console.WriteLine("Comparing local files vs Cosmos:");
+    if (Differ.Compare(books, cosmosBooks))
+    {
+        Console.WriteLine("Already in sync; nothing to seed.");
+        return 0;
+    }
+
+    Console.WriteLine($"Seeding {books.Count} book(s) from {contentRoot}");
+    foreach (var raw in books)
+    {
         var docs = CosmosContent.ToDocuments(raw).ToList();
         var newIds = docs.Select(d => d.Id).ToHashSet(StringComparer.Ordinal);
         var existingIds = await store.ListIdsAsync(raw.Id);
@@ -84,7 +95,8 @@ static async Task<int> Seed(string contentRoot, Container container)
         Console.WriteLine($"  \"{raw.Id}\": upserted {docs.Count} doc(s)" + (stale.Count > 0 ? $", deleted {stale.Count} stale" : ""));
     }
 
-    Console.WriteLine("Seed complete.");
+    var version = await store.BumpVersionAsync();
+    Console.WriteLine($"Seed complete. Content version is now {version}.");
     return 0;
 }
 

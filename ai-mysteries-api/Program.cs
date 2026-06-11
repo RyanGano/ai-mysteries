@@ -28,6 +28,10 @@ if (string.Equals(contentSource, "Cosmos", StringComparison.OrdinalIgnoreCase))
         new CosmosClient(cosmos.Endpoint, new DefaultAzureCredential(), CosmosSetup.ClientOptions()));
     builder.Services.AddSingleton<IBookSource>(sp =>
         new CosmosBookSource(sp.GetRequiredService<CosmosClient>().GetContainer(cosmos.Database, cosmos.Container)));
+
+    // Poll the Cosmos content version and reload when a seed bumps it. File mode is static, so
+    // this only runs against Cosmos.
+    builder.Services.AddHostedService<BookRefreshService>();
 }
 else
 {

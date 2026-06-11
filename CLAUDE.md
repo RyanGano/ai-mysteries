@@ -85,8 +85,16 @@ Two projects:
   client) using the shapes in `src/lib/types.ts`.
 - **`ai-mysteries-api/`** — .NET 10 minimal API. Owns the selection logic and serves content. It
   loads content at startup from a pluggable **`IBookSource`** (`Services/IBookSource.cs`) into an
-  immutable `Book` per book, cached by `Services/BookStore.cs`. Two sources, chosen by the
-  `ContentSource` config key:
+  immutable `Book` per book, cached by `Services/BookStore.cs`. In Cosmos mode the cache is **not**
+  permanent: `Services/BookRefreshService.cs` polls `IBookSource.GetVersion()` every
+  `Content:RefreshIntervalSeconds` (default 60) — one cheap point read of a single global version
+  doc (`_system`/`version`, see `VersionDoc` in `CosmosDocuments.cs`). When the value differs from
+  what the cache was built on, `BookStore.Refresh()` does a full reload and atomically swaps the
+  whole book index ("dirty everything"); otherwise it's a no-op, so steady state makes no
+  per-request DB calls. The seeder bumps that version **only when a seed actually changes content**
+  (it diffs files vs Cosmos first and skips a no-op seed), so a new/edited book goes live within
+  one poll interval with no API redeploy. File mode is static (version constant), so no poller runs.
+  Two sources, chosen by the `ContentSource` config key:
   - **`FileBookSource`** (`ContentSource=File`, dev/authoring default) — reads `Content/<bookId>/`
     on disk: `meta.json` (book-level `BookMeta` — title, summary, cover URL, secret blurb, payoff,
     share strings, special-reveal copy — plus the server-only `selection` rules; all fields

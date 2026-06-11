@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.Azure.Cosmos;
 
 namespace AiMysteries.Api.Services;
@@ -12,6 +13,23 @@ public sealed class CosmosBookSource : IBookSource
 
     // BookStore builds once at startup, so blocking here is acceptable and keeps IBookSource sync.
     public IEnumerable<RawBook> LoadAll() => LoadAllAsync().GetAwaiter().GetResult();
+
+    // One point read of the version doc — the cheapest Cosmos op. Returns "0" before the first
+    // seed has written the doc, so a freshly-loaded store reloads as soon as it appears.
+    public string GetVersion()
+    {
+        try
+        {
+            var resp = _container.ReadItemAsync<VersionDoc>(
+                CosmosContent.VersionId, new PartitionKey(CosmosContent.SystemPartition))
+                .GetAwaiter().GetResult();
+            return resp.Resource.Value.ToString();
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return "0";
+        }
+    }
 
     private async Task<List<RawBook>> LoadAllAsync()
     {
