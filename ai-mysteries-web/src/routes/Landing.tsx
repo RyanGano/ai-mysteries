@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchBooks } from "../lib/api";
 import type { BookMeta } from "../lib/types";
@@ -60,20 +60,70 @@ export default function Landing() {
   );
 }
 
-// One row in the catalog: cover, title, genre + length, and a short teaser. The whole card links
-// to the book's home page. Every word comes from the book's metadata — nothing book-specific here.
+// One row in the catalog: cover, title, genre + reading time, and a short teaser. The whole card
+// links to the book's home page (stretched link off the title). Every word comes from the book's
+// metadata — nothing book-specific here.
 function CatalogCard({ book }: { book: BookMeta }) {
   const facts = [book.genre, book.readingTime].filter(Boolean).join(" · ");
   return (
-    <Link to={`/${book.id}`} className="catalog-card">
+    <article className="catalog-card">
       {book.coverImage && (
         <img src={book.coverImage} alt={book.coverAlt} className="catalog-cover" />
       )}
       <div className="catalog-card-text">
-        <h2 className="catalog-book-title">{book.title}</h2>
+        <h2 className="catalog-book-title">
+          <Link to={`/${book.id}`} className="catalog-card-link">
+            {book.title}
+          </Link>
+        </h2>
         {facts && <p className="catalog-book-facts">{facts}</p>}
-        {book.summary[0] && <p className="catalog-book-teaser">{book.summary[0]}</p>}
+        {book.summary[0] && <Teaser text={book.summary[0]} />}
       </div>
-    </Link>
+    </article>
+  );
+}
+
+// The book's first summary paragraph, clamped to a few lines. Shows a More/Less toggle only when
+// the text actually overflows the clamp, so short teasers stay clean. Expanding happens in place;
+// the toggle sits above the card's stretched link so it doesn't navigate.
+function Teaser({ text }: { text: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Only meaningful while clamped — in that state a taller scrollHeight means text is hidden.
+    const measure = () => {
+      if (!expanded) setOverflowing(el.scrollHeight > el.clientHeight + 1);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [text, expanded]);
+
+  return (
+    <>
+      <p
+        ref={ref}
+        className={`catalog-book-teaser${expanded ? " catalog-book-teaser--expanded" : ""}`}
+      >
+        {text}
+      </p>
+      {(overflowing || expanded) && (
+        <button
+          type="button"
+          className="catalog-more"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setExpanded((v) => !v);
+          }}
+        >
+          {expanded ? "Less" : "More"}
+        </button>
+      )}
+    </>
   );
 }

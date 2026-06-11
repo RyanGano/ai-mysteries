@@ -52,14 +52,13 @@
 
 /* A single book row: cover thumbnail + text, links to the book's home page. */
 .catalog-card {
+  position: relative;
   display: flex;
   gap: 1.5rem;
   padding: 1.25rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  text-decoration: none;
-  color: inherit;
   transition:
     border-color 0.15s,
     transform 0.15s;
@@ -68,6 +67,23 @@
 .catalog-card:hover {
   border-color: var(--color-accent);
   transform: translateY(-2px);
+}
+
+/* The title is the real link; its ::after stretches over the whole card so clicking anywhere
+   (except the More toggle, which sits above it) navigates to the book. */
+.catalog-card-link {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.catalog-card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.catalog-card:hover .catalog-card-link {
+  color: var(--color-accent-hover);
 }
 
 .catalog-cover {
@@ -111,6 +127,32 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Expanded state: drop the clamp and show the full paragraph. */
+.catalog-book-teaser--expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+/* The More/Less toggle. z-index lifts it above the stretched card link so its clicks expand the
+   teaser instead of navigating. */
+.catalog-more {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.4rem;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--color-accent);
+}
+
+.catalog-more:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
 }
 
 /* ---- Book home (single book hero) ---- */
