@@ -59,19 +59,19 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  transition:
-    border-color 0.15s,
-    transform 0.15s;
+  transition: border-color 0.15s;
 }
 
+/* The accent border is the only hover cue — nothing shifts position. */
 .catalog-card:hover {
   border-color: var(--color-accent);
-  transform: translateY(-2px);
 }
 
 /* The title is the real link; its ::after stretches over the whole card so clicking anywhere
-   (except the More toggle, which sits above it) navigates to the book. */
-.catalog-card-link {
+   (except the More toggle, which sits above it) navigates to the book. It stays the plain text
+   colour with no underline — the card border already signals it's clickable. */
+.catalog-card-link,
+.catalog-card-link:hover {
   color: var(--color-text);
   text-decoration: none;
 }
@@ -80,10 +80,6 @@
   content: "";
   position: absolute;
   inset: 0;
-}
-
-.catalog-card:hover .catalog-card-link {
-  color: var(--color-accent-hover);
 }
 
 .catalog-cover {
