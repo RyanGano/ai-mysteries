@@ -8,11 +8,11 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      {/* No slug → Read fetches the table of contents and redirects to the first chapter. */}
-      <Route path="/read" element={<Read />} />
-      <Route path="/read/:slug" element={<Read />} />
-      <Route path="/therealending" element={<FindEnding />} />
-      <Route path="/therealending/:code" element={<Ending />} />
+      {/* /:bookId with no slug → Read redirects to the first chapter */}
+      <Route path="/:bookId" element={<Read />} />
+      <Route path="/:bookId/ending" element={<FindEnding />} />
+      <Route path="/:bookId/ending/:code" element={<Ending />} />
+      <Route path="/:bookId/:slug" element={<Read />} />
     </Routes>
   );
 }

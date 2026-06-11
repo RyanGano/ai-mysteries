@@ -48,22 +48,39 @@ final printed line is `www.therealending.com`. This site delivers the real, vari
 
 ## Architecture
 
+**Two load-bearing principles:**
+
+1. **No book-specific data or wording lives in the front end.** Title, marketing summary, cover
+   image, secret blurb, end-of-book payoff, share text, and the special-ending reveal copy all
+   come from the API (`BookMeta`). React holds only generic, book-agnostic UI chrome — button
+   verbs ("Reveal another ending →", "Continue reading →", "Contents"), loading/error text, and
+   the "AI Mysteries" site brand in `index.html`. If a string names a book or its plot, it
+   belongs in the data, not the components.
+2. **A new book is a data-only change — zero code, zero redeploy.** Author the book's content
+   files locally and `ai-mysteries-tools seed` them into Cosmos; the API auto-discovers books by
+   querying `manifest` docs, the landing renders whatever `GET /api/books` returns, and routing
+   is generic (`/:bookId/…`). The one asset that could force a redeploy is the cover image, so
+   `coverImage` is a **URL** (absolute for new books, e.g. Blob Storage; root-relative for the
+   bundled one) the web uses directly as `<img src>` — never a bundled asset keyed by book.
+
 Two projects:
 
-- **`ai-mysteries-web/`** — React + Vite front end. Rendering only; holds **no** book data. It
-  fetches everything from the API through `src/lib/api.ts` (typed client) using the shapes in
-  `src/lib/types.ts`.
+- **`ai-mysteries-web/`** — React + Vite front end. Rendering only; holds **no** book data or
+  wording (see principle 1). It fetches everything from the API through `src/lib/api.ts` (typed
+  client) using the shapes in `src/lib/types.ts`.
 - **`ai-mysteries-api/`** — .NET 10 minimal API. Owns the selection logic and serves content. It
   loads content at startup from a pluggable **`IBookSource`** (`Services/IBookSource.cs`) into an
   immutable `Book` per book, cached by `Services/BookStore.cs`. Two sources, chosen by the
   `ContentSource` config key:
   - **`FileBookSource`** (`ContentSource=File`, dev/authoring default) — reads `Content/<bookId>/`
-    on disk: `book.json` (`[{ slug, title }]`, reading order) + `book/<slug>.md`; `endings.json`
+    on disk: `meta.json` (book-level `BookMeta` — title, summary, cover URL, secret blurb, payoff,
+    share strings, special-reveal copy; all fields optional, defaults fill in); `book.json`
+    (`[{ slug, title }]`, reading order) + `book/<slug>.md`; `endings.json`
     (`[{ code, culprits, title, special?, slug }]`) + `endings/<slug>.md`; `clues.json` +
     `xref-markers.json` (generated cross-reference data).
   - **`CosmosBookSource`** (`ContentSource=Cosmos`, prod) — reads the Cosmos `content` container
-    (one doc per chapter/ending/clue/xref + a `manifest`, partition key `/bookId`). See
-    `Services/CosmosDocuments.cs` for the document contract.
+    (one doc per chapter/ending/clue/xref + a `manifest` that carries the book's `BookMeta`,
+    partition key `/bookId`). See `Services/CosmosDocuments.cs` for the document contract.
 
   The book data files under `Content/` are **gitignored** (not in the repo) — they are the local
   authoring source of truth, seeded into Cosmos by `ai-mysteries-tools`. The structure is
@@ -73,6 +90,15 @@ Two projects:
   one storage contract. Never deployed.
 
 API endpoints (all `GET`, JSON camelCase):
+
+Book-level (registered at the app root in `Endpoints/BookEndpoints.cs`):
+
+| Route | Returns |
+|---|---|
+| `/api/books`            | `[BookMeta]` — the catalog; drives the landing page |
+| `/api/books/{bookId}`   | one book's `BookMeta` (404 if unknown); used by the reader/ending pages for title, payoff, share + special-reveal copy |
+
+Per-book content (the `/api/books/{bookId}` group; routes below are relative to it):
 
 | Route (`/api/books/{bookId}/…`) | Returns |
 |---|---|
@@ -88,8 +114,10 @@ in `Cors:AllowedOrigins` — so it works regardless of which port Vite lands on.
 
 ## How the ending mechanic works
 
-- `/therealending` — picks a weighted-random code from the registered endings, redirects (replace).
-- `/therealending/:code` — permanent page. Always shows the same ending for that code.
+- Routes are book-scoped: `/:bookId` (reader, redirects to first chapter), `/:bookId/:slug`
+  (a chapter), `/:bookId/ending` (picks a weighted-random code, redirects replace), and
+  `/:bookId/ending/:code` (permanent page — always the same ending for that code). `/` is the
+  data-driven landing/catalog. See `ai-mysteries-web/src/App.tsx`.
 - Codes are 4-char uppercase. `O/0` and `I/1/L` are interchangeable on input (normalized).
 - Deep links work via SPA fallback in `ai-mysteries-web/staticwebapp.config.json`.
 
@@ -159,7 +187,7 @@ every ending, including newly added ones. No extra steps needed when authoring a
 ## Cross-references (in-ending "spot the clue")
 
 Endings render a small binoculars glyph at each reveal; hovering/clicking shows the
-foreshadowing manuscript passage and deep-links to it (`/read/<slug>?clue=<ID>`). The data is
+foreshadowing manuscript passage and deep-links to it (`/<bookId>/<slug>?clue=<ID>`). The data is
 **generated** from `docs/EndingClueMap.md` (gitignored) into two committed artifacts under
 `ai-mysteries-api/Content/within-tolerance/`:
 

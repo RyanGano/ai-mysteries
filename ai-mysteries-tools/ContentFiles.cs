@@ -23,6 +23,13 @@ public static class ContentFiles
         Directory.CreateDirectory(Path.Combine(dir, "book"));
         Directory.CreateDirectory(Path.Combine(dir, "endings"));
 
+        // meta.json — book-level metadata (title, summary, cover, payoff, share + special-reveal).
+        var m = book.Meta;
+        WriteJson(Path.Combine(dir, "meta.json"), new MetaDoc(
+            m.Title, m.Summary.ToList(), m.CoverImage, m.CoverAlt, m.SecretBlurb,
+            m.Payoff.ToList(), m.CodePlaceholder, m.ShareTitle, m.ShareText, m.SpecialShareText,
+            new SpecialRevealDoc(m.SpecialReveal.Headline, m.SpecialReveal.Sub)));
+
         // book.json + book/<slug>.md (chapter order preserved from the manifest)
         var chapterMetas = book.Chapters.Select(c => new ChapterMeta(c.Slug, c.Title)).ToList();
         WriteJson(Path.Combine(dir, "book.json"), chapterMetas);
@@ -52,4 +59,20 @@ public static class ContentFiles
     private record EndingMeta(string Code, List<string> Culprits, string Title, string Slug, bool Special);
 
     private record XrefMeta(string Slug, IReadOnlyList<XrefMarkerDto> Markers);
+
+    // Mirrors meta.json (see FileBookSource). Written back on `pull` for a full round-trip.
+    private record MetaDoc(
+        string Title,
+        List<string> Summary,
+        string CoverImage,
+        string CoverAlt,
+        string SecretBlurb,
+        List<string> Payoff,
+        string CodePlaceholder,
+        string ShareTitle,
+        string ShareText,
+        string SpecialShareText,
+        SpecialRevealDoc SpecialReveal);
+
+    private record SpecialRevealDoc(string Headline, string Sub);
 }

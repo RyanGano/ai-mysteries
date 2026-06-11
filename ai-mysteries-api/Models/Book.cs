@@ -6,6 +6,7 @@ namespace AiMysteries.Api.Models;
 public sealed class Book
 {
     public string Id { get; }
+    public BookMeta Meta { get; }
 
     private readonly List<ChapterDto> _chapters;
     private readonly Dictionary<string, int> _chapterIndex;
@@ -18,12 +19,14 @@ public sealed class Book
 
     public Book(
         string id,
+        BookMeta meta,
         List<ChapterDto> chapters,
         List<Ending> endings,
         Dictionary<string, IReadOnlyList<XrefMarkerDto>> markersByNormalizedCode,
         Dictionary<string, ClueDto> clues)
     {
         Id = id;
+        Meta = meta;
         _chapters = chapters;
         _chapterIndex = new Dictionary<string, int>();
         for (var i = 0; i < chapters.Count; i++) _chapterIndex[chapters[i].Slug] = i;
@@ -41,6 +44,20 @@ public sealed class Book
         _markersByCode = markersByNormalizedCode;
         _clues = clues;
     }
+
+    public BookMetaDto GetMeta() => new(
+        Id,
+        Meta.Title,
+        Meta.Summary,
+        Meta.CoverImage,
+        Meta.CoverAlt,
+        Meta.SecretBlurb,
+        Meta.Payoff,
+        Meta.CodePlaceholder,
+        Meta.ShareTitle,
+        Meta.ShareText,
+        Meta.SpecialShareText,
+        new SpecialRevealDto(Meta.SpecialReveal.Headline, Meta.SpecialReveal.Sub));
 
     public IReadOnlyList<TocEntryDto> GetToc() =>
         _chapters.Select(c => new TocEntryDto(c.Slug, c.Title)).ToList();

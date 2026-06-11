@@ -1,9 +1,58 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { checkCode } from "../lib/api";
+import { fetchBooks, checkCode } from "../lib/api";
+import type { BookMeta } from "../lib/types";
 import "../styles/landing.css";
 
+type State = { status: "loading" } | { status: "ready"; books: BookMeta[] } | { status: "error" };
+
 export default function Landing() {
+  const [state, setState] = useState<State>({ status: "loading" });
+
+  useEffect(() => {
+    document.title = "AI Mysteries";
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetchBooks()
+      .then((books) => active && setState({ status: "ready", books }))
+      .catch(() => active && setState({ status: "error" }));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (state.status === "loading") {
+    return (
+      <main className="landing landing--status">
+        <p className="landing-status-text">Loading&hellip;</p>
+      </main>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <main className="landing landing--status">
+        <p className="landing-status-text">
+          The library couldn&rsquo;t be loaded right now. Please try again in a moment.
+        </p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="landing">
+      {state.books.map((book) => (
+        <BookCard key={book.id} book={book} />
+      ))}
+    </main>
+  );
+}
+
+// One book's marketing hero — cover, summary, CTAs, code entry, secret blurb. Every word and
+// image comes from the book's metadata; nothing here is specific to any single book.
+function BookCard({ book }: { book: BookMeta }) {
   const navigate = useNavigate();
   const [codeInput, setCodeInput] = useState("");
   const [error, setError] = useState("");
@@ -15,12 +64,12 @@ export default function Landing() {
     if (!code) return;
     setChecking(true);
     try {
-      const exists = await checkCode(code);
+      const exists = await checkCode(book.id, code);
       if (!exists) {
         setError("That code didn't match any ending. Check the code and try again.");
         return;
       }
-      navigate(`/therealending/${code}`);
+      navigate(`/${book.id}/ending/${code}`);
     } catch {
       setError("Couldn't reach the endings right now. Please try again in a moment.");
     } finally {
@@ -29,33 +78,32 @@ export default function Landing() {
   }
 
   return (
-    <main className="landing">
-      <div className="landing-cover">
-        <img src="/cover.webp" alt="Within Tolerance book cover" className="cover-image" />
-      </div>
+    <section className="landing-book">
+      {book.coverImage && (
+        <div className="landing-cover">
+          <img src={book.coverImage} alt={book.coverAlt} className="cover-image" />
+        </div>
+      )}
       <div className="landing-content">
-        <h1 className="landing-title">Within Tolerance</h1>
-        <p className="landing-blurb">
-          Michael Holloway, founder, is found dead inside the Charge Cage at his company&rsquo;s
-          battery-storage facility. Detective Mara Ellery investigates. Five suspects. One system.
-          No shortage of reasons.
-        </p>
-        <p className="landing-blurb">
-          The book ends where it ends. But the truth has more than one shape.
-        </p>
+        <h1 className="landing-title">{book.title}</h1>
+        {book.summary.map((para, i) => (
+          <p key={i} className="landing-blurb">
+            {para}
+          </p>
+        ))}
         <div className="landing-ctas">
-          <Link to="/read" className="cta-button cta-button--primary">
+          <Link to={`/${book.id}`} className="cta-button cta-button--primary">
             Start reading the book &rarr;
           </Link>
-          <Link to="/therealending" className="cta-button cta-button--ghost">
+          <Link to={`/${book.id}/ending`} className="cta-button cta-button--ghost">
             Already read the book? Reveal your ending &rarr;
           </Link>
         </div>
         <form onSubmit={handleSubmit} className="code-form">
-          <label htmlFor="code-input">Have a code? Enter it here:</label>
+          <label htmlFor={`code-input-${book.id}`}>Have a code? Enter it here:</label>
           <div className="code-form-row">
             <input
-              id="code-input"
+              id={`code-input-${book.id}`}
               type="text"
               maxLength={6}
               value={codeInput}
@@ -63,7 +111,7 @@ export default function Landing() {
                 setCodeInput(e.target.value);
                 setError("");
               }}
-              placeholder="e.g. 7BXK"
+              placeholder={book.codePlaceholder}
               autoComplete="off"
               spellCheck={false}
             />
@@ -73,11 +121,8 @@ export default function Landing() {
           </div>
           {error && <p className="code-error">{error}</p>}
         </form>
-        <p className="landing-secret">
-          Most readers find an ending. They say there is a rarer one still &mdash; hidden so well
-          that only the most relentless detectives ever turn it up.
-        </p>
+        {book.secretBlurb && <p className="landing-secret">{book.secretBlurb}</p>}
       </div>
-    </main>
+    </section>
   );
 }

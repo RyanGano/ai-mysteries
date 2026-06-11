@@ -24,6 +24,13 @@ public sealed class BookStore
 
     public bool TryGetBook(string bookId, out Book book) => _books.TryGetValue(bookId, out book!);
 
+    // Every book's metadata, ordered by id, for the GET /api/books catalog endpoint.
+    public IReadOnlyList<BookMetaDto> AllMeta() =>
+        _books.Values
+            .OrderBy(b => b.Id, StringComparer.Ordinal)
+            .Select(b => b.GetMeta())
+            .ToList();
+
     // Turn the source-agnostic RawBook into the indexed, immutable Book. The xref map is keyed by
     // canonical code in RawBook; Book wants it keyed by normalized code. Public so the Tools
     // seeder can run the same validation (e.g. the duplicate-code check) before writing to Cosmos.
@@ -35,6 +42,7 @@ public sealed class BookStore
 
         return new Book(
             raw.Id,
+            raw.Meta,
             raw.Chapters.ToList(),
             raw.Endings.ToList(),
             markersByCode,

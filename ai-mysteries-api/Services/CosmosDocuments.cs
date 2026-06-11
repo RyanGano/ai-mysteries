@@ -13,9 +13,23 @@ public sealed class ContentDoc
     public string Type { get; set; } = "";
 
     // manifest / chapter / ending share `Title` (book title / chapter title / ending title —
-    // never coexist in one doc). manifest also carries reading order.
+    // never coexist in one doc). manifest also carries reading order + the rest of the book's
+    // BookMeta (marketing copy, cover URL, payoff, share strings, special-reveal copy).
     public string? Title { get; set; }
     public List<string>? ChapterOrder { get; set; }
+
+    // manifest only — BookMeta fields (flat, matching this doc's type-specific field convention).
+    public List<string>? Summary { get; set; }
+    public string? CoverImage { get; set; }
+    public string? CoverAlt { get; set; }
+    public string? SecretBlurb { get; set; }
+    public List<string>? Payoff { get; set; }
+    public string? CodePlaceholder { get; set; }
+    public string? ShareTitle { get; set; }
+    public string? ShareText { get; set; }
+    public string? SpecialShareText { get; set; }
+    public string? SpecialRevealHeadline { get; set; }
+    public string? SpecialRevealSub { get; set; }
 
     // chapter / ending / xref
     public string? Slug { get; set; }
@@ -58,13 +72,25 @@ public static class CosmosContent
     // Decompose a RawBook into its Cosmos documents.
     public static IEnumerable<ContentDoc> ToDocuments(RawBook raw)
     {
+        var m = raw.Meta;
         yield return new ContentDoc
         {
             Id = Manifest,
             BookId = raw.Id,
             Type = Manifest,
-            Title = raw.Title ?? raw.Id,
+            Title = m.Title,
             ChapterOrder = raw.Chapters.Select(c => c.Slug).ToList(),
+            Summary = m.Summary.ToList(),
+            CoverImage = m.CoverImage,
+            CoverAlt = m.CoverAlt,
+            SecretBlurb = m.SecretBlurb,
+            Payoff = m.Payoff.ToList(),
+            CodePlaceholder = m.CodePlaceholder,
+            ShareTitle = m.ShareTitle,
+            ShareText = m.ShareText,
+            SpecialShareText = m.SpecialShareText,
+            SpecialRevealHeadline = m.SpecialReveal.Headline,
+            SpecialRevealSub = m.SpecialReveal.Sub,
         };
 
         foreach (var c in raw.Chapters)
@@ -107,6 +133,22 @@ public static class CosmosContent
             ?? throw new InvalidOperationException($"Book \"{bookId}\" has no manifest document");
         var order = manifest.ChapterOrder ?? new List<string>();
 
+        var fallback = BookMeta.Default(bookId);
+        var meta = new BookMeta(
+            Title: manifest.Title ?? fallback.Title,
+            Summary: manifest.Summary ?? fallback.Summary.ToList(),
+            CoverImage: manifest.CoverImage ?? fallback.CoverImage,
+            CoverAlt: manifest.CoverAlt ?? fallback.CoverAlt,
+            SecretBlurb: manifest.SecretBlurb ?? fallback.SecretBlurb,
+            Payoff: manifest.Payoff ?? fallback.Payoff.ToList(),
+            CodePlaceholder: manifest.CodePlaceholder ?? fallback.CodePlaceholder,
+            ShareTitle: manifest.ShareTitle ?? manifest.Title ?? fallback.ShareTitle,
+            ShareText: manifest.ShareText ?? fallback.ShareText,
+            SpecialShareText: manifest.SpecialShareText ?? fallback.SpecialShareText,
+            SpecialReveal: new SpecialReveal(
+                manifest.SpecialRevealHeadline ?? "",
+                manifest.SpecialRevealSub ?? ""));
+
         var chaptersBySlug = list.Where(d => d.Type == Chapter)
             .ToDictionary(d => d.Slug!, d => new ChapterDto(d.Slug!, d.Title!, d.Body!));
         var chapters = order.Select(s => chaptersBySlug[s]).ToList();
@@ -126,6 +168,6 @@ public static class CosmosContent
             .OrderBy(d => d.Code, StringComparer.Ordinal)
             .ToDictionary(d => d.Code!, d => new XrefEntry(d.Slug!, d.Markers ?? new List<XrefMarkerDto>()));
 
-        return new RawBook(bookId, manifest.Title, chapters, endings, clues, xref);
+        return new RawBook(bookId, meta, chapters, endings, clues, xref);
     }
 }

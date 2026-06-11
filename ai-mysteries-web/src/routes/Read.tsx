@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { fetchToc, fetchChapterNav, fetchClue } from "../lib/api";
-import type { TocEntry, ChapterNav } from "../lib/types";
+import { fetchToc, fetchChapterNav, fetchClue, fetchBookMeta } from "../lib/api";
+import type { TocEntry, ChapterNav, BookMeta } from "../lib/types";
 import Prose from "../components/Prose";
 import TableOfContents from "../components/TableOfContents";
 import "../styles/read.css";
@@ -14,51 +14,56 @@ type NavState =
   | { status: "missing" };
 
 export default function Read() {
-  const { slug = "" } = useParams<{ slug: string }>();
+  const { bookId = "", slug = "" } = useParams<{ bookId: string; slug: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const clueId = searchParams.get("clue");
   const articleRef = useRef<HTMLElement>(null);
   const [tocOpen, setTocOpen] = useState(false);
   const [toc, setToc] = useState<TocEntry[] | null>(null);
+  const [meta, setMeta] = useState<BookMeta | null>(null);
   const [navState, setNavState] = useState<NavState>({ status: "loading" });
   const [error, setError] = useState(false);
 
-  // The table of contents (drawer + first-chapter fallback). Fetched once.
+  // The table of contents (drawer + first-chapter fallback) and the book metadata (title for the
+  // document title, end-of-book payoff copy). Fetched once per book.
   useEffect(() => {
     let active = true;
-    fetchToc()
+    fetchToc(bookId)
       .then((t) => active && setToc(t ?? []))
+      .catch(() => active && setError(true));
+    fetchBookMeta(bookId)
+      .then((m) => active && setMeta(m))
       .catch(() => active && setError(true));
     return () => {
       active = false;
     };
-  }, []);
+  }, [bookId]);
 
-  // No slug (/read) → redirect to the first chapter once the TOC is known.
+  // No slug (/[bookId]) → redirect to the first chapter once the TOC is known.
   useEffect(() => {
-    if (!slug && toc && toc.length) navigate(`/read/${toc[0].slug}`, { replace: true });
-  }, [slug, toc, navigate]);
+    if (!slug && toc && toc.length) navigate(`/${bookId}/${toc[0].slug}`, { replace: true });
+  }, [slug, toc, navigate, bookId]);
 
   // Fetch the current chapter and its prev/next neighbours.
   useEffect(() => {
     if (!slug) return;
     let active = true;
     setNavState({ status: "loading" });
-    fetchChapterNav(slug)
+    fetchChapterNav(bookId, slug)
       .then((n) => active && setNavState(n ? { status: "ready", nav: n } : { status: "missing" }))
       .catch(() => active && setError(true));
     return () => {
       active = false;
     };
-  }, [slug]);
+  }, [bookId, slug]);
 
   // Unknown slug → fall back to the first chapter.
   useEffect(() => {
     if (navState.status === "missing" && toc && toc.length) {
-      navigate(`/read/${toc[0].slug}`, { replace: true });
+      navigate(`/${bookId}/${toc[0].slug}`, { replace: true });
     }
-  }, [navState, toc, navigate]);
+  }, [navState, toc, navigate, bookId]);
 
   // Start each chapter from the top and close the drawer when the slug changes — unless we
   // arrived via a ?clue= deep link, in which case the highlight effect scrolls instead.
@@ -67,6 +72,14 @@ export default function Read() {
     setTocOpen(false);
   }, [slug, clueId]);
 
+  useEffect(() => {
+    if (navState.status === "ready" && meta) {
+      document.title = `AI Mysteries — ${meta.title} (${navState.nav.chapter.title})`;
+    } else {
+      document.title = "AI Mysteries";
+    }
+  }, [navState, meta]);
+
   // Deep link from an ending's cross-reference: fetch the clue, scroll to the foreshadowing
   // paragraph and highlight it briefly. Matches on whitespace/markdown-normalized text so it
   // survives the manuscript's curly quotes and italics.
@@ -74,7 +87,7 @@ export default function Read() {
     if (!clueId || navState.status !== "ready") return;
     let active = true;
     let timer = 0;
-    fetchClue(clueId).then((clue) => {
+    fetchClue(bookId, clueId).then((clue) => {
       if (!active || !clue || !articleRef.current) return;
       const targets = clue.fragments.map(normalize).filter(Boolean);
       const paras = Array.from(articleRef.current.querySelectorAll("p"));
@@ -91,7 +104,7 @@ export default function Read() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [clueId, navState]);
+  }, [bookId, clueId, navState]);
 
   if (error) {
     return (
@@ -100,7 +113,7 @@ export default function Read() {
           The book couldn&rsquo;t be loaded right now. Please try again in a moment.
         </p>
         <Link to="/" className="read-home">
-          Within Tolerance
+          AI Mysteries
         </Link>
       </main>
     );
@@ -123,7 +136,7 @@ export default function Read() {
           Contents
         </button>
         <Link to="/" className="read-home">
-          Within Tolerance
+          AI Mysteries
         </Link>
       </div>
 
@@ -132,6 +145,7 @@ export default function Read() {
         onClose={() => setTocOpen(false)}
         currentSlug={slug}
         entries={toc ?? []}
+        bookId={bookId}
       />
 
       <header className="read-header">
@@ -142,31 +156,29 @@ export default function Read() {
         <Prose>{chapter.body}</Prose>
       </article>
 
-      {isLast && (
+      {isLast && meta && meta.payoff.length > 0 && (
         <section className="read-payoff">
-          <p className="read-payoff-text">
-            The book ends here &mdash; but the truth has more than one shape. Five suspects. One
-            system. No shortage of reasons.
-          </p>
-          <p className="read-payoff-text">
-            Find out what <em>really</em> happened that morning in the Charge Cage.
-          </p>
-          <button className="cta-button" onClick={() => navigate("/therealending")}>
-            Reveal the real ending &rarr;
+          {meta.payoff.map((para, i) => (
+            <p key={i} className="read-payoff-text">
+              {para}
+            </p>
+          ))}
+          <button className="cta-button" onClick={() => navigate(`/${bookId}/ending`)}>
+            Reveal your ending &rarr;
           </button>
         </section>
       )}
 
       <nav className="read-nav" aria-label="Chapter navigation">
         {prev ? (
-          <Link to={`/read/${prev.slug}`} className="read-nav-link read-nav-prev">
+          <Link to={`/${bookId}/${prev.slug}`} className="read-nav-link read-nav-prev">
             &larr; {prev.title}
           </Link>
         ) : (
           <span />
         )}
         {next ? (
-          <Link to={`/read/${next.slug}`} className="read-nav-link read-nav-next">
+          <Link to={`/${bookId}/${next.slug}`} className="read-nav-link read-nav-next">
             {next.title} &rarr;
           </Link>
         ) : (

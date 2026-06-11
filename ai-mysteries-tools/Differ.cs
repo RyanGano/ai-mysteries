@@ -5,8 +5,8 @@ namespace AiMysteries.Tools;
 
 // Compares the local-file books against the Cosmos books and reports any drift. Order- and
 // formatting-independent: each book is flattened into a map of logical-key -> canonical JSON,
-// then the two maps are compared key by key. The manifest title is intentionally ignored (the
-// file layout has no book-level title). Returns true when everything is in sync.
+// then the two maps are compared key by key, including the book-level metadata (meta.json /
+// manifest). Returns true when everything is in sync.
 public static class Differ
 {
     private static readonly JsonSerializerOptions Canon = new(JsonSerializerDefaults.Web);
@@ -57,10 +57,11 @@ public static class Differ
         return false;
     }
 
-    // Flatten a book into logical-key -> canonical JSON. Manifest/title excluded.
+    // Flatten a book into logical-key -> canonical JSON, including the book-level metadata.
     private static Dictionary<string, string> Index(RawBook b)
     {
         var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        map["manifest:meta"] = JsonSerializer.Serialize(b.Meta, Canon);
         foreach (var ch in b.Chapters)
             map[$"chapter:{ch.Slug}"] = JsonSerializer.Serialize(new { ch.Slug, ch.Title, ch.Body }, Canon);
         foreach (var e in b.Endings)

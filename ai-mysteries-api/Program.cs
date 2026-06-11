@@ -44,7 +44,10 @@ app.UseCors(CorsPolicy);
 // Eager-load content so a bad/missing file fails fast at startup, not on first request.
 app.Services.GetRequiredService<BookStore>();
 
-// All routes share the "/api/books/{bookId}" prefix; each area registers its own endpoints.
+// Book-level metadata: the catalog (/api/books) and single-book lookup (/api/books/{bookId}).
+app.MapBookEndpoints();
+
+// Per-book content shares the "/api/books/{bookId}" prefix; each area registers its own routes.
 var books = app.MapGroup("/api/books/{bookId}");
 books.MapChapterEndpoints();
 books.MapEndingEndpoints();

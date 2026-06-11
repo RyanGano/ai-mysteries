@@ -27,6 +27,10 @@ public sealed class FileBookSource : IBookSource
 
     private static RawBook LoadBook(string id, string dir)
     {
+        // Book-level metadata (title, marketing copy, cover URL, payoff, share strings). Optional:
+        // a book with no meta.json falls back to defaults so it still loads.
+        var meta = ReadMeta(Path.Combine(dir, "meta.json"), id);
+
         // Chapters: order from book.json, bodies from book/<slug>.md
         var chapterMetas = ReadJson<List<ChapterMeta>>(Path.Combine(dir, "book.json"));
         var chapters = chapterMetas
@@ -44,7 +48,30 @@ public sealed class FileBookSource : IBookSource
         var xref = ReadJsonOrEmpty<Dictionary<string, XrefMeta>>(Path.Combine(dir, "xref-markers.json"))
             .ToDictionary(kv => kv.Key, kv => new XrefEntry(kv.Value.Slug, kv.Value.Markers));
 
-        return new RawBook(id, null, chapters, endings, clues, xref);
+        return new RawBook(id, meta, chapters, endings, clues, xref);
+    }
+
+    // meta.json → BookMeta. Absent file or absent fields fall back to BookMeta.Default(id).
+    private static BookMeta ReadMeta(string path, string id)
+    {
+        var d = File.Exists(path)
+            ? JsonSerializer.Deserialize<MetaDoc>(File.ReadAllText(path), Json) ?? new MetaDoc()
+            : new MetaDoc();
+        var fallback = BookMeta.Default(id);
+        return new BookMeta(
+            Title: d.Title ?? fallback.Title,
+            Summary: d.Summary ?? fallback.Summary,
+            CoverImage: d.CoverImage ?? fallback.CoverImage,
+            CoverAlt: d.CoverAlt ?? fallback.CoverAlt,
+            SecretBlurb: d.SecretBlurb ?? fallback.SecretBlurb,
+            Payoff: d.Payoff ?? fallback.Payoff,
+            CodePlaceholder: d.CodePlaceholder ?? fallback.CodePlaceholder,
+            ShareTitle: d.ShareTitle ?? d.Title ?? fallback.ShareTitle,
+            ShareText: d.ShareText ?? fallback.ShareText,
+            SpecialShareText: d.SpecialShareText ?? fallback.SpecialShareText,
+            SpecialReveal: d.SpecialReveal is { } sr
+                ? new SpecialReveal(sr.Headline ?? "", sr.Sub ?? "")
+                : fallback.SpecialReveal);
     }
 
     private static string ReadMd(string dir, string sub, string slug)
@@ -71,4 +98,20 @@ public sealed class FileBookSource : IBookSource
     private record EndingMeta(string Code, List<string> Culprits, string Title, string Slug, bool Special = false);
 
     private record XrefMeta(string Slug, List<XrefMarkerDto> Markers);
+
+    // Nullable mirror of meta.json — every field optional so partial/absent files fall back.
+    private sealed record MetaDoc(
+        string? Title = null,
+        List<string>? Summary = null,
+        string? CoverImage = null,
+        string? CoverAlt = null,
+        string? SecretBlurb = null,
+        List<string>? Payoff = null,
+        string? CodePlaceholder = null,
+        string? ShareTitle = null,
+        string? ShareText = null,
+        string? SpecialShareText = null,
+        SpecialRevealDoc? SpecialReveal = null);
+
+    private sealed record SpecialRevealDoc(string? Headline = null, string? Sub = null);
 }

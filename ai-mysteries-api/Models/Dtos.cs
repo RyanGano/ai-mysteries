@@ -38,3 +38,21 @@ public record EndingDto(
 public record RandomCodeDto(string Code);
 
 public record ExistsDto(bool Exists);
+
+// All book-identifying content the front end renders, served by GET /api/books (list) and
+// GET /api/books/{bookId} (single). Carries no codes/culprits/ending list — no spoilers.
+public record BookMetaDto(
+    string Id,
+    string Title,
+    IReadOnlyList<string> Summary,
+    string CoverImage,
+    string CoverAlt,
+    string SecretBlurb,
+    IReadOnlyList<string> Payoff,
+    string CodePlaceholder,
+    string ShareTitle,
+    string ShareText,
+    string SpecialShareText,
+    SpecialRevealDto SpecialReveal);
+
+public record SpecialRevealDto(string Headline, string Sub);

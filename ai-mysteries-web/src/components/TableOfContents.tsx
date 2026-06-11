@@ -6,6 +6,7 @@ interface TableOfContentsProps {
   open: boolean;
   onClose: () => void;
   currentSlug: string;
+  bookId: string;
   // The chapter list, fetched by the parent (Read).
   entries: TocEntry[];
 }
@@ -16,6 +17,7 @@ export default function TableOfContents({
   open,
   onClose,
   currentSlug,
+  bookId,
   entries,
 }: TableOfContentsProps) {
   // Close on Escape while open.
@@ -42,7 +44,7 @@ export default function TableOfContents({
           {entries.map((ch) => (
             <li key={ch.slug}>
               <Link
-                to={`/read/${ch.slug}`}
+                to={`/${bookId}/${ch.slug}`}
                 className={`toc-link${ch.slug === currentSlug ? " toc-link--active" : ""}`}
                 aria-current={ch.slug === currentSlug ? "page" : undefined}
                 onClick={onClose}
