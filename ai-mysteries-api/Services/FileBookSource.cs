@@ -27,9 +27,10 @@ public sealed class FileBookSource : IBookSource
 
     private static RawBook LoadBook(string id, string dir)
     {
-        // Book-level metadata (title, marketing copy, cover URL, payoff, share strings). Optional:
-        // a book with no meta.json falls back to defaults so it still loads.
-        var meta = ReadMeta(Path.Combine(dir, "meta.json"), id);
+        // Book-level metadata (title, marketing copy, cover URL, payoff, share strings) plus the
+        // server-only selection rules. Optional: a book with no meta.json falls back to defaults
+        // so it still loads.
+        var (meta, selection) = ReadMeta(Path.Combine(dir, "meta.json"), id);
 
         // Chapters: order from book.json, bodies from book/<slug>.md
         var chapterMetas = ReadJson<List<ChapterMeta>>(Path.Combine(dir, "book.json"));
@@ -48,17 +49,23 @@ public sealed class FileBookSource : IBookSource
         var xref = ReadJsonOrEmpty<Dictionary<string, XrefMeta>>(Path.Combine(dir, "xref-markers.json"))
             .ToDictionary(kv => kv.Key, kv => new XrefEntry(kv.Value.Slug, kv.Value.Markers));
 
-        return new RawBook(id, meta, chapters, endings, clues, xref);
+        return new RawBook(id, meta, chapters, endings, clues, xref, selection);
     }
 
-    // meta.json → BookMeta. Absent file or absent fields fall back to BookMeta.Default(id).
-    private static BookMeta ReadMeta(string path, string id)
+    // meta.json → BookMeta + SelectionRules. Absent file or absent fields fall back to defaults.
+    private static (BookMeta, SelectionRules) ReadMeta(string path, string id)
     {
         var d = File.Exists(path)
             ? JsonSerializer.Deserialize<MetaDoc>(File.ReadAllText(path), Json) ?? new MetaDoc()
             : new MetaDoc();
+        var selection = d.Selection is { } s
+            ? new SelectionRules(
+                s.SentinelCulprit,
+                s.CategoryWeights ?? new Dictionary<string, int>(),
+                s.SpecialEndingOdds ?? 0)
+            : SelectionRules.Default;
         var fallback = BookMeta.Default(id);
-        return new BookMeta(
+        return (new BookMeta(
             Title: d.Title ?? fallback.Title,
             Summary: d.Summary ?? fallback.Summary,
             CoverImage: d.CoverImage ?? fallback.CoverImage,
@@ -71,7 +78,7 @@ public sealed class FileBookSource : IBookSource
             SpecialShareText: d.SpecialShareText ?? fallback.SpecialShareText,
             SpecialReveal: d.SpecialReveal is { } sr
                 ? new SpecialReveal(sr.Headline ?? "", sr.Sub ?? "")
-                : fallback.SpecialReveal);
+                : fallback.SpecialReveal), selection);
     }
 
     private static string ReadMd(string dir, string sub, string slug)
@@ -111,7 +118,13 @@ public sealed class FileBookSource : IBookSource
         string? ShareTitle = null,
         string? ShareText = null,
         string? SpecialShareText = null,
-        SpecialRevealDoc? SpecialReveal = null);
+        SpecialRevealDoc? SpecialReveal = null,
+        SelectionDoc? Selection = null);
 
     private sealed record SpecialRevealDoc(string? Headline = null, string? Sub = null);
+
+    private sealed record SelectionDoc(
+        string? SentinelCulprit = null,
+        Dictionary<string, int>? CategoryWeights = null,
+        double? SpecialEndingOdds = null);
 }

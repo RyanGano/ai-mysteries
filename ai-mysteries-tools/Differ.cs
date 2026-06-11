@@ -62,6 +62,15 @@ public static class Differ
     {
         var map = new Dictionary<string, string>(StringComparer.Ordinal);
         map["manifest:meta"] = JsonSerializer.Serialize(b.Meta, Canon);
+        // Weights are key-ordered so File vs Cosmos dictionary ordering can't cause false drift.
+        map["manifest:selection"] = JsonSerializer.Serialize(new
+        {
+            b.Selection.SentinelCulprit,
+            CategoryWeights = b.Selection.CategoryWeights
+                .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+                .ToDictionary(kv => kv.Key, kv => kv.Value),
+            b.Selection.SpecialEndingOdds,
+        }, Canon);
         foreach (var ch in b.Chapters)
             map[$"chapter:{ch.Slug}"] = JsonSerializer.Serialize(new { ch.Slug, ch.Title, ch.Body }, Canon);
         foreach (var e in b.Endings)

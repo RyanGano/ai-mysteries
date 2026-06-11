@@ -31,6 +31,12 @@ public sealed class ContentDoc
     public string? SpecialRevealHeadline { get; set; }
     public string? SpecialRevealSub { get; set; }
 
+    // manifest only — server-side selection rules (see SelectionRules). Read by the API for
+    // the random picker; never mapped into any response DTO.
+    public string? SentinelCulprit { get; set; }
+    public Dictionary<string, int>? CategoryWeights { get; set; }
+    public double? SpecialEndingOdds { get; set; }
+
     // chapter / ending / xref
     public string? Slug { get; set; }
     public string? Body { get; set; }
@@ -91,6 +97,11 @@ public static class CosmosContent
             SpecialShareText = m.SpecialShareText,
             SpecialRevealHeadline = m.SpecialReveal.Headline,
             SpecialRevealSub = m.SpecialReveal.Sub,
+            SentinelCulprit = raw.Selection.SentinelCulprit,
+            CategoryWeights = raw.Selection.CategoryWeights.Count > 0
+                ? new Dictionary<string, int>(raw.Selection.CategoryWeights)
+                : null,
+            SpecialEndingOdds = raw.Selection.SpecialEndingOdds,
         };
 
         foreach (var c in raw.Chapters)
@@ -149,6 +160,11 @@ public static class CosmosContent
                 manifest.SpecialRevealHeadline ?? "",
                 manifest.SpecialRevealSub ?? ""));
 
+        var selection = new SelectionRules(
+            manifest.SentinelCulprit,
+            manifest.CategoryWeights ?? new Dictionary<string, int>(),
+            manifest.SpecialEndingOdds ?? 0);
+
         var chaptersBySlug = list.Where(d => d.Type == Chapter)
             .ToDictionary(d => d.Slug!, d => new ChapterDto(d.Slug!, d.Title!, d.Body!));
         var chapters = order.Select(s => chaptersBySlug[s]).ToList();
@@ -168,6 +184,6 @@ public static class CosmosContent
             .OrderBy(d => d.Code, StringComparer.Ordinal)
             .ToDictionary(d => d.Code!, d => new XrefEntry(d.Slug!, d.Markers ?? new List<XrefMarkerDto>()));
 
-        return new RawBook(bookId, meta, chapters, endings, clues, xref);
+        return new RawBook(bookId, meta, chapters, endings, clues, xref, selection);
     }
 }

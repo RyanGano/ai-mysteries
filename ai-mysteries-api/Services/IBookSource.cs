@@ -12,7 +12,28 @@ public sealed record RawBook(
     IReadOnlyList<ChapterDto> Chapters,
     IReadOnlyList<Ending> Endings,
     IReadOnlyDictionary<string, ClueDto> Clues,
-    IReadOnlyDictionary<string, XrefEntry> Xref);
+    IReadOnlyDictionary<string, XrefEntry> Xref,
+    SelectionRules Selection);
+
+// Server-only rules for the weighted-random ending picker, authored per book (the `selection`
+// key in meta.json / fields on the Cosmos manifest doc) so the API code knows nothing about any
+// book's suspects, categories, or odds. Never map these into a DTO — they are spoilers.
+//
+// Categories are derived: an ending's category is its culprit-set size as a string ("1", "2",
+// …), except a solo ending by `SentinelCulprit` (if set), which gets the dedicated "sentinel"
+// category. `CategoryWeights` maps those category ids to relative weights; when empty, every
+// category present in the book is equally likely. `SpecialEndingOdds` is the chance (0..1) that
+// a random pick short-circuits to the book's `special: true` ending; 0 means that ending is
+// reachable only by entering its code.
+public sealed record SelectionRules(
+    string? SentinelCulprit,
+    IReadOnlyDictionary<string, int> CategoryWeights,
+    double SpecialEndingOdds)
+{
+    // Inert defaults for a book that authors no rules: no sentinel, uniform categories, no
+    // special roll.
+    public static SelectionRules Default { get; } = new(null, new Dictionary<string, int>(), 0);
+}
 
 // All book-identifying content the front end renders — title, marketing copy, cover URL, the
 // end-of-book payoff, share strings, and the special-ending reveal. Lives in the Cosmos manifest

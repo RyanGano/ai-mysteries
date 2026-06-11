@@ -50,12 +50,14 @@ final printed line is `www.therealending.com`. This site delivers the real, vari
 
 **Two load-bearing principles:**
 
-1. **No book-specific data or wording lives in the front end.** Title, marketing summary, cover
-   image, secret blurb, end-of-book payoff, share text, and the special-ending reveal copy all
-   come from the API (`BookMeta`). React holds only generic, book-agnostic UI chrome — button
-   verbs ("Reveal another ending →", "Continue reading →", "Contents"), loading/error text, and
-   the "AI Mysteries" site brand in `index.html`. If a string names a book or its plot, it
-   belongs in the data, not the components.
+1. **No book-specific data or wording lives in the code — front end or API.** Title, marketing
+   summary, cover image, secret blurb, end-of-book payoff, share text, and the special-ending
+   reveal copy all come from the API (`BookMeta`). React holds only generic, book-agnostic UI
+   chrome — button verbs ("Reveal another ending →", "Continue reading →", "Contents"),
+   loading/error text, and the "AI Mysteries" site brand in `index.html`. The API is equally
+   book-blind: selection rules (category weights, sentinel culprit, special-ending odds) are
+   authored data (`selection` in meta.json), not constants in code. If a string or number
+   describes a book, it belongs in the data.
 2. **A new book is a data-only change — zero code, zero redeploy.** Author the book's content
    files locally and `ai-mysteries-tools seed` them into Cosmos; the API auto-discovers books by
    querying `manifest` docs, the landing renders whatever `GET /api/books` returns, and routing
@@ -74,7 +76,8 @@ Two projects:
   `ContentSource` config key:
   - **`FileBookSource`** (`ContentSource=File`, dev/authoring default) — reads `Content/<bookId>/`
     on disk: `meta.json` (book-level `BookMeta` — title, summary, cover URL, secret blurb, payoff,
-    share strings, special-reveal copy; all fields optional, defaults fill in); `book.json`
+    share strings, special-reveal copy — plus the server-only `selection` rules; all fields
+    optional, defaults fill in); `book.json`
     (`[{ slug, title }]`, reading order) + `book/<slug>.md`; `endings.json`
     (`[{ code, culprits, title, special?, slug }]`) + `endings/<slug>.md`; `clues.json` +
     `xref-markers.json` (generated cross-reference data).
@@ -123,20 +126,31 @@ in `Cors:AllowedOrigins` — so it works regardless of which port Vite lands on.
 
 ### Weighted random selection
 
-Each ending names a set of culprits via `culprits` (in `endings.json`). The **category** is
-derived from that set's size, plus one special sentinel category — see
-`ai-mysteries-api/Services/EndingSelector.cs` for the categories and their weights. Selection
-runs **server-side** and is three-stage:
+Selection runs **server-side** and is fully generic — the algorithm lives in
+`ai-mysteries-api/Services/EndingSelector.cs`, but every book-specific input comes from the
+book's **selection rules**, authored as the `selection` key of its `meta.json` (carried on the
+Cosmos manifest doc, held in the server-only `SelectionRules` record, and **never exposed by
+any endpoint** — the rules themselves are spoilers):
 
-1. **Pick a category by weight** — `CategoryWeights` in `EndingSelector.cs`, ordered most →
-   least common (a single culprit is the most likely; the special category the least). The
-   weights must stay monotonically decreasing and sum to 100.
-2. **Pick a culprit combination uniformly** within the category.
-3. **Pick uniformly** among that combination's registered endings.
+```json
+"selection": {
+  "sentinelCulprit": "<culprit value whose solo endings form their own category>",
+  "categoryWeights": { "1": 45, "2": 30, "sentinel": 25 },
+  "specialEndingOdds": 0.001
+}
+```
 
-Picking the combo before the ending keeps every combination equally likely regardless of how
-many endings it has. To add a new suspect, the combinatorics change — revisit the weights, but
-the size-derived categories keep working automatically.
+- An ending's **category** is its `culprits` set size as a string (`"1"`, `"2"`, …); a solo
+  ending by the `sentinelCulprit` gets the dedicated `"sentinel"` category instead.
+- Three stages: pick a category by `categoryWeights` (relative weights among the categories
+  present), pick a culprit combination uniformly within it, pick uniformly among that
+  combination's endings. Picking the combo before the ending keeps every combination equally
+  likely regardless of how many endings it has.
+- `specialEndingOdds` (0..1) is the chance a pick short-circuits to the book's `special: true`
+  ending; `0`/omitted means that ending is reachable only by entering its code.
+- A book with no `selection` key gets uniform category odds and no special roll.
+- `BookStore.Build` validates at startup that authored weights give a positive weight to every
+  category the book's endings actually use.
 
 ### "Reveal another ending" exclusion rule
 
@@ -165,9 +179,10 @@ every ending, including newly added ones. No extra steps needed when authoring a
    { "code": "XXXX", "culprits": ["Name"], "title": "<copy from an existing entry>", "slug": "my-ending" }
    ```
    `culprits` lists everyone responsible — one name for a single, several for a combination,
-   every suspect for the all-of-them category, or the special sentinel (see
-   `EndingSelector.cs`). The `title` is identical for every ending — copy it from any existing
-   entry in `endings.json`; it must never vary or hint at the culprit(s).
+   every suspect for the all-of-them category, or the book's sentinel culprit (see the
+   `selection` rules in the book's `meta.json`). The `title` is identical for every ending —
+   copy it from any existing entry in `endings.json`; it must never vary or hint at the
+   culprit(s).
 4. Use a unique canonical 4-char code. Canonical = uppercase, `O` not `0`, `I` not `1`/`L`.
    **Do not let the code hint at the culprit** — pick unrelated letters/digits. Never quote a
    real, registered code in a committed file (docs, comments, examples).

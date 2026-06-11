@@ -23,12 +23,24 @@ public static class ContentFiles
         Directory.CreateDirectory(Path.Combine(dir, "book"));
         Directory.CreateDirectory(Path.Combine(dir, "endings"));
 
-        // meta.json — book-level metadata (title, summary, cover, payoff, share + special-reveal).
+        // meta.json — book-level metadata (title, summary, cover, payoff, share + special-reveal)
+        // plus the server-only selection rules. All-default rules are written as no `selection`
+        // key at all, so a book authored without one round-trips unchanged.
         var m = book.Meta;
+        var r = book.Selection;
+        var selection = r.SentinelCulprit is null && r.CategoryWeights.Count == 0 && r.SpecialEndingOdds == 0
+            ? null
+            : new SelectionDoc(
+                r.SentinelCulprit,
+                r.CategoryWeights
+                    .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value),
+                r.SpecialEndingOdds);
         WriteJson(Path.Combine(dir, "meta.json"), new MetaDoc(
             m.Title, m.Summary.ToList(), m.CoverImage, m.CoverAlt, m.SecretBlurb,
             m.Payoff.ToList(), m.CodePlaceholder, m.ShareTitle, m.ShareText, m.SpecialShareText,
-            new SpecialRevealDoc(m.SpecialReveal.Headline, m.SpecialReveal.Sub)));
+            new SpecialRevealDoc(m.SpecialReveal.Headline, m.SpecialReveal.Sub),
+            selection));
 
         // book.json + book/<slug>.md (chapter order preserved from the manifest)
         var chapterMetas = book.Chapters.Select(c => new ChapterMeta(c.Slug, c.Title)).ToList();
@@ -72,7 +84,13 @@ public static class ContentFiles
         string ShareTitle,
         string ShareText,
         string SpecialShareText,
-        SpecialRevealDoc SpecialReveal);
+        SpecialRevealDoc SpecialReveal,
+        SelectionDoc? Selection);
 
     private record SpecialRevealDoc(string Headline, string Sub);
+
+    private record SelectionDoc(
+        string? SentinelCulprit,
+        Dictionary<string, int> CategoryWeights,
+        double SpecialEndingOdds);
 }

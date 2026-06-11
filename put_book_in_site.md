@@ -51,9 +51,20 @@ of it in the React components.
   "shareTitle": "…",
   "shareText": "…",
   "specialShareText": "…",
-  "specialReveal": { "headline": "…", "sub": "…" }
+  "specialReveal": { "headline": "…", "sub": "…" },
+  "selection": {
+    "sentinelCulprit": "<culprit value whose solo endings form their own category>",
+    "categoryWeights": { "1": 45, "2": 30, "sentinel": 25 },
+    "specialEndingOdds": 0.001
+  }
 }
 ```
+
+- `selection` holds the book's **server-only** random-pick rules (see *Weighted random
+  selection* in `CLAUDE.md`): relative `categoryWeights` keyed by culprit-set size (plus
+  `"sentinel"` for the `sentinelCulprit`'s solo endings), and the odds of the `special: true`
+  ending. Omit it for uniform odds and no special roll. It is never returned by any API
+  endpoint — keep it that way.
 
 - `coverImage` is a **URL** the web uses directly as `<img src>`. For a new book it
   must be **absolute** (host it yourself, e.g. Azure Blob Storage with public read) —
@@ -74,9 +85,10 @@ Each entry in `endings.json`:
   culprit(s)** — unrelated letters/digits only. The API throws at startup on a
   duplicate normalized code.
 - `culprits` — everyone responsible. The selection category is derived from the
-  set's size; a reserved sentinel value can mark a special category — check
-  `ai-mysteries-api/Services/EndingSelector.cs` if the new book's suspect count
-  differs, since the category weights are tied to combination counts.
+  set's size (plus the optional `sentinelCulprit` category — see `selection` in
+  meta.json above). Make sure `categoryWeights` covers every culprit-set size your
+  endings actually use — the API validates this at startup and refuses to load the
+  book otherwise.
 - `title` — identical for every ending; it must never vary or hint at the culprit(s).
 - `special: true` — marks a rare ending that gets the reveal overlay
   (`specialReveal` copy in meta.json).

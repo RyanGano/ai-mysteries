@@ -36,6 +36,21 @@ public sealed class BookStore
     // seeder can run the same validation (e.g. the duplicate-code check) before writing to Cosmos.
     public static Book Build(RawBook raw)
     {
+        // When explicit category weights are authored, every non-special ending must land in a
+        // positively-weighted category — otherwise it would be silently unreachable by the
+        // random picker. Fail at startup, like the duplicate-code check.
+        if (raw.Selection.CategoryWeights.Count > 0)
+        {
+            foreach (var e in raw.Endings.Where(e => !e.Special))
+            {
+                var cat = EndingSelector.CategoryOf(e, raw.Selection);
+                if (raw.Selection.CategoryWeights.GetValueOrDefault(cat) <= 0)
+                    throw new InvalidOperationException(
+                        $"Book \"{raw.Id}\": ending \"{e.Slug}\" falls in category \"{cat}\", which has " +
+                        "no positive weight in selection.categoryWeights — check meta.json");
+            }
+        }
+
         var markersByCode = raw.Xref.ToDictionary(
             kv => CodeNormalizer.Normalize(kv.Key),
             kv => kv.Value.Markers);
@@ -43,6 +58,7 @@ public sealed class BookStore
         return new Book(
             raw.Id,
             raw.Meta,
+            raw.Selection,
             raw.Chapters.ToList(),
             raw.Endings.ToList(),
             markersByCode,

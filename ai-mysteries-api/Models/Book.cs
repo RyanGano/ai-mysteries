@@ -8,6 +8,10 @@ public sealed class Book
     public string Id { get; }
     public BookMeta Meta { get; }
 
+    // Server-only rules for the random-ending picker. Never expose via a DTO (spoilers) —
+    // GetMeta() intentionally doesn't map it.
+    public SelectionRules Selection { get; }
+
     private readonly List<ChapterDto> _chapters;
     private readonly Dictionary<string, int> _chapterIndex;
 
@@ -20,6 +24,7 @@ public sealed class Book
     public Book(
         string id,
         BookMeta meta,
+        SelectionRules selection,
         List<ChapterDto> chapters,
         List<Ending> endings,
         Dictionary<string, IReadOnlyList<XrefMarkerDto>> markersByNormalizedCode,
@@ -27,6 +32,7 @@ public sealed class Book
     {
         Id = id;
         Meta = meta;
+        Selection = selection;
         _chapters = chapters;
         _chapterIndex = new Dictionary<string, int>();
         for (var i = 0; i < chapters.Count; i++) _chapterIndex[chapters[i].Slug] = i;
