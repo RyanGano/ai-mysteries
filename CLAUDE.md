@@ -250,6 +250,16 @@ hard "never do" rules, and the mandatory shared opening. **Read it (plus a few e
 endings) before writing a new ending** — and don't reproduce its specifics in this file or
 anything else committed.
 
+**Kid-friendly or no-murder books read easy, not just clean.** When a book targets younger
+readers or simply has no death, the *reading level* drops too: short phonetic names that a
+child decodes at a glance and stay distinct from one another (Lena Park, Bo Hale — not
+Sorokin or Lindqvist, and never a near-homophone pair like Vale/Vane), plain words over
+jargon (list not *manifest*, inspector not *proctor*, cooling pipe not *coolant manifold*,
+"within limits" not *within parameters*), and the longest sentences broken up. Keep any
+real idea a clue depends on (condensation, freeze-thaw) but gloss it in plain words the
+first time. A load-bearing theme word may stay (e.g. *non-essential mass*) if the prose
+around it explains it plainly. See `create_new_book.md` Phase 0 for the fuller checklist.
+
 ## Character reference
 
 The character bible — a `.docx` in `source_materials/`, local-only, never committed. Contains

@@ -33,7 +33,7 @@ Extract or default these parameters before writing anything:
 | Parameter | From the brief | Default if unstated |
 |---|---|---|
 | Setting / genre / era | explicit ("space station, 2218", "western", "zoo") | ask, or infer from genre |
-| Audience | "kid friendly" → middle-grade voice, nonviolent crime | adult |
+| Audience | "kid friendly" → middle-grade voice, nonviolent crime, **easy-to-read names + concepts** (see below) | adult |
 | Total reading time | "less than 15 minutes" | 30–45 minutes |
 | Suspects | rarely stated | 5 (use 4 for very short books) |
 | Endings | "multiple endings" is the baseline | see ending matrix below |
@@ -52,6 +52,23 @@ adds ~600–1,000 words on top but readers only see one at a time.
 The crime itself scales with audience: a death for adult mysteries; a theft, sabotage,
 disappearance, or hoax for kid-friendly ones. The mechanic is identical either way —
 several suspects, each of whom plausibly did it.
+
+**Kid-friendly or no-murder books also get easy names and easy concepts.** If the book is
+for younger readers (or simply has no death — a softer book invites a younger reader either
+way), make the prose easy to *read*, not just easy to stomach:
+
+- **Names a child can decode at a glance.** Short, phonetic first names and one-syllable
+  surnames (Lena Park, Bo Hale, Dr. Sam Reed) — not Sorokin, Lindqvist, or Halvik Mensah.
+  Keep all of them visibly distinct from each other (different first letters and sounds) so a
+  young reader never confuses two suspects. Avoid two names that look or sound alike (no
+  "Vale" *and* "Vane" in the same cast).
+- **Concepts a child can follow.** Prefer the plain word over the technical one
+  (list not *manifest*, inspector not *proctor*, cooling pipe not *coolant manifold*, cleanup
+  not *prune*, "within limits" not *within parameters*). When a real idea matters to a clue
+  (condensation, freeze-thaw), keep the idea but **gloss it in plain words the first time** —
+  don't make the reader already know the term. Break the longest sentences up.
+- A theme word can stay if it carries the book (e.g. *non-essential mass*) — but the prose
+  around it must explain it plainly, so the term teaches itself.
 
 ## Phase 1 — Design the mystery (the dossier)
 
