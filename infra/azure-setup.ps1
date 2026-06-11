@@ -1,7 +1,7 @@
 <#
   One-time Azure setup for the Within Tolerance book API + Cosmos DB.
 
-  Reuses the EXISTING free-tier Cosmos account (goal-reacher-db) and just adds a `books`
+  Reuses an EXISTING free-tier Cosmos account (set $CosmosAcct below) and just adds a `books`
   database + `content` container to it (shared 400 RU/s, under the free 1000). Creates a Free
   (F1) Linux App Service web app for the API, its managed identity, and the passwordless Cosmos
   RBAC role assignments scoped to the books database (the API reads; you write via the Tools
@@ -21,14 +21,14 @@ $ErrorActionPreference = 'Stop'
 # ---- Edit these ----------------------------------------------------------------------------
 $Rg          = 'ai-mysteries'                    # resource group for the web app
 $Location    = 'westus2'                         # az account list-locations -o table
-$CosmosRg    = 'goal-reacher'                    # RG of the EXISTING shared Cosmos account
-$CosmosAcct  = 'goal-reacher-db'                 # reuse the existing free-tier account
+$CosmosRg    = '<existing-cosmos-rg>'            # RG of the EXISTING shared Cosmos account
+$CosmosAcct  = '<existing-cosmos-account>'       # reuse the existing free-tier account
 $Database    = 'books'                           # new database inside that account
 $Container   = 'content'
 $Plan        = 'ai-mysteries-plan'
 $WebApp      = 'ai-mysteries-api'                # must be globally unique -> <name>.azurewebsites.net
 $SwaOrigin   = 'https://therealending.com'       # prod front-end origin (lock CORS to this)
-# Scope the API/seeder to only the books database (the account also hosts goal-reacher data).
+# Scope the API/seeder to only the books database (the account also hosts other projects' data).
 $DbScope     = "/dbs/$Database"
 # --------------------------------------------------------------------------------------------
 
@@ -39,8 +39,9 @@ $DataContributor = '00000000-0000-0000-0000-000000000002'
 Write-Host "==> Resource group" -ForegroundColor Cyan
 az group create -n $Rg -l $Location | Out-Null
 
-# Reusing an existing free-tier Cosmos account (goal-reacher-db); we don't create it. Add a
+# Reusing an existing free-tier Cosmos account ($CosmosAcct); we don't create it. Add a
 # database with shared 400 RU/s (the minimum) so the container fits under the free 1000 RU/s.
+if ($CosmosAcct -like '<*') { throw 'Edit the $CosmosRg / $CosmosAcct placeholders at the top of this script first.' }
 Write-Host "==> Cosmos database + container in existing account $CosmosAcct (partition key /bookId)" -ForegroundColor Cyan
 az cosmosdb sql database create -a $CosmosAcct -g $CosmosRg -n $Database --throughput 400 | Out-Null
 az cosmosdb sql container create -a $CosmosAcct -g $CosmosRg -d $Database -n $Container `

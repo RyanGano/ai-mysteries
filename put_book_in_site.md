@@ -1,62 +1,129 @@
-# Plan: Put the book on the site
+# Put a book in the site
 
-Goal: serve the full novel **Within Tolerance** from the site itself, with a
-landing-page "Start reading" CTA, a slide-out Table of Contents drawer, per-chapter
-Previous/Next navigation, and an end-of-book payoff that routes the reader to a
-real ending.
+Agent playbook for adding a **new book** to the site. By design this is a
+**data-only change** — no code edits, no web/API redeploy (see the architecture
+principles in `CLAUDE.md`). The API auto-discovers books from Cosmos, the landing
+page renders whatever `GET /api/books` returns, and routing is generic
+(`/:bookId/…`).
 
-## Status: implemented
+Everything below happens locally under `ai-mysteries-api/Content/` (gitignored —
+**never commit book data**) and is then seeded into Cosmos.
 
-All steps below are done. This file is kept as a record / handoff.
+## 1. Pick a `bookId`
 
-## Content extraction
+A kebab-case slug, e.g. `within-tolerance`. It becomes:
 
-- Source: `source_materials/Within_Tolerance_Clean.docx` (gitignored, local-only).
-- One-off generator: `scripts/gen-book.cjs`.
-  - Unzips the `.docx`, parses `word/document.xml` paragraph-by-paragraph.
-  - Headings (`Prologue`, `Chapter N — Title`, `Epilogue`) are detected on the
-    **plain** run text; chapter headings are bold in the manuscript, so detection
-    must ignore the bold markers.
-  - Body paragraphs preserve italic (`*`) and bold (`**`) runs as markdown. Bold
-    is meaningful in Chapter 14 (the `T — 15` … `T — 0` countdown); italics appear
-    twice (`Optimized for what?`, `Did they know what they were doing?`).
-  - The book's final printed line, `www.therealending.com`, is stripped from the
-    Epilogue — the reader supplies its own closing CTA instead.
-  - Output: committed `src/content/book/<slug>.md` (one per chapter) + an
-    `index.ts` registry. Slugs: `prologue`, `chapter-1` … `chapter-15`, `epilogue`.
-- Re-run with `node scripts/gen-book.cjs` if the manuscript changes (needs the
-  local `.docx`). The `.docx` is never committed (see `source_materials/` policy).
+- the content folder name: `ai-mysteries-api/Content/<bookId>/`
+- the URL prefix: `/<bookId>/…`
+- the Cosmos partition key value (`/bookId`)
 
-## Code
+## 2. Author the content files
 
-- `src/content/book/index.ts` — generated `chapters: Chapter[]` (`{ slug, title, body }`),
-  in reading order.
-- `src/lib/book.ts` — `chapters`, `firstChapterSlug`, `getChapter(slug)`,
-  `getChapterNav(slug)` (resolves chapter + prev/next + isFirst/isLast).
-- `src/components/TableOfContents.tsx` — left-sliding drawer. Lists every chapter;
-  selecting one navigates and closes the drawer. Closes on overlay click and Escape.
-- `src/routes/Read.tsx` — the reader. Top bar with a **Contents** button (opens the
-  drawer) and a home link. Chapter title + `<Prose>` body (same renderer/look as
-  endings). Prev/Next links. On the last chapter (Epilogue), a payoff block with a
-  CTA to `/therealending` (weighted-random ending).
-- `src/routes/Landing.tsx` — adds a primary **Start reading the book** CTA
-  (`/read`) alongside the existing "Reveal your ending" CTA (now ghost-styled).
-- `src/App.tsx` — routes: `/read` → redirect to first chapter; `/read/:slug` → `Read`.
-- Styles: `src/styles/read.css` (reader + drawer), additions to `landing.css`
-  (`.landing-ctas`, `.cta-button--primary`, `.cta-button--ghost`).
-
-## Routes
+Layout (folder per book, read by `FileBookSource` —
+`ai-mysteries-api/Services/FileBookSource.cs` is the contract):
 
 ```
-/                -> landing (intro, cover, Start reading + Reveal ending CTAs)
-/read            -> redirect to /read/prologue
-/read/:slug      -> chapter page (drawer + Prev/Next; Epilogue shows the payoff CTA)
-/therealending   -> existing weighted-random ending picker
+Content/<bookId>/
+  meta.json            # optional — book-level copy (defaults fill in)
+  book.json            # required — [{ "slug", "title" }] in reading order
+  book/<slug>.md       # required — one body per chapter listed in book.json
+  endings.json         # required — [{ "code", "culprits", "title", "special"?, "slug" }]
+  endings/<slug>.md    # required — one body per ending listed in endings.json
+  clues.json           # optional — generated cross-reference data
+  xref-markers.json    # optional — generated cross-reference data
 ```
 
-## Notes / not in scope
+### meta.json (`BookMeta`)
 
-- The site remains `noindex` globally (`staticwebapp.config.json`). If the book
-  should be discoverable for marketing/SEO, that header would need revisiting —
-  but it also covers the endings, so leave as-is unless asked.
-- Scene breaks in the manuscript are standalone `—` paragraphs; they render as-is.
+All fields optional; absent fields fall back to defaults (title falls back to the
+bookId). This is the **only** place book-identifying wording lives — never put any
+of it in the React components.
+
+```json
+{
+  "title": "…",
+  "summary": ["paragraph 1", "paragraph 2"],
+  "coverImage": "https://…/cover.webp",
+  "coverAlt": "…",
+  "secretBlurb": "…",
+  "payoff": ["end-of-book payoff paragraph(s) shown after the last chapter"],
+  "codePlaceholder": "hint text for the landing-page code input",
+  "shareTitle": "…",
+  "shareText": "…",
+  "specialShareText": "…",
+  "specialReveal": { "headline": "…", "sub": "…" }
+}
+```
+
+- `coverImage` is a **URL** the web uses directly as `<img src>`. For a new book it
+  must be **absolute** (host it yourself, e.g. Azure Blob Storage with public read) —
+  never add a bundled asset to the web app, that would force a redeploy. Verify the
+  URL is reachable from the public internet, not just locally.
+
+### Chapters
+
+`book.json` defines reading order; each entry's `slug` names `book/<slug>.md`.
+Markdown bodies; the title lives in `book.json`, not in the `.md`.
+
+### Endings
+
+Each entry in `endings.json`:
+
+- `code` — unique 4-char canonical code **within the book**: uppercase, use `O` not
+  `0` and `I` not `1`/`L` (input is normalized). **Never let the code hint at the
+  culprit(s)** — unrelated letters/digits only. The API throws at startup on a
+  duplicate normalized code.
+- `culprits` — everyone responsible. The selection category is derived from the
+  set's size; a single sentinel value (like `["SAM"]` in Within Tolerance) can mark a
+  special category — check `ai-mysteries-api/Services/EndingSelector.cs` if the new
+  book's suspect count differs, since the category weights are tied to combination
+  counts.
+- `title` — identical for every ending; it must never vary or hint at the culprit(s).
+- `special: true` — marks a rare ending that gets the reveal overlay
+  (`specialReveal` copy in meta.json).
+
+### Cross-references (optional, can be added later)
+
+`clues.json` / `xref-markers.json` are **generated**, not hand-written. The current
+generator (`scripts/gen-xrefs.cjs`) is hardwired to `within-tolerance` and its
+`docs/EndingClueMap.md` source — for a new book, generalize the script (or author a
+book-specific clue map + adapt the paths) before generating. Omitting both files is
+fine; endings simply render without the "spot the clue" glyphs.
+
+## 3. Verify locally
+
+Run both halves (see `CLAUDE.md` Commands):
+
+```
+cd ai-mysteries-api && dotnet run     # ContentSource=File reads Content/ on disk
+cd ai-mysteries-web && npm run dev
+```
+
+Checklist:
+
+- the landing page (`/`) lists the new book with its cover and summary
+- `/<bookId>` redirects to the first chapter; TOC, prev/next work
+- the last chapter shows the payoff and its CTA reveals an ending
+- "Reveal another ending" never repeats the current culprit combination
+- entering a known code on the landing page resolves; an unknown code is rejected
+
+## 4. Seed Cosmos
+
+From the repo root, after `az login` (you hold *Data Contributor* on the `books`
+database):
+
+```
+dotnet run --project ai-mysteries-tools -- seed --endpoint <cosmos-uri>
+dotnet run --project ai-mysteries-tools -- diff --endpoint <cosmos-uri>   # must report in sync
+```
+
+That's it. The prod API picks the book up from Cosmos (restart the App Service app
+if you need it immediately — content is cached at startup), the landing page lists
+it, and no front-end or API deploy is needed.
+
+## Spoiler rules (apply to every book)
+
+- Never commit anything under `Content/` or `source_materials/` (both gitignored).
+- Never build or commit a public index of endings or codes — no file in the repo may
+  map codes/slugs to culprits.
+- Don't add endpoints or payloads that return many endings at once.
