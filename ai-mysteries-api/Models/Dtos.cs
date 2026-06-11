@@ -44,6 +44,8 @@ public record ExistsDto(bool Exists);
 public record BookMetaDto(
     string Id,
     string Title,
+    string Genre,
+    string Length,
     IReadOnlyList<string> Summary,
     string CoverImage,
     string CoverAlt,

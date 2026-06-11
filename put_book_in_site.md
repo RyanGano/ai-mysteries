@@ -46,6 +46,8 @@ of it in the React components.
 ```json
 {
   "title": "…",
+  "genre": "…",
+  "length": "…",
   "summary": ["paragraph 1", "paragraph 2"],
   "coverImage": "https://…/cover.webp",
   "coverAlt": "…",
@@ -69,6 +71,10 @@ of it in the React components.
   `"sentinel"` for the `sentinelCulprit`'s solo endings), and the odds of the `special: true`
   ending. Omit it for uniform odds and no special roll. It is never returned by any API
   endpoint — keep it that way.
+
+- `genre` and `length` are short free-form strings shown on the catalog and the book's home
+  page (e.g. `"Mystery"` and `"~14,000 words"`). The catalog renders them as `genre · length`,
+  so keep each to a few words; either may be omitted.
 
 - `coverImage` is a **URL** the web uses directly as `<img src>`. For a new book it
   must be **absolute** (host it yourself, e.g. Azure Blob Storage with public read) —

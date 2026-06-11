@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { fetchBooks, checkCode } from "../lib/api";
+import { Link } from "react-router-dom";
+import { fetchBooks } from "../lib/api";
 import type { BookMeta } from "../lib/types";
 import "../styles/landing.css";
 
@@ -25,16 +25,16 @@ export default function Landing() {
 
   if (state.status === "loading") {
     return (
-      <main className="landing landing--status">
-        <p className="landing-status-text">Loading&hellip;</p>
+      <main className="catalog catalog--status">
+        <p className="catalog-status-text">Loading&hellip;</p>
       </main>
     );
   }
 
   if (state.status === "error") {
     return (
-      <main className="landing landing--status">
-        <p className="landing-status-text">
+      <main className="catalog catalog--status">
+        <p className="catalog-status-text">
           The library couldn&rsquo;t be loaded right now. Please try again in a moment.
         </p>
       </main>
@@ -42,87 +42,38 @@ export default function Landing() {
   }
 
   return (
-    <main className="landing">
-      {state.books.map((book) => (
-        <BookCard key={book.id} book={book} />
-      ))}
+    <main className="catalog">
+      <header className="catalog-header">
+        <h1 className="catalog-title">AI Mysteries</h1>
+        <p className="catalog-tagline">
+          Every story here is written by AI &mdash; and every one has more than one ending.
+        </p>
+      </header>
+      <ul className="catalog-list">
+        {state.books.map((book) => (
+          <li key={book.id}>
+            <CatalogCard book={book} />
+          </li>
+        ))}
+      </ul>
     </main>
   );
 }
 
-// One book's marketing hero — cover, summary, CTAs, code entry, secret blurb. Every word and
-// image comes from the book's metadata; nothing here is specific to any single book.
-function BookCard({ book }: { book: BookMeta }) {
-  const navigate = useNavigate();
-  const [codeInput, setCodeInput] = useState("");
-  const [error, setError] = useState("");
-  const [checking, setChecking] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const code = codeInput.trim();
-    if (!code) return;
-    setChecking(true);
-    try {
-      const exists = await checkCode(book.id, code);
-      if (!exists) {
-        setError("That code didn't match any ending. Check the code and try again.");
-        return;
-      }
-      navigate(`/${book.id}/ending/${code}`);
-    } catch {
-      setError("Couldn't reach the endings right now. Please try again in a moment.");
-    } finally {
-      setChecking(false);
-    }
-  }
-
+// One row in the catalog: cover, title, genre + length, and a short teaser. The whole card links
+// to the book's home page. Every word comes from the book's metadata — nothing book-specific here.
+function CatalogCard({ book }: { book: BookMeta }) {
+  const facts = [book.genre, book.length].filter(Boolean).join(" · ");
   return (
-    <section className="landing-book">
+    <Link to={`/${book.id}`} className="catalog-card">
       {book.coverImage && (
-        <div className="landing-cover">
-          <img src={book.coverImage} alt={book.coverAlt} className="cover-image" />
-        </div>
+        <img src={book.coverImage} alt={book.coverAlt} className="catalog-cover" />
       )}
-      <div className="landing-content">
-        <h1 className="landing-title">{book.title}</h1>
-        {book.summary.map((para, i) => (
-          <p key={i} className="landing-blurb">
-            {para}
-          </p>
-        ))}
-        <div className="landing-ctas">
-          <Link to={`/${book.id}`} className="cta-button cta-button--primary">
-            Start reading the book &rarr;
-          </Link>
-          <Link to={`/${book.id}/ending`} className="cta-button cta-button--ghost">
-            Already read the book? Reveal your ending &rarr;
-          </Link>
-        </div>
-        <form onSubmit={handleSubmit} className="code-form">
-          <label htmlFor={`code-input-${book.id}`}>Have a code? Enter it here:</label>
-          <div className="code-form-row">
-            <input
-              id={`code-input-${book.id}`}
-              type="text"
-              maxLength={6}
-              value={codeInput}
-              onChange={(e) => {
-                setCodeInput(e.target.value);
-                setError("");
-              }}
-              placeholder={book.codePlaceholder}
-              autoComplete="off"
-              spellCheck={false}
-            />
-            <button type="submit" disabled={checking}>
-              Go
-            </button>
-          </div>
-          {error && <p className="code-error">{error}</p>}
-        </form>
-        {book.secretBlurb && <p className="landing-secret">{book.secretBlurb}</p>}
+      <div className="catalog-card-text">
+        <h2 className="catalog-book-title">{book.title}</h2>
+        {facts && <p className="catalog-book-facts">{facts}</p>}
+        {book.summary[0] && <p className="catalog-book-teaser">{book.summary[0]}</p>}
       </div>
-    </section>
+    </Link>
   );
 }

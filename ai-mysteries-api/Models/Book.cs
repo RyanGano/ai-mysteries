@@ -54,6 +54,8 @@ public sealed class Book
     public BookMetaDto GetMeta() => new(
         Id,
         Meta.Title,
+        Meta.Genre,
+        Meta.Length,
         Meta.Summary,
         Meta.CoverImage,
         Meta.CoverAlt,

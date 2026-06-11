@@ -1,10 +1,158 @@
+/* ---- Catalog (landing list of all books) ---- */
+.catalog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  padding: var(--page-pad);
+  min-height: 100dvh;
+}
+
+.catalog--status {
+  justify-content: center;
+}
+
+.catalog-status-text {
+  font-family: var(--font-serif);
+  color: var(--color-text-muted);
+}
+
+.catalog-header {
+  text-align: center;
+  max-width: 46ch;
+  margin-top: 4vh;
+}
+
+.catalog-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--color-text);
+}
+
+.catalog-tagline {
+  margin-top: 0.75rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.catalog-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* A single book row: cover thumbnail + text, links to the book's home page. */
+.catalog-card {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+
+.catalog-card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.catalog-cover {
+  flex-shrink: 0;
+  width: 88px;
+  height: auto;
+  align-self: flex-start;
+  border-radius: 2px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.catalog-card-text {
+  min-width: 0;
+}
+
+.catalog-book-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: var(--color-text);
+}
+
+.catalog-book-facts {
+  margin-top: 0.3rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.catalog-book-teaser {
+  margin-top: 0.6rem;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  /* clamp the teaser so long first paragraphs stay scannable */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- Book home (single book hero) ---- */
 .landing {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4rem;
+  gap: 2rem;
   padding: var(--page-pad);
   min-height: 100dvh;
+}
+
+/* Top bar on the book home page holding the back-to-catalog link. */
+.landing-bar {
+  width: 100%;
+  max-width: 640px;
+}
+
+.landing-back {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.landing-back:hover {
+  color: var(--color-text);
+}
+
+.landing-facts {
+  margin-top: -0.6rem;
+  margin-bottom: 1.2rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.cta-button--disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* Each book's hero: cover + content, stacked on narrow screens, side-by-side on wide ones. */

@@ -11,6 +11,8 @@ export interface SpecialReveal {
 export interface BookMeta {
   id: string;
   title: string;
+  genre: string;
+  length: string;
   summary: string[];
   coverImage: string;
   coverAlt: string;

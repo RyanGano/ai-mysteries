@@ -19,6 +19,8 @@ public sealed class ContentDoc
     public List<string>? ChapterOrder { get; set; }
 
     // manifest only — BookMeta fields (flat, matching this doc's type-specific field convention).
+    public string? Genre { get; set; }
+    public string? Length { get; set; }
     public List<string>? Summary { get; set; }
     public string? CoverImage { get; set; }
     public string? CoverAlt { get; set; }
@@ -85,6 +87,8 @@ public static class CosmosContent
             BookId = raw.Id,
             Type = Manifest,
             Title = m.Title,
+            Genre = m.Genre,
+            Length = m.Length,
             ChapterOrder = raw.Chapters.Select(c => c.Slug).ToList(),
             Summary = m.Summary.ToList(),
             CoverImage = m.CoverImage,
@@ -147,6 +151,8 @@ public static class CosmosContent
         var fallback = BookMeta.Default(bookId);
         var meta = new BookMeta(
             Title: manifest.Title ?? fallback.Title,
+            Genre: manifest.Genre ?? fallback.Genre,
+            Length: manifest.Length ?? fallback.Length,
             Summary: manifest.Summary ?? fallback.Summary.ToList(),
             CoverImage: manifest.CoverImage ?? fallback.CoverImage,
             CoverAlt: manifest.CoverAlt ?? fallback.CoverAlt,

@@ -41,6 +41,8 @@ public sealed record SelectionRules(
 // a new book is a data-only change. Contains no codes, culprits, or ending list (no spoilers).
 public sealed record BookMeta(
     string Title,
+    string Genre,
+    string Length,
     IReadOnlyList<string> Summary,
     string CoverImage,
     string CoverAlt,
@@ -56,6 +58,8 @@ public sealed record BookMeta(
     // else empty so the API and web still render without throwing.
     public static BookMeta Default(string bookId) => new(
         Title: bookId,
+        Genre: "",
+        Length: "",
         Summary: Array.Empty<string>(),
         CoverImage: "",
         CoverAlt: "",

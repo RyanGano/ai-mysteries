@@ -67,6 +67,8 @@ public sealed class FileBookSource : IBookSource
         var fallback = BookMeta.Default(id);
         return (new BookMeta(
             Title: d.Title ?? fallback.Title,
+            Genre: d.Genre ?? fallback.Genre,
+            Length: d.Length ?? fallback.Length,
             Summary: d.Summary ?? fallback.Summary,
             CoverImage: d.CoverImage ?? fallback.CoverImage,
             CoverAlt: d.CoverAlt ?? fallback.CoverAlt,
@@ -109,6 +111,8 @@ public sealed class FileBookSource : IBookSource
     // Nullable mirror of meta.json — every field optional so partial/absent files fall back.
     private sealed record MetaDoc(
         string? Title = null,
+        string? Genre = null,
+        string? Length = null,
         List<string>? Summary = null,
         string? CoverImage = null,
         string? CoverAlt = null,

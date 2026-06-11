@@ -40,11 +40,6 @@ export default function Read() {
     };
   }, [bookId]);
 
-  // No slug (/[bookId]) → redirect to the first chapter once the TOC is known.
-  useEffect(() => {
-    if (!slug && toc && toc.length) navigate(`/${bookId}/${toc[0].slug}`, { replace: true });
-  }, [slug, toc, navigate, bookId]);
-
   // Fetch the current chapter and its prev/next neighbours.
   useEffect(() => {
     if (!slug) return;
