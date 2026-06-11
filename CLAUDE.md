@@ -124,35 +124,27 @@ in `Cors:AllowedOrigins` — so it works regardless of which port Vite lands on.
 ### Weighted random selection
 
 Each ending names a set of culprits via `culprits` (in `endings.json`). The **category** is
-derived from that set's size (`["SAM"]` is the special SAM category). Selection runs
-**server-side** and is three-stage (see `ai-mysteries-api/Services/EndingSelector.cs`):
+derived from that set's size, plus one special sentinel category — see
+`ai-mysteries-api/Services/EndingSelector.cs` for the categories and their weights. Selection
+runs **server-side** and is three-stage:
 
-1. **Pick a category by weight** (most → least common):
-
-   | Category               | `culprits` size | Weight |
-   |------------------------|-----------------|--------|
-   | Single person          | 1               | 45%    |
-   | Two people             | 2               | 25%    |
-   | Three people           | 3               | 14%    |
-   | Four people            | 4               | 8%     |
-   | All of the team        | 5               | 5%     |
-   | SAM                    | `["SAM"]`       | 3%     |
-
-2. **Pick a culprit combination uniformly** within the category (e.g. one of the 10 pairs).
+1. **Pick a category by weight** — `CategoryWeights` in `EndingSelector.cs`, ordered most →
+   least common (a single culprit is the most likely; the special category the least). The
+   weights must stay monotonically decreasing and sum to 100.
+2. **Pick a culprit combination uniformly** within the category.
 3. **Pick uniformly** among that combination's registered endings.
 
 Picking the combo before the ending keeps every combination equally likely regardless of how
-many endings it has. `CategoryWeights` in `ai-mysteries-api/Services/EndingSelector.cs` must
-stay monotonically decreasing and sum to 100. To add a new suspect, the combinatorics change —
-revisit the weights, but the size-derived categories keep working automatically.
+many endings it has. To add a new suspect, the combinatorics change — revisit the weights, but
+the size-derived categories keep working automatically.
 
 ### "Reveal another ending" exclusion rule
 
 When a reader clicks **Reveal another ending**, the next pick excludes any ending that shares
-the same culprit combination as the one currently displayed. For example, if you're reading a
-Rourke-solo ending you won't see another Rourke-solo; if you're reading a Rourke+Shah pair
-you won't see another Rourke+Shah ending. Endings that merely _include_ one of those people
-in a different combination are still eligible.
+the same culprit combination as the one currently displayed. For example, if you're reading an
+ending where suspect A acted alone you won't see another A-solo ending; if you're reading an
+A+B pair you won't see another A+B ending. Endings that merely _include_ A or B in a different
+combination are still eligible.
 
 This is enforced by `EndingSelector.PickCode(book, excludeCode, …)` in
 `ai-mysteries-api/Services/EndingSelector.cs` — the client passes the currently displayed
@@ -164,21 +156,21 @@ every ending, including newly added ones. No extra steps needed when authoring a
 
 1. Write `ai-mysteries-api/Content/within-tolerance/endings/<slug>.md` in the book's voice
    (see style guide below).
-2. Every ending must open with these exact two paragraphs:
-   ```
-   No one asked why they were there this time.
-   The meeting had been called without an agenda, without a subject line, without the small procedural courtesies that usually softened bad news. That alone told them this wasn't another reconstruction.
-   ```
+2. Every ending must open with the book's mandatory two-paragraph header. Copy it **verbatim**
+   from any existing ending in `Content/within-tolerance/endings/` (or from
+   `docs/EndingStyleGuide.md`) — both local-only. Never reproduce it in a committed file.
 3. Add an entry to `ai-mysteries-api/Content/within-tolerance/endings.json` (`slug` links the
    entry to the `.md` file you just wrote):
    ```json
-   { "code": "XXXX", "culprits": ["Name"], "title": "Chapter 17 — The Real Ending", "slug": "my-ending" }
+   { "code": "XXXX", "culprits": ["Name"], "title": "<copy from an existing entry>", "slug": "my-ending" }
    ```
    `culprits` lists everyone responsible — one name for a single, several for a combination,
-   all five for "all of the team", or `["SAM"]` for SAM. The `title` is always
-   `"Chapter 17 — The Real Ending"` — it must never vary or hint at the culprit(s).
+   every suspect for the all-of-them category, or the special sentinel (see
+   `EndingSelector.cs`). The `title` is identical for every ending — copy it from any existing
+   entry in `endings.json`; it must never vary or hint at the culprit(s).
 4. Use a unique canonical 4-char code. Canonical = uppercase, `O` not `0`, `I` not `1`/`L`.
-   **Do not let the code hint at the culprit** — use unrelated letters/digits (e.g. `7BXK`, `Q4NM`).
+   **Do not let the code hint at the culprit** — pick unrelated letters/digits. Never quote a
+   real, registered code in a committed file (docs, comments, examples).
 5. Restart the API (`dotnet run`) — `BookStore` throws on a duplicate normalized code at startup.
 6. (Optional) Wire up the ending's **cross-references** (the in-ending "spot the clue"
    binoculars). See *Cross-references* below — this is driven entirely from
@@ -210,21 +202,25 @@ longer matches the manuscript. Web runtime lives in `src/lib/remark-xref.ts`,
 ## Voice and style guide
 
 `docs/EndingStyleGuide.md` is the full reference — local-only, not committed (see `docs/` in
-`.gitignore`). Key rules:
-- Third-person past tense, restrained/literary register
-- Em-dashes, short sentences for weight, long ones for accumulation
-- Recurring motifs: _within tolerance_, _acceptable loss_, _the system made a decision_
-- No confession scenes, no explicit verdicts, no new characters
-- Every ending opens with the mandatory two-paragraph header (see step 2 above)
+`.gitignore`). It carries the register, the recurring motifs, the hard "never do" rules, and
+the mandatory two-paragraph opening. **Read it (plus a few existing endings) before writing a
+new ending** — and don't reproduce its specifics in this file or anything else committed.
 
 ## Character reference
 
-`source_materials/Battery_Lab_Mystery_Character_Bible.docx` — local-only, never committed.
-Contains full character details for all suspects. Use it when writing new endings.
+The character bible — a `.docx` in `source_materials/`, local-only, never committed. Contains
+full character details for all suspects. Use it when writing new endings.
 
 ## Spoiler rules
 
+The repo is **public**. Treat every committed file as reader-visible.
+
 - **Never** build a public index of endings or codes.
+- No committed file (including this one, code comments, and docs) may contain real ending
+  codes, ending slugs paired with culprits, character/suspect names, category names, verbatim
+  book text, or revealing source-material filenames. Use placeholders (`XXXX`, "suspect A") in
+  examples; the real details live only in gitignored files (`Content/`, `docs/`,
+  `source_materials/`).
 - The client no longer holds the full registry. The API returns one ending at a time
   (`endings/{code}`) and runs selection server-side, so the browser never receives the list of
   all codes/culprits. Keep it that way — don't add an endpoint or payload that returns many

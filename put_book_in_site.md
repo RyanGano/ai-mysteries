@@ -74,10 +74,9 @@ Each entry in `endings.json`:
   culprit(s)** — unrelated letters/digits only. The API throws at startup on a
   duplicate normalized code.
 - `culprits` — everyone responsible. The selection category is derived from the
-  set's size; a single sentinel value (like `["SAM"]` in Within Tolerance) can mark a
-  special category — check `ai-mysteries-api/Services/EndingSelector.cs` if the new
-  book's suspect count differs, since the category weights are tied to combination
-  counts.
+  set's size; a reserved sentinel value can mark a special category — check
+  `ai-mysteries-api/Services/EndingSelector.cs` if the new book's suspect count
+  differs, since the category weights are tied to combination counts.
 - `title` — identical for every ending; it must never vary or hint at the culprit(s).
 - `special: true` — marks a rare ending that gets the reveal overlay
   (`specialReveal` copy in meta.json).
