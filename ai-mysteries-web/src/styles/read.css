@@ -34,6 +34,11 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+.read-bar-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
 .read-toc-button {
   padding: 0.45rem 1rem;
   background: var(--color-surface);
@@ -229,6 +234,167 @@
 .toc-link--active {
   border-left-color: var(--color-accent);
   color: var(--color-accent);
+}
+
+/* ── Endings drawer (right-sliding: reveal an ending / enter a code) ──── */
+
+.endings {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.endings-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.endings-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(22rem, 86vw);
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.5);
+  padding: 1.5rem 0;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+}
+
+.endings--open {
+  pointer-events: auto;
+}
+
+.endings--open .endings-overlay {
+  opacity: 1;
+}
+
+.endings--open .endings-panel {
+  transform: translateX(0);
+}
+
+.endings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem 1rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.endings-head-title {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.endings-close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0 0.25rem;
+  transition: color 0.15s;
+}
+
+.endings-close:hover {
+  color: var(--color-text);
+}
+
+.endings-body {
+  padding: 0.5rem 1.5rem 1.5rem;
+}
+
+.endings-lead {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+}
+
+.endings-body .cta-button {
+  margin-top: 0.5rem;
+}
+
+.endings-code-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.endings-code-form label {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.endings-code-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.endings-code-row input {
+  padding: 0.5rem 0.75rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  width: 8ch;
+  text-align: center;
+}
+
+.endings-code-row input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.endings-code-row button {
+  padding: 0.5rem 1rem;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+
+.endings-code-row button:hover {
+  background: var(--color-accent-hover);
+}
+
+.endings-code-error {
+  color: var(--color-error);
+  font-size: 0.85rem;
+}
+
+.endings-secret {
+  margin-top: 1.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
 }
 
 /* Transient highlight when arriving from an ending's cross-reference (/read/...?clue=ID). */

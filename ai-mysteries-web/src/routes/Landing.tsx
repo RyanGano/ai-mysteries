@@ -61,8 +61,8 @@ export default function Landing() {
 }
 
 // One row in the catalog: cover, title, genre + reading time, and a short teaser. The whole card
-// links to the book's home page (stretched link off the title). Every word comes from the book's
-// metadata — nothing book-specific here.
+// links into the book (stretched link off the title) — /:bookId drops straight into the first
+// chapter. Every word comes from the book's metadata — nothing book-specific here.
 function CatalogCard({ book }: { book: BookMeta }) {
   const facts = [book.genre, book.readingTime].filter(Boolean).join(" · ");
   return (

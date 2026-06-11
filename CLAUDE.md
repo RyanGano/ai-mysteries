@@ -138,8 +138,10 @@ in `Cors:AllowedOrigins` — so it works regardless of which port Vite lands on.
 
 ## How the ending mechanic works
 
-- Routes are book-scoped: `/:bookId` (the book's home — cover, summary, CTAs, code entry),
-  `/:bookId/:slug` (a chapter; "Start reading" links to the first chapter's slug),
+- Routes are book-scoped: `/:bookId` (redirects straight into the book's first chapter — there is
+  no per-book marketing page; the catalog card carries the cover/summary, and the reader's Endings
+  drawer carries the code-entry + reveal-ending controls),
+  `/:bookId/:slug` (a chapter; clicking a catalog card lands here on the first chapter's slug),
   `/:bookId/ending` (picks a weighted-random code, redirects replace), and
   `/:bookId/ending/:code` (permanent page — always the same ending for that code). `/` is the
   data-driven catalog listing every book (title, genre, reading time); `/privacy` is the static

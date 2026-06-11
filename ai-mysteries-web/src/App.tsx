@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Landing from "./routes/Landing";
-import BookHome from "./routes/BookHome";
+import BookEntry from "./routes/BookEntry";
 import FindEnding from "./routes/FindEnding";
 import Ending from "./routes/Ending";
 import Read from "./routes/Read";
@@ -13,8 +13,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/privacy" element={<Privacy />} />
-        {/* /:bookId is the book's home (cover, summary, CTAs, code entry) */}
-        <Route path="/:bookId" element={<BookHome />} />
+        {/* /:bookId drops straight into the first chapter (no per-book marketing page) */}
+        <Route path="/:bookId" element={<BookEntry />} />
         <Route path="/:bookId/ending" element={<FindEnding />} />
         <Route path="/:bookId/ending/:code" element={<Ending />} />
         <Route path="/:bookId/:slug" element={<Read />} />
