@@ -42,7 +42,7 @@ public sealed record SelectionRules(
 public sealed record BookMeta(
     string Title,
     string Genre,
-    string Length,
+    int WordCount,
     IReadOnlyList<string> Summary,
     string CoverImage,
     string CoverAlt,
@@ -59,7 +59,7 @@ public sealed record BookMeta(
     public static BookMeta Default(string bookId) => new(
         Title: bookId,
         Genre: "",
-        Length: "",
+        WordCount: 0,
         Summary: Array.Empty<string>(),
         CoverImage: "",
         CoverAlt: "",

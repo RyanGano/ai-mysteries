@@ -85,7 +85,7 @@ export default function BookHome() {
   }
 
   const book = state.book;
-  const facts = [book.genre, book.length].filter(Boolean).join(" · ");
+  const facts = [book.genre, book.readingTime].filter(Boolean).join(" · ");
   const firstSlug = toc[0]?.slug;
 
   return (

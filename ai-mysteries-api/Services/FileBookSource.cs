@@ -68,7 +68,7 @@ public sealed class FileBookSource : IBookSource
         return (new BookMeta(
             Title: d.Title ?? fallback.Title,
             Genre: d.Genre ?? fallback.Genre,
-            Length: d.Length ?? fallback.Length,
+            WordCount: d.WordCount ?? fallback.WordCount,
             Summary: d.Summary ?? fallback.Summary,
             CoverImage: d.CoverImage ?? fallback.CoverImage,
             CoverAlt: d.CoverAlt ?? fallback.CoverAlt,
@@ -112,7 +112,7 @@ public sealed class FileBookSource : IBookSource
     private sealed record MetaDoc(
         string? Title = null,
         string? Genre = null,
-        string? Length = null,
+        int? WordCount = null,
         List<string>? Summary = null,
         string? CoverImage = null,
         string? CoverAlt = null,

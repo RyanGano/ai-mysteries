@@ -47,7 +47,7 @@ of it in the React components.
 {
   "title": "…",
   "genre": "…",
-  "length": "…",
+  "wordCount": 12345,
   "summary": ["paragraph 1", "paragraph 2"],
   "coverImage": "https://…/cover.webp",
   "coverAlt": "…",
@@ -72,9 +72,10 @@ of it in the React components.
   ending. Omit it for uniform odds and no special roll. It is never returned by any API
   endpoint — keep it that way.
 
-- `genre` and `length` are short free-form strings shown on the catalog and the book's home
-  page (e.g. `"Mystery"` and `"~14,000 words"`). The catalog renders them as `genre · length`,
-  so keep each to a few words; either may be omitted.
+- `genre` is a short free-form string (e.g. `"Mystery"`). `wordCount` is the book's word count
+  as a number; the API converts it to an estimated reading time (and also returns the raw count
+  for future sorting/filtering). The catalog and book home render `genre · <reading time>`, so
+  keep `genre` to a few words; either field may be omitted.
 
 - `coverImage` is a **URL** the web uses directly as `<img src>`. For a new book it
   must be **absolute** (host it yourself, e.g. Azure Blob Storage with public read) —

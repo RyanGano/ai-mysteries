@@ -12,7 +12,9 @@ export interface BookMeta {
   id: string;
   title: string;
   genre: string;
-  length: string;
+  // Raw word count (for future sorting/filtering) and the server-computed display estimate.
+  wordCount: number;
+  readingTime: string;
   summary: string[];
   coverImage: string;
   coverAlt: string;

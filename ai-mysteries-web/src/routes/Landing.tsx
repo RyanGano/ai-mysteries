@@ -63,7 +63,7 @@ export default function Landing() {
 // One row in the catalog: cover, title, genre + length, and a short teaser. The whole card links
 // to the book's home page. Every word comes from the book's metadata — nothing book-specific here.
 function CatalogCard({ book }: { book: BookMeta }) {
-  const facts = [book.genre, book.length].filter(Boolean).join(" · ");
+  const facts = [book.genre, book.readingTime].filter(Boolean).join(" · ");
   return (
     <Link to={`/${book.id}`} className="catalog-card">
       {book.coverImage && (

@@ -62,8 +62,9 @@ Two committed, spoiler-free playbooks at the repo root:
 **Two load-bearing principles:**
 
 1. **No book-specific data or wording lives in the code — front end or API.** Title, genre,
-   length, marketing summary, cover image, secret blurb, end-of-book payoff, share text, and the
-   special-ending reveal copy all come from the API (`BookMeta`). React holds only generic,
+   word count (the API converts it to an estimated reading time), marketing summary, cover image,
+   secret blurb, end-of-book payoff, share text, and the special-ending reveal copy all come from
+   the API (`BookMeta`). React holds only generic,
    book-agnostic UI chrome — button verbs ("Reveal another ending →", "Continue reading →",
    "Contents"), loading/error text, the catalog tagline + footer disclaimers + privacy policy,
    and the "AI Mysteries" site brand in `index.html`. The API is equally
@@ -133,7 +134,7 @@ in `Cors:AllowedOrigins` — so it works regardless of which port Vite lands on.
   `/:bookId/:slug` (a chapter; "Start reading" links to the first chapter's slug),
   `/:bookId/ending` (picks a weighted-random code, redirects replace), and
   `/:bookId/ending/:code` (permanent page — always the same ending for that code). `/` is the
-  data-driven catalog listing every book (title, genre, length); `/privacy` is the static
+  data-driven catalog listing every book (title, genre, reading time); `/privacy` is the static
   privacy policy. A site-wide `Footer` (AI-authorship + fiction disclaimers, privacy link)
   renders on every route. See `ai-mysteries-web/src/App.tsx`.
 - Codes are 4-char uppercase. `O/0` and `I/1/L` are interchangeable on input (normalized).
