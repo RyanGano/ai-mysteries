@@ -1,16 +1,16 @@
 // Generator for the cross-reference ("spot the clue") data.
 //
-// Source of truth: docs/EndingClueMap.md (gitignored spoiler artifact). Two of its
-// sections drive two committed artifacts under ai-mysteries-api/Content/within-tolerance/:
+// Source of truth: the book's EndingClueMap.md (gitignored spoiler artifact). Two of its
+// sections drive two artifacts under ai-mysteries-api/Content/<bookId>/ (gitignored like the
+// rest of the book content; they reach prod via the ai-mysteries-tools seeder):
 //
 //   * Clue Library                       -> clues.json        (clueId -> { chapter, quote })
 //   * Marker placement (annotated …)     -> xref-markers.json (endingCode -> { slug, markers })
 //
-// Run with:  node scripts/gen-xrefs.cjs   (from the repo root)
+// Run with:  node scripts/gen-xrefs.cjs [bookId]   (from the repo root; default within-tolerance)
 //
-// The .md doc is never committed (see source_materials / docs policy in CLAUDE.md), so this
-// script only runs locally where the doc is present. The generated .json files ARE committed
-// and loaded at runtime by the .NET API.
+// The clue map lives at docs/<bookId>/EndingClueMap.md. docs/ is never committed (see
+// CLAUDE.md spoiler rules), so this script only runs locally where the doc is present.
 //
 // See docs/cross_reference.md for the design and the matching contract this implements.
 
@@ -19,8 +19,13 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const SNIPPET_LEN = 40; // chars of body kept before each marker, for drift detection at runtime
-const DOC = path.join(ROOT, "docs", "EndingClueMap.md");
-const CONTENT = path.join(ROOT, "ai-mysteries-api", "Content", "within-tolerance");
+const BOOK_ID = process.argv[2] || "within-tolerance";
+const DOC = path.join(ROOT, "docs", BOOK_ID, "EndingClueMap.md");
+if (!fs.existsSync(DOC)) {
+  console.error(`gen-xrefs: no clue map found at docs/${BOOK_ID}/EndingClueMap.md`);
+  process.exit(1);
+}
+const CONTENT = path.join(ROOT, "ai-mysteries-api", "Content", BOOK_ID);
 const ENDINGS_DIR = path.join(CONTENT, "endings");
 const BOOK_DIR = path.join(CONTENT, "book");
 
@@ -47,9 +52,12 @@ function sliceSection(lines, startRe, stopRe) {
 
 // --- Clue Library ------------------------------------------------------------
 // Expected shape (illustrative placeholders, not real data):
-// ### Chapter N — <Suspect> — `/read/chapter-N`
+// ### Chapter N — <Suspect> — `/some-book/chapter-N`
 // - **CN-EXAMPLE** — “…verbatim quote…”
 // - **CN-OTHER** *(added crumb)* — “…”
+//
+// The backticked route's last path segment is the chapter slug (so both the legacy
+// `/read/<slug>` form and the current `/<bookId>/<slug>` form work).
 
 function parseClueLibrary(lines) {
   const section = sliceSection(lines, /^## Clue Library\s*$/, /^#{1,2} (?!#)/);
@@ -57,14 +65,14 @@ function parseClueLibrary(lines) {
   let chapterSlug = null;
   let chapterTitle = null;
 
-  const headingRe = /^### (.+?) — `(\/read\/[^`]+)`\s*$/;
+  const headingRe = /^### (.+?) — `(\/[^`]+)`\s*$/;
   const bulletRe = /^- \*\*([A-Z0-9-]+)\*\*(?:\s*\*\([^)]*\)\*)?\s*— (.+)$/;
 
   for (const line of section) {
     const h = line.match(headingRe);
     if (h) {
       chapterTitle = h[1].trim();
-      chapterSlug = h[2].replace("/read/", "");
+      chapterSlug = h[2].split("/").filter(Boolean).pop();
       continue;
     }
     const b = line.match(bulletRe);
@@ -287,7 +295,7 @@ function emit() {
 
   const markerCount = Object.values(byCode).reduce((n, e) => n + e.markers.length, 0);
   console.log(
-    `Wrote clues.json (${Object.keys(clues).length} clues) and xref-markers.json ` +
+    `[${BOOK_ID}] Wrote clues.json (${Object.keys(clues).length} clues) and xref-markers.json ` +
       `(${Object.keys(byCode).length} endings, ${markerCount} markers).`
   );
   if (warnings.length) {

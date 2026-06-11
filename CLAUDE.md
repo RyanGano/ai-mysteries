@@ -31,11 +31,12 @@ dotnet run --project ai-mysteries-tools -- pull --endpoint <cosmos-uri>   # Cosm
 defaults (`books` / `content` / `ai-mysteries-api/Content`). The Tools project is
 local-only and never deployed.
 
-Cross-reference data (run from the **repo root**, where `docs/EndingClueMap.md` lives):
+Cross-reference data (run from the **repo root**; each book's clue map lives at
+`docs/<bookId>/EndingClueMap.md`):
 
 ```
-node scripts/gen-xrefs.cjs     # regenerate clues.json + xref-markers.json from EndingClueMap.md
-node scripts/check-xrefs.cjs   # validate the generated JSON against the manuscript (no drift)
+node scripts/gen-xrefs.cjs [bookId]     # regenerate clues.json + xref-markers.json from the clue map (default within-tolerance)
+node scripts/check-xrefs.cjs [bookId]   # validate the generated JSON against the manuscript (all books if omitted)
 ```
 
 The web dev server points at the API via `VITE_API_BASE_URL` (defaults to `http://localhost:5180`
@@ -45,6 +46,16 @@ The web dev server points at the API via `VITE_API_BASE_URL` (defaults to `http:
 
 Marketing + payoff site for the novel **Within Tolerance**. The book ends unresolved — the
 final printed line is `www.therealending.com`. This site delivers the real, varied endings.
+
+## Adding a book
+
+Two committed, spoiler-free playbooks at the repo root:
+
+- **`create_new_book.md`** — start-to-finish: turn a one-line premise into a finished book
+  (design the mystery, write chapters + weighted endings, plant clues, wire
+  cross-references, verify, seed). Start here when asked to *create* a new book.
+- **`put_book_in_site.md`** — the underlying file contract (`meta.json`, `book.json`,
+  `endings.json`, …) and the Cosmos seeding procedure. Reference for the mechanics.
 
 ## Architecture
 
@@ -172,7 +183,8 @@ every ending, including newly added ones. No extra steps needed when authoring a
    (see style guide below).
 2. Every ending must open with the book's mandatory two-paragraph header. Copy it **verbatim**
    from any existing ending in `Content/within-tolerance/endings/` (or from
-   `docs/EndingStyleGuide.md`) — both local-only. Never reproduce it in a committed file.
+   `docs/within-tolerance/EndingStyleGuide.md`) — both local-only. Never reproduce it in a
+   committed file.
 3. Add an entry to `ai-mysteries-api/Content/within-tolerance/endings.json` (`slug` links the
    entry to the `.md` file you just wrote):
    ```json
@@ -189,14 +201,15 @@ every ending, including newly added ones. No extra steps needed when authoring a
 5. Restart the API (`dotnet run`) — `BookStore` throws on a duplicate normalized code at startup.
 6. (Optional) Wire up the ending's **cross-references** (the in-ending "spot the clue"
    binoculars). See *Cross-references* below — this is driven entirely from
-   `docs/EndingClueMap.md`, never by editing the ending `.md`.
+   `docs/within-tolerance/EndingClueMap.md`, never by editing the ending `.md`.
 
 ## Cross-references (in-ending "spot the clue")
 
 Endings render a small binoculars glyph at each reveal; hovering/clicking shows the
-foreshadowing manuscript passage and deep-links to it (`/<bookId>/<slug>?clue=<ID>`). The data is
-**generated** from `docs/EndingClueMap.md` (gitignored) into two committed artifacts under
-`ai-mysteries-api/Content/within-tolerance/`:
+foreshadowing manuscript passage and deep-links to it (`/<bookId>/<slug>?clue=<ID>`). The data
+is **generated** per book from `docs/<bookId>/EndingClueMap.md` (gitignored) into two artifacts
+under `ai-mysteries-api/Content/<bookId>/` (gitignored with the rest of the book data; they
+reach prod via the Tools seeder):
 
 - `clues.json` — from the **Clue Library** section (clue id → chapter + the verbatim
   passage(s) to show).
@@ -205,9 +218,9 @@ foreshadowing manuscript passage and deep-links to it (`/<bookId>/<slug>?clue=<I
 
 The API ships, with each ending, only that ending's markers and the clues those markers
 reference (built in `Models/Book.cs`). To add/update cross-references for an ending: edit
-those two sections of `EndingClueMap.md` (add a clue to the Clue Library if new; add the
-ending's annotated excerpt with `[CLUE-ID]` markers to the Marker-placement section), then run
-`node scripts/gen-xrefs.cjs` (from the repo root) and commit the regenerated JSON.
+those two sections of the book's `EndingClueMap.md` (add a clue to the Clue Library if new; add
+the ending's annotated excerpt with `[CLUE-ID]` markers to the Marker-placement section), then
+run `node scripts/gen-xrefs.cjs <bookId>` (from the repo root).
 `node scripts/check-xrefs.cjs` fails if a marker drifted off its anchor or a clue passage no
 longer matches the manuscript. Web runtime lives in `src/lib/remark-xref.ts`,
 `src/components/XrefMarker.tsx` (reads clue data from `CluesContext`, supplied by `Prose`), and
@@ -216,10 +229,11 @@ longer matches the manuscript. Web runtime lives in `src/lib/remark-xref.ts`,
 
 ## Voice and style guide
 
-`docs/EndingStyleGuide.md` is the full reference — local-only, not committed (see `docs/` in
-`.gitignore`). It carries the register, the recurring motifs, the hard "never do" rules, and
-the mandatory two-paragraph opening. **Read it (plus a few existing endings) before writing a
-new ending** — and don't reproduce its specifics in this file or anything else committed.
+Each book has its own style guide at `docs/<bookId>/EndingStyleGuide.md` — local-only, not
+committed (see `docs/` in `.gitignore`). It carries the register, the recurring motifs, the
+hard "never do" rules, and the mandatory shared opening. **Read it (plus a few existing
+endings) before writing a new ending** — and don't reproduce its specifics in this file or
+anything else committed.
 
 ## Character reference
 

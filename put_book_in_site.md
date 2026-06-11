@@ -1,5 +1,9 @@
 # Put a book in the site
 
+> Writing a brand-new book from a premise (story, endings, clues and all)? Start with
+> `create_new_book.md` — the start-to-finish playbook. This doc is the **file contract +
+> seeding reference** it builds on.
+
 Agent playbook for adding a **new book** to the site. By design this is a
 **data-only change** — no code edits, no web/API redeploy (see the architecture
 principles in `CLAUDE.md`). The API auto-discovers books from Cosmos, the landing
@@ -95,11 +99,16 @@ Each entry in `endings.json`:
 
 ### Cross-references (optional, can be added later)
 
-`clues.json` / `xref-markers.json` are **generated**, not hand-written. The current
-generator (`scripts/gen-xrefs.cjs`) is hardwired to `within-tolerance` and its
-`docs/EndingClueMap.md` source — for a new book, generalize the script (or author a
-book-specific clue map + adapt the paths) before generating. Omitting both files is
-fine; endings simply render without the "spot the clue" glyphs.
+`clues.json` / `xref-markers.json` are **generated**, not hand-written. Author the
+book's clue map at `docs/<bookId>/EndingClueMap.md` (gitignored — format and authoring
+guidance in `create_new_book.md` Phase 5), then from the repo root:
+
+```
+node scripts/gen-xrefs.cjs <bookId>     # writes the two JSON files into Content/<bookId>/
+node scripts/check-xrefs.cjs <bookId>   # validates them against the prose (all books if no arg)
+```
+
+Omitting both files is fine; endings simply render without the "spot the clue" glyphs.
 
 ## 3. Verify locally
 
