@@ -46,9 +46,10 @@ function sliceSection(lines, startRe, stopRe) {
 }
 
 // --- Clue Library ------------------------------------------------------------
-// ### Chapter 8 — Marcus Rourke — `/read/chapter-8`
-// - **C8-MAINT** — “…verbatim quote…”
-// - **C6-PACKS** *(added crumb)* — “…”
+// Expected shape (illustrative placeholders, not real data):
+// ### Chapter N — <Suspect> — `/read/chapter-N`
+// - **CN-EXAMPLE** — “…verbatim quote…”
+// - **CN-OTHER** *(added crumb)* — “…”
 
 function parseClueLibrary(lines) {
   const section = sliceSection(lines, /^## Clue Library\s*$/, /^#{1,2} (?!#)/);
@@ -80,7 +81,8 @@ function parseClueLibrary(lines) {
 }
 
 // --- Marker placement --------------------------------------------------------
-// - **P8WR** `rourke-maintenance` — "excerpt [C8-MAINT]" … "excerpt [C8-WINDOW]"
+// Expected shape (illustrative placeholders, not real data):
+// - **XXXX** `some-ending-slug` — "excerpt [CN-EXAMPLE]" … "excerpt [CN-OTHER]"
 //
 // Anchor for each [CLUE-ID] = the contiguous verbatim run immediately before the marker,
 // bounded by the nearest preceding `…` elision or the excerpt's quote boundary. Endings use
