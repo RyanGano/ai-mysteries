@@ -46,7 +46,8 @@ of it in the React components.
 ```json
 {
   "title": "…",
-  "genre": "…",
+  "tags": ["…", "…"],
+  "published": "2026-06-08",
   "wordCount": 12345,
   "summary": ["paragraph 1", "paragraph 2"],
   "coverImage": "https://…/cover.webp",
@@ -72,10 +73,12 @@ of it in the React components.
   ending. Omit it for uniform odds and no special roll. It is never returned by any API
   endpoint — keep it that way.
 
-- `genre` is a short free-form string (e.g. `"Mystery"`). `wordCount` is the book's word count
-  as a number; the API converts it to an estimated reading time (and also returns the raw count
-  for future sorting/filtering). The catalog and book home render `genre · <reading time>`, so
-  keep `genre` to a few words; either field may be omitted.
+- `tags` is a list of short free-form filtering/topic labels (e.g. `["Murder", "AI", "Kid
+  Friendly"]`) — these replace the old single `genre` field; keep them to one or two words each.
+  `published` is the ISO date (`YYYY-MM-DD`) the book went on the site. `wordCount` is the book's
+  word count as a number; the API converts it to an estimated reading time (and also returns the
+  raw count for future sorting/filtering). The catalog renders the tags as chips plus
+  `<reading time> · <published date>`; any of these fields may be omitted.
 
 - `coverImage` is a **URL** the web uses directly as `<img src>`. For a new book it
   must be **absolute** (host it yourself, e.g. Azure Blob Storage with public read) —

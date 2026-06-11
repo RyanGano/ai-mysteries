@@ -11,7 +11,10 @@ export interface SpecialReveal {
 export interface BookMeta {
   id: string;
   title: string;
-  genre: string;
+  // Free-form filtering/topic tags (e.g. "Murder", "AI", "Kid Friendly"). Replaces genre.
+  tags: string[];
+  // ISO date (YYYY-MM-DD) the book was published to the site.
+  published: string;
   // Raw word count (for future sorting/filtering) and the server-computed display estimate.
   wordCount: number;
   readingTime: string;

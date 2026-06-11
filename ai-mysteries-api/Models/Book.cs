@@ -54,7 +54,8 @@ public sealed class Book
     public BookMetaDto GetMeta() => new(
         Id,
         Meta.Title,
-        Meta.Genre,
+        Meta.Tags,
+        Meta.Published,
         Meta.WordCount,
         ReadingTime.Estimate(Meta.WordCount),
         Meta.Summary,
