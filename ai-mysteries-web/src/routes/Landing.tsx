@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchBooks } from "../lib/api";
 import type { BookMeta } from "../lib/types";
@@ -41,6 +41,14 @@ export default function Landing() {
     );
   }
 
+  return <Catalog books={state.books} />;
+}
+
+// The catalog body, given the loaded books. Sorting/filtering are view concerns over the
+// already-fetched list, so they live here client-side; the backend just returns the full set.
+// Default order is newest-first by published date — room to add user-selectable sorts/filters.
+function Catalog({ books }: { books: BookMeta[] }) {
+  const sorted = useMemo(() => [...books].sort(byPublishedDesc), [books]);
   return (
     <main className="catalog">
       <header className="catalog-header">
@@ -50,7 +58,7 @@ export default function Landing() {
         </p>
       </header>
       <ul className="catalog-list">
-        {state.books.map((book) => (
+        {sorted.map((book) => (
           <li key={book.id}>
             <CatalogCard book={book} />
           </li>
@@ -90,6 +98,13 @@ function CatalogCard({ book }: { book: BookMeta }) {
       </div>
     </article>
   );
+}
+
+// Newest-first by published date. ISO "YYYY-MM-DD" strings sort lexicographically the same as by
+// date, so a plain string compare is safe; titles break ties so the order is stable.
+function byPublishedDesc(a: BookMeta, b: BookMeta): number {
+  if (a.published !== b.published) return a.published < b.published ? 1 : -1;
+  return a.title.localeCompare(b.title);
 }
 
 // "2026-06-08" → "June 8, 2026". Parses the date parts by hand so the displayed day never shifts
