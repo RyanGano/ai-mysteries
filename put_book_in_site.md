@@ -10,6 +10,11 @@ principles in `CLAUDE.md`). The API auto-discovers books from Cosmos, the landin
 page renders whatever `GET /api/books` returns, and routing is generic
 (`/:bookId/…`).
 
+**"Add a book" means add it to the *live* site.** The job isn't finished when the files exist
+under `Content/` or even when it works on localhost — it's finished when the book is seeded to
+Cosmos and serving from the production API (§4). Run §4 every time unless the user explicitly
+says not to ship.
+
 Everything below happens locally under `ai-mysteries-api/Content/` (gitignored —
 **never commit book data**) and is then seeded into Cosmos.
 
@@ -155,11 +160,14 @@ container as `<bookId>.webp`:
 ```
 node scripts/gen-cover.cjs <bookId>     # writes ai-mysteries-web/public/covers/<bookId>.webp
 az storage blob upload --account-name <assets-account> -c covers \
-  -n <bookId>.webp -f ai-mysteries-web/public/covers/<bookId>.webp --overwrite --content-type image/webp
+  -n <bookId>.webp -f ai-mysteries-web/public/covers/<bookId>.webp \
+  --overwrite --content-type image/webp --auth-mode key
 ```
 
+Use `--auth-mode key` (the logged-in identity may only hold *Blob Data Reader* on the assets
+account; key auth works as long as you have management access to list the account's keys).
 Confirm `coverImage` in `meta.json` is the public URL of that blob and that it loads in a
-browser (anonymous, not just locally).
+browser (anonymous, not just locally) — `curl -I` it and expect `200` + `image/webp`.
 
 **b. Seed + verify Cosmos:**
 
@@ -167,6 +175,12 @@ browser (anonymous, not just locally).
 dotnet run --project ai-mysteries-tools -- seed --endpoint <cosmos-uri>
 dotnet run --project ai-mysteries-tools -- diff --endpoint <cosmos-uri>   # must report in sync
 ```
+
+**c. Confirm it's live on prod.** Within one refresh poll (~60s) the production API serves the
+book with no App Service restart and no front-end/API deploy. Verify it actually went live:
+poll the prod API's `/api/books` until the new title appears, resolve one of the book's ending
+codes against prod, and re-check the public cover URL. The book is not shipped until prod
+serves it.
 
 That's it. The prod API picks the book up from Cosmos within one refresh poll (~60s) — no
 App Service restart, no front-end or API deploy. The landing page then lists the book.

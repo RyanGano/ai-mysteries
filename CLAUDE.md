@@ -49,13 +49,21 @@ final printed line is `www.therealending.com`. This site delivers the real, vari
 
 ## Adding a book
 
+**A request for a book means a book *live on the production site*.** When a user asks for a
+new book ("I want a mystery set in…"), the default deliverable is the finished book serving from
+the prod API — catalog entry, cover, readable chapters, working endings — not a folder of local
+files or a localhost preview. Run the pipeline all the way through shipping (generate + upload
+the cover, seed Cosmos, verify it's live) every time, unless the user explicitly says to stop
+short ("just draft it locally"). Treat "create a book" and "put it on the site" as one request.
+
 Two committed, spoiler-free playbooks at the repo root:
 
-- **`create_new_book.md`** — start-to-finish: turn a one-line premise into a finished book
-  (design the mystery, write chapters + weighted endings, plant clues, wire
-  cross-references, verify, seed). Start here when asked to *create* a new book.
+- **`create_new_book.md`** — start-to-finish: turn a one-line premise into a book **live on the
+  site** (design the mystery, write chapters + weighted endings, plant clues, wire
+  cross-references, verify, generate + upload the cover, seed Cosmos, confirm it's live). Start
+  here when asked to *create* a new book.
 - **`put_book_in_site.md`** — the underlying file contract (`meta.json`, `book.json`,
-  `endings.json`, …) and the Cosmos seeding procedure. Reference for the mechanics.
+  `endings.json`, …) and the Cosmos seeding + go-live procedure. Reference for the mechanics.
 
 ## Architecture
 

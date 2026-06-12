@@ -13,6 +13,18 @@ and shipping. The companion doc [`put_book_in_site.md`](put_book_in_site.md) is 
 **file contract** (every field of every JSON file) and the **seeding** procedure; this doc
 references it rather than repeating it.
 
+**The deliverable is a book live on the production site — not a folder of local files.**
+When a user asks for a book ("I want a mystery set in…"), the default, expected end state is
+that a stranger can open `therealending.com`, see the new book in the catalog, read it, and
+hit its endings. That means you run the pipeline **all the way through Phase 7**: generate and
+upload the cover, seed Cosmos, verify parity, and confirm the book is serving from the prod
+API. Do **not** stop at "authored locally and verified on localhost" and ask whether to ship —
+shipping is part of the task, not a follow-up. The only times you stop short of live are when
+the user explicitly says so (e.g. "just draft it locally", "don't ship yet") or when a ship
+step needs a credential/permission you don't have — in which case do everything you can, then
+report the one blocking step. Treat "create a book" and "put the book on the site" as the same
+request.
+
 **Ground rules before anything else** (see *Spoiler rules* in `CLAUDE.md`):
 
 - Everything you author lives in **gitignored** locations: book data in
@@ -303,11 +315,13 @@ Checklist — all of `put_book_in_site.md` §3, plus the authoring-quality check
 - [ ] Fair-play audit: for each ending, confirm its ≥2 clues exist in the chapters and
       that no committed file mentions any code, slug+culprit pairing, or character name.
 
-## Phase 7 — Ship (turn-key)
+## Phase 7 — Ship (turn-key, and not optional)
 
-Shipping is automated end-to-end. After generating the cover (Phase 2 — `gen-cover.cjs`),
-the agent runs the rest from the repo root (after `az login`); see `put_book_in_site.md`
-§4 for the exact commands:
+**This phase is mandatory unless the user told you to stop short.** A book that only exists
+under `Content/` is unfinished — "done" means *live on the production site*. Shipping is
+automated end-to-end. After generating the cover (Phase 2 — `gen-cover.cjs`), the agent runs
+the rest from the repo root (after `az login`); see `put_book_in_site.md` §4 for the exact
+commands:
 
 1. **Upload the cover** (`ai-mysteries-web/public/covers/<bookId>.webp`) to the assets
    blob account's `covers` container as `<bookId>.webp`, and confirm `coverImage` in
@@ -317,6 +331,11 @@ the agent runs the rest from the repo root (after `az login`); see `put_book_in_
 4. **Push site updates** — normally **none**: a new book is data-only, and `Content/` +
    `public/covers/` are gitignored. Only push if the brief required a genuine UI/API
    change (a new generic field, new chrome) — that's the rare exception, not the rule.
+5. **Confirm it's live.** The prod API picks the book up within one refresh poll (~60s) — no
+   App Service restart, no front-end or API redeploy. Poll the prod API's `/api/books` until
+   the new title appears, resolve one ending code against prod, and check the public cover URL
+   returns `200 image/webp`. Only then is the task done. (The prod API host and the assets blob
+   account are subscription-specific — kept out of this public file; the agent has them.)
 
 The prod API picks the book up within one refresh poll (~60s) — no App Service restart,
 no front-end or API redeploy.
@@ -342,9 +361,18 @@ own escape; weights `{"1": 60, "2": 30, "4": 10}`.
 
 ## Definition of done
 
-The book is done when: a stranger can land on `/`, pick the book, read it in roughly the
-promised time, hit an ending, reveal three more without ever seeing the same culprit
-combination twice in a row, spot at least one binoculars glyph per ending, deep-link a
-clue back into the manuscript — the **cover-art prompt is written** to
-`docs/<bookId>/CoverPrompt.md` and handed to the user (with size + wiring instructions) —
-and `git status` shows **nothing** book-specific staged or committed.
+The book is done when it is **live on the production site** and a stranger — using the real
+public URL, not localhost — can land on `/`, pick the book, read it in roughly the promised
+time, hit an ending, reveal three more without ever seeing the same culprit combination twice
+in a row, spot at least one binoculars glyph per ending, and deep-link a clue back into the
+manuscript. Concretely, all of these hold:
+
+- the cover is generated, **uploaded to the assets blob**, and its public URL returns `200`;
+- the book is **seeded to Cosmos** and `diff` reports in sync;
+- the **prod** `/api/books` lists the book and one of its ending codes resolves against prod;
+- the cover-art prompt is saved to `docs/<bookId>/CoverPrompt.md`;
+- `git status` shows **nothing** book-specific staged or committed (book data + covers are
+  gitignored).
+
+If the user explicitly asked to stop before shipping, "done" is the local equivalent (verified
+on localhost) plus a clear note of the remaining ship steps. Otherwise, not-live is not-done.
