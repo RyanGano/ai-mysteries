@@ -160,9 +160,9 @@ placeholder URL is fine; before shipping, host real cover art at a public absolu
 (e.g. Azure Blob Storage) — never bundle it into the web app (`put_book_in_site.md` §2).
 
 **Always author a cover-art prompt** and save it to `docs/<bookId>/CoverPrompt.md` — every
-new book ships with one. You don't generate the image; you write the prompt the user feeds to
-an image generator (Copilot, DALL·E, etc.), then tell them the size and how to wire the result
-into `coverImage`. Match the site's **house style**, set by the existing covers:
+new book ships with one. The prompt is also the **input to cover generation**: `scripts/gen-cover.cjs`
+reads the `## Prompt` blockquote of that file. Match the site's **house style**, set by the
+existing covers:
 
 - **A cinematic photograph, not an illustration.** Realistic, shallow depth of field, 50mm feel.
 - **One emotionally-loaded object** — the book's central token (the ruined keepsake, the
@@ -174,9 +174,20 @@ into `coverImage`. Match the site's **house style**, set by the existing covers:
 - **No text, no lettering, no logos, no people** — the UI renders the title beside the thumbnail.
 - **2:3 portrait, 1024×1536 px, exported as `.webp`** (the bundled cover is exactly this).
 
-Tell the user the target size (2:3 / 1024×1536 / webp) and the two wiring options: host at a
-public absolute URL and set `coverImage` to it (the shipping path — no redeploy), or, for local
-preview only, drop the file in `ai-mysteries-web/public/` and use a root-relative path.
+**Generating the image (free, automated).** After writing the prompt, generate the cover from
+the repo root:
+
+```
+node scripts/gen-cover.cjs <bookId>              # FLUX (default, best photographic quality)
+node scripts/gen-cover.cjs <bookId> --model sdxl # fallback if FLUX is quota-limited
+```
+
+It calls **Cloudflare Workers AI** (free daily quota, no per-image cost; creds in a gitignored
+`.env` — `CF_ACCOUNT_ID`/`CF_API_TOKEN`), crops/encodes to the house-style **2:3 / 1024×1536 /
+webp**, and writes `ai-mysteries-web/public/covers/<bookId>.webp`. Re-run with `--seed N` to
+get a different composition; show the user the result and regenerate until it lands. The cover
+then ships via Phase 7 (upload to blob, set `coverImage` to the public URL). For local preview
+only you can point `coverImage` at the root-relative `/covers/<bookId>.webp` instead.
 
 ## Phase 3 — Write the manuscript (chapters)
 
@@ -294,14 +305,13 @@ Checklist — all of `put_book_in_site.md` §3, plus the authoring-quality check
 
 ## Phase 7 — Ship (turn-key)
 
-Shipping is automated end-to-end except the cover **image** itself. The single manual
-handoff: the user generates the cover from `docs/<bookId>/CoverPrompt.md` and drops the
-`.webp` at `ai-mysteries-web/public/covers/<bookId>.webp` (gitignored). With that file in
-place, the agent runs the rest from the repo root (after `az login`); see
-`put_book_in_site.md` §4 for the exact commands:
+Shipping is automated end-to-end. After generating the cover (Phase 2 — `gen-cover.cjs`),
+the agent runs the rest from the repo root (after `az login`); see `put_book_in_site.md`
+§4 for the exact commands:
 
-1. **Upload the cover** to the assets blob account's `covers` container as
-   `<bookId>.webp`, and confirm `coverImage` in `meta.json` points at that public URL.
+1. **Upload the cover** (`ai-mysteries-web/public/covers/<bookId>.webp`) to the assets
+   blob account's `covers` container as `<bookId>.webp`, and confirm `coverImage` in
+   `meta.json` points at that public URL.
 2. **Seed** Cosmos (`ai-mysteries-tools -- seed --endpoint <cosmos-uri>`).
 3. **Verify** parity (`-- diff` — must report in sync).
 4. **Push site updates** — normally **none**: a new book is data-only, and `Content/` +

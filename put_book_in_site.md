@@ -148,11 +148,12 @@ literal Cosmos endpoint and assets-account name are subscription-specific and ke
 this public file — the agent has them; otherwise pass `--endpoint` (or set
 `COSMOS_ENDPOINT`).
 
-**a. Upload the cover image.** Generate it from `docs/<bookId>/CoverPrompt.md` (manual
-step — drop the result at `ai-mysteries-web/public/covers/<bookId>.webp`, gitignored),
-then push it to the assets account's `covers` container as `<bookId>.webp`:
+**a. Generate + upload the cover image.** Generate it (free, via Cloudflare Workers AI)
+from `docs/<bookId>/CoverPrompt.md`, then push the result to the assets account's `covers`
+container as `<bookId>.webp`:
 
 ```
+node scripts/gen-cover.cjs <bookId>     # writes ai-mysteries-web/public/covers/<bookId>.webp
 az storage blob upload --account-name <assets-account> -c covers \
   -n <bookId>.webp -f ai-mysteries-web/public/covers/<bookId>.webp --overwrite --content-type image/webp
 ```

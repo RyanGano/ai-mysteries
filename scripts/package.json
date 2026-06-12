@@ -1,0 +1,8 @@
+{
+  "name": "wt-scripts",
+  "private": true,
+  "description": "Local-only helper scripts (cover generation). Not part of the web/api build.",
+  "dependencies": {
+    "sharp": "^0.33.5"
+  }
+}
