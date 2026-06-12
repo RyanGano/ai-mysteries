@@ -89,6 +89,8 @@ partition key (see `put_book_in_site.md` §1).
   put in `meta.json`.
 - **`EndingStyleGuide.md`** — the book's voice rules and its **mandatory shared opening**
   (see Phase 4).
+- **`CoverPrompt.md`** — the image-generation prompt for the book's cover, in the house
+  style (see Phase 2). The user generates the art from this prompt (e.g. in Copilot).
 - **`EndingClueMap.md`** — grows during Phases 3–5; the machine-parsed clue map
   (see Phase 5).
 
@@ -156,6 +158,25 @@ is server-only and never returned by any endpoint; keep it that way.
 `coverImage` is a URL used directly as `<img src>`. While authoring locally, a public
 placeholder URL is fine; before shipping, host real cover art at a public absolute URL
 (e.g. Azure Blob Storage) — never bundle it into the web app (`put_book_in_site.md` §2).
+
+**Always author a cover-art prompt** and save it to `docs/<bookId>/CoverPrompt.md` — every
+new book ships with one. You don't generate the image; you write the prompt the user feeds to
+an image generator (Copilot, DALL·E, etc.), then tell them the size and how to wire the result
+into `coverImage`. Match the site's **house style**, set by the existing covers:
+
+- **A cinematic photograph, not an illustration.** Realistic, shallow depth of field, 50mm feel.
+- **One emotionally-loaded object** — the book's central token (the ruined keepsake, the
+  high-alert vial) — resting on a **cold, hard surface** (brushed steel, etc.).
+- **An empty, soft-focus institutional background** that places the world (station cabin, night
+  ward) with no people in frame.
+- **Desaturated, near-monochrome palette** keyed to the book (ice-blue, clinical steel/bone),
+  optionally one muted spot of color on the object. Quiet dread, long soft shadows.
+- **No text, no lettering, no logos, no people** — the UI renders the title beside the thumbnail.
+- **2:3 portrait, 1024×1536 px, exported as `.webp`** (the bundled cover is exactly this).
+
+Tell the user the target size (2:3 / 1024×1536 / webp) and the two wiring options: host at a
+public absolute URL and set `coverImage` to it (the shipping path — no redeploy), or, for local
+preview only, drop the file in `ai-mysteries-web/public/` and use a root-relative path.
 
 ## Phase 3 — Write the manuscript (chapters)
 
@@ -308,5 +329,6 @@ own escape; weights `{"1": 60, "2": 30, "4": 10}`.
 The book is done when: a stranger can land on `/`, pick the book, read it in roughly the
 promised time, hit an ending, reveal three more without ever seeing the same culprit
 combination twice in a row, spot at least one binoculars glyph per ending, deep-link a
-clue back into the manuscript — and `git status` shows **nothing** book-specific staged
-or committed.
+clue back into the manuscript — the **cover-art prompt is written** to
+`docs/<bookId>/CoverPrompt.md` and handed to the user (with size + wiring instructions) —
+and `git status` shows **nothing** book-specific staged or committed.

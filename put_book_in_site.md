@@ -83,7 +83,10 @@ of it in the React components.
 - `coverImage` is a **URL** the web uses directly as `<img src>`. For a new book it
   must be **absolute** (host it yourself, e.g. Azure Blob Storage with public read) —
   never add a bundled asset to the web app, that would force a redeploy. Verify the
-  URL is reachable from the public internet, not just locally.
+  URL is reachable from the public internet, not just locally. Every new book also ships
+  with a **cover-art prompt** in the house style at `docs/<bookId>/CoverPrompt.md` — the
+  prompt the user feeds to an image generator; target **2:3 portrait, 1024×1536, `.webp`**.
+  See `create_new_book.md` Phase 2 for the house style and wiring options.
 
 ### Chapters
 
