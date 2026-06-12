@@ -21,6 +21,10 @@ ai-mysteries-api/Content/
 plans/
 docs/
 
+# Local-only cache of cover art for offline dev testing. The covers are served in prod from
+# their absolute blob URLs (meta.json coverImage); these downloaded copies are never committed.
+ai-mysteries-web/public/covers/
+
 # Vite / TypeScript build cache
 *.local
 node_modules/.tmp/
