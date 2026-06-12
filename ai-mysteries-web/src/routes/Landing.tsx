@@ -46,9 +46,36 @@ export default function Landing() {
 
 // The catalog body, given the loaded books. Sorting/filtering are view concerns over the
 // already-fetched list, so they live here client-side; the backend just returns the full set.
-// Default order is newest-first by published date — room to add user-selectable sorts/filters.
+// Default order is newest-first by published date. Tag filtering is AND: a book shows only if it
+// carries every selected tag.
 function Catalog({ books }: { books: BookMeta[] }) {
   const sorted = useMemo(() => [...books].sort(byPublishedDesc), [books]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const visible = useMemo(
+    () => sorted.filter((book) => selectedTags.every((tag) => book.tags.includes(tag))),
+    [sorted, selectedTags]
+  );
+
+  // Tags still worth offering: those on the currently-visible books that aren't already selected,
+  // each with how many visible books carry it. Narrowing further can only ever shrink the list, so
+  // we never offer a tag that would empty the catalog. Sorted by count (desc) then name.
+  const availableTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const book of visible) {
+      for (const tag of book.tags) {
+        if (selectedTags.includes(tag)) continue;
+        counts.set(tag, (counts.get(tag) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+  }, [visible, selectedTags]);
+
+  const addTag = (tag: string) => setSelectedTags((tags) => [...tags, tag]);
+  const removeTag = (tag: string) => setSelectedTags((tags) => tags.filter((t) => t !== tag));
+
   return (
     <main className="catalog">
       <header className="catalog-header">
@@ -57,14 +84,108 @@ function Catalog({ books }: { books: BookMeta[] }) {
           Every story here is written by AI &mdash; and every one has more than one ending.
         </p>
       </header>
+      <FilterBar
+        selectedTags={selectedTags}
+        availableTags={availableTags}
+        onAddTag={addTag}
+        onRemoveTag={removeTag}
+      />
       <ul className="catalog-list">
-        {sorted.map((book) => (
+        {visible.map((book) => (
           <li key={book.id}>
             <CatalogCard book={book} />
           </li>
         ))}
       </ul>
     </main>
+  );
+}
+
+// The filter control: a "Filter" button that opens a popup of the still-applicable tags (with the
+// count of matching books), plus a breadcrumb row of the chosen tags, each removable. Selecting a
+// tag narrows the catalog and the popup; removing one widens both back out.
+function FilterBar({
+  selectedTags,
+  availableTags,
+  onAddTag,
+  onRemoveTag,
+}: {
+  selectedTags: string[];
+  availableTags: { tag: string; count: number }[];
+  onAddTag: (tag: string) => void;
+  onRemoveTag: (tag: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close the popup on an outside click or Escape.
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="catalog-filter">
+      <div className="catalog-filter-controls" ref={ref}>
+        <button
+          type="button"
+          className="catalog-filter-button"
+          aria-haspopup="true"
+          aria-expanded={open}
+          disabled={availableTags.length === 0}
+          onClick={() => setOpen((v) => !v)}
+        >
+          Filter{selectedTags.length > 0 ? ` (${selectedTags.length})` : ""}
+        </button>
+        {open && availableTags.length > 0 && (
+          <div className="catalog-filter-popup" role="menu">
+            {availableTags.map(({ tag, count }) => (
+              <button
+                key={tag}
+                type="button"
+                className="catalog-filter-option"
+                role="menuitem"
+                onClick={() => {
+                  onAddTag(tag);
+                  setOpen(false);
+                }}
+              >
+                <span className="catalog-filter-option-tag">{tag}</span>
+                <span className="catalog-filter-option-count">{count}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {selectedTags.length > 0 && (
+        <ul className="catalog-filter-crumbs">
+          {selectedTags.map((tag) => (
+            <li key={tag} className="catalog-filter-crumb">
+              {tag}
+              <button
+                type="button"
+                className="catalog-filter-crumb-remove"
+                aria-label={`Remove ${tag} filter`}
+                onClick={() => onRemoveTag(tag)}
+              >
+                &times;
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

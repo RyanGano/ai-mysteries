@@ -39,6 +39,132 @@
   color: var(--color-text-muted);
 }
 
+/* ---- Tag filter (Filter button + popup + breadcrumb row) ---- */
+.catalog-filter {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: -1rem; /* pull up toward the header; the list gap below keeps spacing */
+}
+
+/* Anchor for the popup, which is absolutely positioned beneath the button. */
+.catalog-filter-controls {
+  position: relative;
+}
+
+.catalog-filter-button {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  transition: border-color 0.15s;
+}
+
+.catalog-filter-button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.catalog-filter-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.catalog-filter-popup {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 10;
+  min-width: 12rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.3rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.catalog-filter-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 0.45rem 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.catalog-filter-option:hover {
+  background: var(--color-bg);
+  color: var(--color-accent-hover);
+}
+
+.catalog-filter-option-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.catalog-filter-crumbs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.catalog-filter-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  padding: 0.18rem 0.3rem 0.18rem 0.6rem;
+}
+
+.catalog-filter-crumb-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.catalog-filter-crumb-remove:hover {
+  color: var(--color-text);
+  background: var(--color-border);
+}
+
 .catalog-list {
   list-style: none;
   padding: 0;
