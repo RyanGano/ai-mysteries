@@ -292,18 +292,24 @@ Checklist — all of `put_book_in_site.md` §3, plus the authoring-quality check
 - [ ] Fair-play audit: for each ending, confirm its ≥2 clues exist in the chapters and
       that no committed file mentions any code, slug+culprit pairing, or character name.
 
-## Phase 7 — Ship
+## Phase 7 — Ship (turn-key)
 
-Follow `put_book_in_site.md` §4: host the cover image, then from the repo root after
-`az login`:
+Shipping is automated end-to-end except the cover **image** itself. The single manual
+handoff: the user generates the cover from `docs/<bookId>/CoverPrompt.md` and drops the
+`.webp` at `ai-mysteries-web/public/covers/<bookId>.webp` (gitignored). With that file in
+place, the agent runs the rest from the repo root (after `az login`); see
+`put_book_in_site.md` §4 for the exact commands:
 
-```
-dotnet run --project ai-mysteries-tools -- seed --endpoint <cosmos-uri>
-dotnet run --project ai-mysteries-tools -- diff --endpoint <cosmos-uri>   # must report in sync
-```
+1. **Upload the cover** to the assets blob account's `covers` container as
+   `<bookId>.webp`, and confirm `coverImage` in `meta.json` points at that public URL.
+2. **Seed** Cosmos (`ai-mysteries-tools -- seed --endpoint <cosmos-uri>`).
+3. **Verify** parity (`-- diff` — must report in sync).
+4. **Push site updates** — normally **none**: a new book is data-only, and `Content/` +
+   `public/covers/` are gitignored. Only push if the brief required a genuine UI/API
+   change (a new generic field, new chrome) — that's the rare exception, not the rule.
 
-Restart the App Service app to pick the book up immediately (content is cached at
-startup). No front-end or API deploy.
+The prod API picks the book up within one refresh poll (~60s) — no App Service restart,
+no front-end or API redeploy.
 
 ---
 

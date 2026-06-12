@@ -140,19 +140,35 @@ Checklist:
 - "Reveal another ending" never repeats the current culprit combination
 - entering a known code on the landing page resolves; an unknown code is rejected
 
-## 4. Seed Cosmos
+## 4. Ship (cover, seed, verify)
 
-From the repo root, after `az login` (you hold *Data Contributor* on the `books`
-database):
+All of this runs from the repo root after `az login` (you hold *Data Contributor* on
+the `books` database and management access to the cover assets storage account). The
+literal Cosmos endpoint and assets-account name are subscription-specific and kept out of
+this public file — the agent has them; otherwise pass `--endpoint` (or set
+`COSMOS_ENDPOINT`).
+
+**a. Upload the cover image.** Generate it from `docs/<bookId>/CoverPrompt.md` (manual
+step — drop the result at `ai-mysteries-web/public/covers/<bookId>.webp`, gitignored),
+then push it to the assets account's `covers` container as `<bookId>.webp`:
+
+```
+az storage blob upload --account-name <assets-account> -c covers \
+  -n <bookId>.webp -f ai-mysteries-web/public/covers/<bookId>.webp --overwrite --content-type image/webp
+```
+
+Confirm `coverImage` in `meta.json` is the public URL of that blob and that it loads in a
+browser (anonymous, not just locally).
+
+**b. Seed + verify Cosmos:**
 
 ```
 dotnet run --project ai-mysteries-tools -- seed --endpoint <cosmos-uri>
 dotnet run --project ai-mysteries-tools -- diff --endpoint <cosmos-uri>   # must report in sync
 ```
 
-That's it. The prod API picks the book up from Cosmos (restart the App Service app
-if you need it immediately — content is cached at startup), the landing page lists
-it, and no front-end or API deploy is needed.
+That's it. The prod API picks the book up from Cosmos within one refresh poll (~60s) — no
+App Service restart, no front-end or API deploy. The landing page then lists the book.
 
 ## Spoiler rules (apply to every book)
 
