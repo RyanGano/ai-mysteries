@@ -141,8 +141,16 @@ Per-book content (the `/api/books/{bookId}` group; routes below are relative to 
 | `endings/{code}/exists` | `{ exists }` — lightweight check for the landing code input |
 | `clues/{id}`            | a single clue, for the reader's deep-link highlight (404 if unknown) |
 
-CORS (`Program.cs`) allows any `localhost`/`127.0.0.1` origin in addition to any origin listed
-in `Cors:AllowedOrigins` — so it works regardless of which port Vite lands on.
+CORS (`Program.cs`) allows any origin listed in `Cors:AllowedOrigins`, plus — **in the
+Development environment only** — any `localhost`/`127.0.0.1` origin (so local dev works
+regardless of which port Vite lands on). Prod trusts only the deployed front end. To run the
+local UI against the prod API, don't fight CORS — set `VITE_PROXY_TARGET` (see
+`ai-mysteries-web/.env.example`) so the Vite dev server proxies `/api` to prod same-origin.
+
+Rate limits (`Program.cs`): per-IP, 300 req/min across the API and 30 req/min on the
+`endings/*` routes (random/exists/by-code) to deter ending-code enumeration. Real client IPs
+come from `X-Forwarded-For` (rightmost entry) via the forwarded-headers middleware, since the
+API sits behind the App Service front end. Over-limit requests get `429`.
 
 ## How the ending mechanic works
 
