@@ -79,7 +79,6 @@ tag if nothing in the list fits. Current canonical tags (as of 2026-06-12):
 | `Kid Friendly` | suitable for young readers (simple vocabulary, no violence) |
 | `Medical` | hospital/clinical setting or medical negligence is central |
 | `Murder` | at least one suspect is a deliberate killer |
-| `Mystery` | whodunit structure with a clear investigator |
 | `No Crime` | no crime has been committed — the mystery is a misunderstanding or loss |
 | `Technology` | tech system or industrial setting is load-bearing to the plot |
 | `Wedding` | wedding or ceremony setting |
@@ -89,6 +88,9 @@ When tagging a new book: check this list first. If a tag covers the intent (e.g.
 `Technology`; "Children's" → `Kid Friendly`; "Thriller" → `Murder`), use the existing tag.
 Add a new row only if the concept is genuinely distinct from every entry above, then update
 this table and the description accordingly.
+
+Deliberately **not** a tag: `Mystery`. Every book on the site is a whodunit with an
+investigator, so the tag carries no filtering signal — don't re-add it.
 
 ## Architecture
 
