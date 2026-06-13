@@ -190,10 +190,13 @@ function FilterBar({
 }
 
 // One row in the catalog: cover, title, tags, reading time + published date, and a short teaser.
-// The whole card links into the book (stretched link off the title) — /:bookId drops straight into
-// the first chapter. Every word comes from the book's metadata — nothing book-specific here.
+// The whole card links into the book (stretched link off the title) — it deep-links straight into
+// the first chapter (the per-book landing page at /:bookId is the share target, reached by sharing
+// or by the book title in the reader, not by the catalog). Falls back to /:bookId if a book has no
+// chapters. Every word comes from the book's metadata — nothing book-specific here.
 function CatalogCard({ book }: { book: BookMeta }) {
   const facts = [book.readingTime, formatPublished(book.published)].filter(Boolean).join(" · ");
+  const to = book.firstChapterSlug ? `/${book.id}/${book.firstChapterSlug}` : `/${book.id}`;
   return (
     <article className="catalog-card">
       {book.coverImage && (
@@ -201,7 +204,7 @@ function CatalogCard({ book }: { book: BookMeta }) {
       )}
       <div className="catalog-card-text">
         <h2 className="catalog-book-title">
-          <Link to={`/${book.id}`} className="catalog-card-link">
+          <Link to={to} className="catalog-card-link">
             {book.title}
           </Link>
         </h2>

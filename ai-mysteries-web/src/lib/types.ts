@@ -28,6 +28,9 @@ export interface BookMeta {
   shareText: string;
   specialShareText: string;
   specialReveal: SpecialReveal;
+  // Slug of the first chapter — the catalog deep-links straight into the reading, bypassing the
+  // per-book landing page. Empty when the book has no chapters.
+  firstChapterSlug: string;
 }
 
 export interface TocEntry {

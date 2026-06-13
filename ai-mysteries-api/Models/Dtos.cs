@@ -57,6 +57,10 @@ public record BookMetaDto(
     string ShareTitle,
     string ShareText,
     string SpecialShareText,
-    SpecialRevealDto SpecialReveal);
+    SpecialRevealDto SpecialReveal,
+    // Slug of the book's first chapter, so the catalog can deep-link straight into the reading
+    // (the per-book landing page is the share target; the catalog card skips it). Empty if the
+    // book has no chapters.
+    string FirstChapterSlug);
 
 public record SpecialRevealDto(string Headline, string Sub);

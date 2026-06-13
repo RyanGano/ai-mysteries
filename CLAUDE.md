@@ -196,15 +196,20 @@ API sits behind the App Service front end. Over-limit requests get `429`.
 
 ## How the ending mechanic works
 
-- Routes are book-scoped: `/:bookId` (redirects straight into the book's first chapter — there is
-  no per-book marketing page; the catalog card carries the cover/summary, and the reader's Endings
-  drawer carries the code-entry + reveal-ending controls),
-  `/:bookId/:slug` (a chapter; clicking a catalog card lands here on the first chapter's slug),
+- Routes are book-scoped: `/:bookId` (the book's **landing page** — cover, blurb, reading time, a
+  "Start reading" link and a "Share this story" button; this is the **share target** so a recipient
+  meets the story before reading, and is reached by the book-title link in the reader/ending or by
+  sharing, **not** by the catalog card),
+  `/:bookId/:slug` (a chapter; clicking a catalog card deep-links here straight to the first
+  chapter's slug, bypassing the landing page — the slug comes from `BookMeta.firstChapterSlug`),
   `/:bookId/ending` (picks a weighted-random code, redirects replace), and
-  `/:bookId/ending/:code` (permanent page — always the same ending for that code). `/` is the
-  data-driven catalog listing every book (title, tags, reading time, published date); `/privacy` is the static
-  privacy policy. A site-wide `Footer` (AI-authorship + fiction disclaimers, privacy link)
-  renders on every route. See `ai-mysteries-web/src/App.tsx`.
+  `/:bookId/ending/:code` (permanent page — always the same ending for that code). The reader's
+  Endings drawer carries the code-entry + reveal-ending controls. Both the chapter reader and the
+  ending page show the book title (linking back to the landing page) and a Share control; the
+  ending page offers **Share this ending** (the code URL) and **Share this story** (the landing
+  URL) separately. `/` is the data-driven catalog listing every book (title, tags, reading time,
+  published date); `/privacy` is the static privacy policy. A site-wide `Footer` (AI-authorship +
+  fiction disclaimers, privacy link) renders on every route. See `ai-mysteries-web/src/App.tsx`.
 - Codes are 4-char uppercase. `O/0` and `I/1/L` are interchangeable on input (normalized).
 - Deep links work via SPA fallback in `ai-mysteries-web/staticwebapp.config.json`.
 

@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Landing from "./routes/Landing";
-import BookEntry from "./routes/BookEntry";
+import BookLanding from "./routes/BookLanding";
 import FindEnding from "./routes/FindEnding";
 import Ending from "./routes/Ending";
 import Read from "./routes/Read";
@@ -13,8 +13,9 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/privacy" element={<Privacy />} />
-        {/* /:bookId drops straight into the first chapter (no per-book marketing page) */}
-        <Route path="/:bookId" element={<BookEntry />} />
+        {/* /:bookId is the book's landing page — the share target (cover + blurb). The catalog
+            card deep-links past it straight into the first chapter. */}
+        <Route path="/:bookId" element={<BookLanding />} />
         <Route path="/:bookId/ending" element={<FindEnding />} />
         <Route path="/:bookId/ending/:code" element={<Ending />} />
         <Route path="/:bookId/:slug" element={<Read />} />

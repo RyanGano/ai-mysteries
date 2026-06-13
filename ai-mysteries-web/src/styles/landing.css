@@ -328,3 +328,145 @@
   font-family: var(--font-serif);
   color: var(--color-text-muted);
 }
+
+/* ---- Per-book landing page (/:bookId) — the share target: cover + blurb ---- */
+.book-landing {
+  max-width: calc(var(--max-prose) + 2 * var(--page-pad));
+  margin: 0 auto;
+  padding: var(--page-pad);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.book-landing-bar {
+  align-self: flex-start;
+  margin-bottom: clamp(1.5rem, 4vh, 3rem);
+}
+
+.book-landing-cover {
+  width: min(220px, 60vw);
+  height: auto;
+  border-radius: 3px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.55);
+}
+
+.book-landing-title {
+  margin-top: 1.75rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
+}
+
+.book-landing-tags {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.book-landing-tag {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.18rem 0.6rem;
+  white-space: nowrap;
+}
+
+.book-landing-facts {
+  margin-top: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.book-landing-summary {
+  margin-top: 2rem;
+  max-width: var(--max-prose);
+  text-align: left;
+}
+
+.book-landing-summary p {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--color-text);
+  margin-bottom: 1em;
+}
+
+.book-landing-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.book-landing-actions .cta-button {
+  margin-top: 0;
+}
+
+.book-landing-secondary {
+  padding: 0.65rem 1.4rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.book-landing-secondary:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.book-landing-share-note {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.book-landing-ending-link {
+  margin-top: 1.75rem;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  transition: color 0.15s;
+}
+
+.book-landing-ending-link:hover {
+  color: var(--color-accent-hover);
+}
+
+.book-landing-secret {
+  margin-top: 2rem;
+  max-width: 52ch;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+}

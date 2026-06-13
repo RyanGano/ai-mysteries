@@ -71,10 +71,36 @@
   text-decoration: none;
 }
 
+/* Transient "Link copied" note next to the Share button in the top bar. */
+.read-share-note {
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
 /* ── Chapter header + body ─────────────────────────────────────────── */
 
 .read-header {
   margin-bottom: 2.5rem;
+}
+
+/* The book title above the chapter title — also the link to the book's landing page. */
+.read-book-title {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.read-book-title:hover {
+  color: var(--color-accent-hover);
+  text-decoration: none;
 }
 
 .read-title {

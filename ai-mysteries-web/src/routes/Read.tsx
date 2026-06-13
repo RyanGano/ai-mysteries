@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { fetchToc, fetchChapterNav, fetchClue, fetchBookMeta } from "../lib/api";
+import { shareOrCopy } from "../lib/share";
 import type { TocEntry, ChapterNav, BookMeta } from "../lib/types";
 import Prose from "../components/Prose";
 import TableOfContents from "../components/TableOfContents";
@@ -26,6 +27,7 @@ export default function Read() {
   const [meta, setMeta] = useState<BookMeta | null>(null);
   const [navState, setNavState] = useState<NavState>({ status: "loading" });
   const [error, setError] = useState(false);
+  const [shareNote, setShareNote] = useState("");
 
   // The table of contents (drawer + first-chapter fallback) and the book metadata (title for the
   // document title, end-of-book payoff copy). Fetched once per book.
@@ -104,6 +106,19 @@ export default function Read() {
     };
   }, [bookId, clueId, navState]);
 
+  // Share a link to the book's landing page (the cover + blurb) — never a chapter deep link, so
+  // the recipient meets the story before reading.
+  async function handleShare() {
+    const note = await shareOrCopy({
+      title: meta?.shareTitle ?? "",
+      text: meta?.shareText ?? "",
+      url: `${window.location.origin}/${bookId}`,
+    });
+    if (!note) return;
+    setShareNote(note);
+    window.setTimeout(() => setShareNote(""), 3000);
+  }
+
   if (error) {
     return (
       <main className="read read--status">
@@ -137,6 +152,14 @@ export default function Read() {
           <button className="read-toc-button" onClick={() => setEndingsOpen(true)}>
             Endings
           </button>
+          <button className="read-toc-button" onClick={handleShare}>
+            Share
+          </button>
+          {shareNote && (
+            <span className="read-share-note" role="status">
+              {shareNote}
+            </span>
+          )}
         </div>
         <Link to="/" className="read-home">
           AI Mysteries
@@ -160,6 +183,11 @@ export default function Read() {
       />
 
       <header className="read-header">
+        {meta && (
+          <Link to={`/${bookId}`} className="read-book-title">
+            {meta.title}
+          </Link>
+        )}
         <h1 className="read-title">{chapter.title}</h1>
       </header>
 

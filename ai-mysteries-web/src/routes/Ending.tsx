@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { fetchEnding, fetchRandomCode, fetchBookMeta } from "../lib/api";
+import { shareOrCopy } from "../lib/share";
 import type { Ending as EndingData, BookMeta } from "../lib/types";
 import Prose from "../components/Prose";
 import "../styles/ending.css";
@@ -109,50 +110,39 @@ export default function Ending() {
     }
   }
 
-  async function handleShare() {
-    const shareTitle = meta?.shareTitle ?? "";
-
-    if (ending!.special) {
-      const specialText = meta?.specialShareText ?? "";
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: shareTitle, text: specialText });
-        } catch {
-          // Share sheet dismissed — nothing to do.
-        }
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(specialText);
-        setShareNote("Copied to clipboard");
-      } catch {
-        setShareNote(specialText);
-      }
-      window.setTimeout(() => setShareNote(""), 3000);
-      return;
-    }
-
-    const url = `${window.location.origin}/${bookId}/ending/${canonical}`;
-    const shareData = {
-      title: shareTitle,
-      text: meta?.shareText ?? "",
-      url,
-    };
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch {
-        // Share sheet dismissed — nothing to do.
-      }
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareNote("Link copied to clipboard");
-    } catch {
-      setShareNote(url);
-    }
+  function flashNote(note: string) {
+    if (!note) return;
+    setShareNote(note);
     window.setTimeout(() => setShareNote(""), 3000);
+  }
+
+  // Share this exact ending. The special ending shares only teaser text with no link, so it can't
+  // be handed out directly; every other ending shares its permanent code URL.
+  async function handleShareEnding() {
+    const shareTitle = meta?.shareTitle ?? "";
+    if (ending!.special) {
+      flashNote(await shareOrCopy({ title: shareTitle, text: meta?.specialShareText ?? "" }));
+      return;
+    }
+    flashNote(
+      await shareOrCopy({
+        title: shareTitle,
+        text: meta?.shareText ?? "",
+        url: `${window.location.origin}/${bookId}/ending/${canonical}`,
+      })
+    );
+  }
+
+  // Share the story itself — a link to the book's landing page, never this ending — so the
+  // recipient meets the book without having an ending spoiled.
+  async function handleShareStory() {
+    flashNote(
+      await shareOrCopy({
+        title: meta?.shareTitle ?? "",
+        text: meta?.shareText ?? "",
+        url: `${window.location.origin}/${bookId}`,
+      })
+    );
   }
 
   return (
@@ -192,6 +182,11 @@ export default function Ending() {
         </Link>
       </div>
       <header className="ending-header">
+        {meta && (
+          <Link to={`/${bookId}`} className="ending-book-title">
+            {meta.title}
+          </Link>
+        )}
         {!ending.special && (
           <p className="ending-code">
             Your ending: <span>{canonical}</span>
@@ -208,8 +203,11 @@ export default function Ending() {
         <button className="cta-button" onClick={handleNewEnding}>
           Reveal another ending &rarr;
         </button>
-        <button className="ending-action-secondary" onClick={handleShare}>
-          Share
+        <button className="ending-action-secondary" onClick={handleShareEnding}>
+          Share this ending
+        </button>
+        <button className="ending-action-secondary" onClick={handleShareStory}>
+          Share this story
         </button>
         {shareNote && (
           <span className="ending-share-note" role="status">
