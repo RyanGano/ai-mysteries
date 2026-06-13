@@ -326,8 +326,10 @@ commands:
 1. **Upload the cover** (`ai-mysteries-web/public/covers/<bookId>.webp`) to the assets
    blob account's `covers` container as `<bookId>.webp`, and confirm `coverImage` in
    `meta.json` points at that public URL.
-2. **Seed** Cosmos (`ai-mysteries-tools -- seed --endpoint <cosmos-uri>`).
-3. **Verify** parity (`-- diff` — must report in sync).
+2. **Seed** Cosmos (`ai-mysteries-tools -- seed --endpoint <cosmos-uri>`) — it stamps the book's
+   `version` and pushes it (a new book is always newer than the empty Cosmos copy).
+3. **Verify** parity (`-- diff` — cheap per-book version check, must report in sync; `-- full-diff`
+   for a deep field-by-field check).
 4. **Push site updates** — normally **none**: a new book is data-only, and `Content/` +
    `public/covers/` are gitignored. Only push if the brief required a genuine UI/API
    change (a new generic field, new chrome) — that's the rare exception, not the rule.

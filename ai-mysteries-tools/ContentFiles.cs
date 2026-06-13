@@ -37,10 +37,11 @@ public static class ContentFiles
                     .ToDictionary(kv => kv.Key, kv => kv.Value),
                 r.SpecialEndingOdds);
         WriteJson(Path.Combine(dir, "meta.json"), new MetaDoc(
-            m.Title, m.Summary.ToList(), m.CoverImage, m.CoverAlt, m.SecretBlurb,
+            m.Title, m.Tags.ToList(), m.Published, m.WordCount, m.Summary.ToList(),
+            m.CoverImage, m.CoverAlt, m.SecretBlurb,
             m.Payoff.ToList(), m.CodePlaceholder, m.ShareTitle, m.ShareText, m.SpecialShareText,
             new SpecialRevealDoc(m.SpecialReveal.Headline, m.SpecialReveal.Sub),
-            selection));
+            selection, book.Version, book.ContentHash));
 
         // book.json + book/<slug>.md (chapter order preserved from the manifest)
         var chapterMetas = book.Chapters.Select(c => new ChapterMeta(c.Slug, c.Title)).ToList();
@@ -75,6 +76,9 @@ public static class ContentFiles
     // Mirrors meta.json (see FileBookSource). Written back on `pull` for a full round-trip.
     private record MetaDoc(
         string Title,
+        List<string> Tags,
+        string Published,
+        int WordCount,
         List<string> Summary,
         string CoverImage,
         string CoverAlt,
@@ -85,7 +89,9 @@ public static class ContentFiles
         string ShareText,
         string SpecialShareText,
         SpecialRevealDoc SpecialReveal,
-        SelectionDoc? Selection);
+        SelectionDoc? Selection,
+        string? Version,
+        string? ContentHash);
 
     private record SpecialRevealDoc(string Headline, string Sub);
 

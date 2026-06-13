@@ -6,6 +6,12 @@ namespace AiMysteries.Api.Services;
 // It mirrors the on-disk file layout (meta.json, book.json / book/*.md, endings.json /
 // endings/*.md, clues.json, xref-markers.json) so the same shape round-trips through both the
 // File source and the Cosmos source. BookStore turns a RawBook into an immutable Book.
+//
+// `Version` / `ContentHash` are operational bookkeeping used only by the Tools sync pipeline (not
+// by the runtime API): `Version` is a UTC timestamp marking when the book's content last changed,
+// `ContentHash` is the fingerprint of that content the version was stamped against. They are
+// authored in meta.json (locally) / carried on the Cosmos manifest doc (Version only), and both
+// are null for a book that hasn't been stamped yet. The runtime Book ignores them.
 public sealed record RawBook(
     string Id,
     BookMeta Meta,
@@ -13,7 +19,9 @@ public sealed record RawBook(
     IReadOnlyList<Ending> Endings,
     IReadOnlyDictionary<string, ClueDto> Clues,
     IReadOnlyDictionary<string, XrefEntry> Xref,
-    SelectionRules Selection);
+    SelectionRules Selection,
+    string? Version = null,
+    string? ContentHash = null);
 
 // Server-only rules for the weighted-random ending picker, authored per book (the `selection`
 // key in meta.json / fields on the Cosmos manifest doc) so the API code knows nothing about any

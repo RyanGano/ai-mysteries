@@ -12,6 +12,22 @@ public sealed class CosmosStore
 
     public CosmosStore(Container container) => _container = container;
 
+    // Every book's id + its sync version, read from the manifest docs only — one lightweight
+    // query (no per-book content fetch), so the cost stays flat as books are added. A manifest
+    // with no version yet (seeded before versioning existed) maps to null. This is what the sync
+    // uses to decide per-book push/pull/skip.
+    public async Task<Dictionary<string, string?>> ListVersionsAsync()
+    {
+        var versions = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var q = new QueryDefinition("SELECT c.bookId, c.version FROM c WHERE c.type = @t")
+            .WithParameter("@t", CosmosContent.Manifest);
+        using var it = _container.GetItemQueryIterator<ManifestVersion>(q);
+        while (it.HasMoreResults)
+            foreach (var m in await it.ReadNextAsync())
+                versions[m.BookId] = m.Version;
+        return versions;
+    }
+
     // All document ids currently stored for a book (single-partition).
     public async Task<List<string>> ListIdsAsync(string bookId)
     {
@@ -54,4 +70,6 @@ public sealed class CosmosStore
     }
 
     private sealed record IdOnly(string Id);
+
+    private sealed record ManifestVersion(string BookId, string? Version);
 }

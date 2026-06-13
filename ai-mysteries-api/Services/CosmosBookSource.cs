@@ -14,6 +14,10 @@ public sealed class CosmosBookSource : IBookSource
     // BookStore builds once at startup, so blocking here is acceptable and keeps IBookSource sync.
     public IEnumerable<RawBook> LoadAll() => LoadAllAsync().GetAwaiter().GetResult();
 
+    // Load a single book's full content (one single-partition query). Used by the Tools sync to
+    // pull only the book(s) that actually drifted, instead of LoadAll's whole-DB fetch.
+    public RawBook LoadOne(string bookId) => LoadBookAsync(bookId).GetAwaiter().GetResult();
+
     // One point read of the version doc — the cheapest Cosmos op. Returns "0" before the first
     // seed has written the doc, so a freshly-loaded store reloads as soon as it appears.
     public string GetVersion()

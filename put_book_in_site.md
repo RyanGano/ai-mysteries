@@ -78,6 +78,12 @@ of it in the React components.
   ending. Omit it for uniform odds and no special roll. It is never returned by any API
   endpoint — keep it that way.
 
+- `version` / `contentHash` are **managed by the seeder, not authored by hand** — leave them out.
+  The `seed`/`sync` tool stamps `version` (a UTC timestamp) and `contentHash` (a content
+  fingerprint) into `meta.json` whenever it detects the book's content changed, and uses them to
+  decide what to push. Don't hand-edit them; if you want to force a re-push, just change real
+  content (or delete the two fields) and re-run `seed`.
+
 - `tags` is a list of short free-form filtering/topic labels (e.g. `["Murder", "AI", "Kid
   Friendly"]`) — these replace the old single `genre` field; keep them to one or two words each.
   `published` is the ISO date (`YYYY-MM-DD`) the book went on the site. `wordCount` is the book's
@@ -175,6 +181,12 @@ browser (anonymous, not just locally) — `curl -I` it and expect `200` + `image
 dotnet run --project ai-mysteries-tools -- seed --endpoint <cosmos-uri>
 dotnet run --project ai-mysteries-tools -- diff --endpoint <cosmos-uri>   # must report in sync
 ```
+
+`seed` is version-based: it stamps the book's `version` (a UTC timestamp written to `meta.json`,
+auto-bumped whenever the content changed) and pushes only books whose local version is newer than
+Cosmos's. A new book is always newer (it's absent from Cosmos), so the first `seed` pushes it and
+bumps the global content version once, which the prod API reloads off of. `diff` then compares
+just the per-book versions (cheap); use `full-diff` if you want a deep field-by-field check.
 
 **c. Confirm it's live on prod.** Within one refresh poll (~60s) the production API serves the
 book with no App Service restart and no front-end/API deploy. Verify it actually went live:

@@ -22,10 +22,21 @@ dotnet build      # compile
 Content pipeline — local files ⇄ Cosmos (`ai-mysteries-tools/`, run from the **repo root** after `az login`):
 
 ```
-dotnet run --project ai-mysteries-tools -- seed --endpoint <cosmos-uri>   # local files → Cosmos (deploy data)
-dotnet run --project ai-mysteries-tools -- diff --endpoint <cosmos-uri>   # report drift (exit 1 if out of sync)
-dotnet run --project ai-mysteries-tools -- pull --endpoint <cosmos-uri>   # Cosmos → local files (recovery)
+dotnet run --project ai-mysteries-tools -- sync      --endpoint <cosmos-uri>   # reconcile both ways by version
+dotnet run --project ai-mysteries-tools -- seed      --endpoint <cosmos-uri>   # push newer local books → Cosmos (deploy data)
+dotnet run --project ai-mysteries-tools -- pull      --endpoint <cosmos-uri>   # pull newer Cosmos books → local (recovery; --force for all)
+dotnet run --project ai-mysteries-tools -- diff      --endpoint <cosmos-uri>   # compare versions, exit 1 on drift (default check)
+dotnet run --project ai-mysteries-tools -- full-diff --endpoint <cosmos-uri>   # deep content compare, exit 1 on drift
 ```
+
+Reconciliation is **version-based**: every book carries a `version` (a UTC timestamp on its
+`meta.json` locally / the Cosmos manifest doc). The tool stamps a fresh version whenever a book's
+content fingerprint stops matching the one recorded in `meta.json` (that's the "modified → bump the
+version" rule, done from local files — no DB call), then reads just the per-book versions from
+Cosmos (one lightweight manifest-only query, **not** every book's content) to decide per book:
+local newer → push, Cosmos newer → pull, equal → skip. This keeps the request cost flat as books
+are added. `diff` is the cheap default check; `full-diff` is the old field-by-field compare —
+slower, but catches a version that was never bumped or a doc edited out of band.
 
 `--endpoint` can also come from `COSMOS_ENDPOINT`; `--database`/`--container`/`--content` have
 defaults (`books` / `content` / `ai-mysteries-api/Content`). The Tools project is
@@ -126,27 +137,31 @@ Two projects:
   doc (`_system`/`version`, see `VersionDoc` in `CosmosDocuments.cs`). When the value differs from
   what the cache was built on, `BookStore.Refresh()` does a full reload and atomically swaps the
   whole book index ("dirty everything"); otherwise it's a no-op, so steady state makes no
-  per-request DB calls. The seeder bumps that version **only when a seed actually changes content**
-  (it diffs files vs Cosmos first and skips a no-op seed), so a new/edited book goes live within
-  one poll interval with no API redeploy. File mode is static (version constant), so no poller runs.
+  per-request DB calls. This global `_system`/`version` doc is the API's reload trigger and is
+  **separate** from the per-book `version` timestamps the Tools sync compares (those live on each
+  manifest doc; the runtime API ignores them). The seeder bumps the global version **once, only
+  when a sync/seed actually pushes a book** (each book is pushed only when its local version is
+  newer than Cosmos's), so a new/edited book goes live within one poll interval with no API
+  redeploy and an in-sync run never reloads. File mode is static (version constant), so no poller runs.
   Two sources, chosen by the `ContentSource` config key:
   - **`FileBookSource`** (`ContentSource=File`, dev/authoring default) — reads `Content/<bookId>/`
     on disk: `meta.json` (book-level `BookMeta` — title, summary, cover URL, secret blurb, payoff,
-    share strings, special-reveal copy — plus the server-only `selection` rules; all fields
-    optional, defaults fill in); `book.json`
+    share strings, special-reveal copy — plus the server-only `selection` rules and the sync
+    pipeline's `version`/`contentHash` bookkeeping; all fields optional, defaults fill in); `book.json`
     (`[{ slug, title }]`, reading order) + `book/<slug>.md`; `endings.json`
     (`[{ code, culprits, title, special?, slug }]`) + `endings/<slug>.md`; `clues.json` +
     `xref-markers.json` (generated cross-reference data).
   - **`CosmosBookSource`** (`ContentSource=Cosmos`, prod) — reads the Cosmos `content` container
-    (one doc per chapter/ending/clue/xref + a `manifest` that carries the book's `BookMeta`,
-    partition key `/bookId`). See `Services/CosmosDocuments.cs` for the document contract.
+    (one doc per chapter/ending/clue/xref + a `manifest` that carries the book's `BookMeta` and its
+    sync `version`, partition key `/bookId`). See `Services/CosmosDocuments.cs` for the document contract.
 
   The book data files under `Content/` are **gitignored** (not in the repo) — they are the local
   authoring source of truth, seeded into Cosmos by `ai-mysteries-tools`. The structure is
   book-agnostic; routing keys off `{bookId}` and each book is its own Cosmos partition.
-- **`ai-mysteries-tools/`** — local-only console (`seed`/`pull`/`diff`) that moves content between
-  the on-disk files and Cosmos. Reuses the API's `FileBookSource`/`CosmosBookSource` so there is
-  one storage contract. Never deployed.
+- **`ai-mysteries-tools/`** — local-only console (`sync`/`seed`/`pull`/`diff`/`full-diff`) that
+  reconciles content between the on-disk files and Cosmos by per-book version (see the Commands
+  section). Reuses the API's `FileBookSource`/`CosmosBookSource` so there is one storage contract.
+  Never deployed.
 
 API endpoints (all `GET`, JSON camelCase):
 
@@ -356,9 +371,10 @@ scripted in [`infra/azure-setup.ps1`](infra/azure-setup.ps1).
 - **App settings (prod)**: `ContentSource=Cosmos`, `Cosmos__Endpoint/Database/Container`,
   `Cors__AllowedOrigins__0=<SWA origin>` (locks CORS to the front end; localhost stays
   dev-only). Then set the SWA's `VITE_API_BASE_URL` to the web app URL and redeploy the front end.
-- **Data flow**: edit content locally → `ai-mysteries-tools seed` pushes to Cosmos → `diff`
-  proves parity before deploy. Order the first time: run `infra/azure-setup.ps1` → `seed` →
-  deploy API → set `VITE_API_BASE_URL`.
+- **Data flow**: edit content locally → `ai-mysteries-tools seed` (or `sync`) stamps the changed
+  book's version and pushes it to Cosmos → `diff` proves per-book parity before deploy (`full-diff`
+  for a deep check). Order the first time: run `infra/azure-setup.ps1` → `seed` → deploy API → set
+  `VITE_API_BASE_URL`.
 
 ## source_materials/ policy
 

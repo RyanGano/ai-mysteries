@@ -18,6 +18,11 @@ public sealed class ContentDoc
     public string? Title { get; set; }
     public List<string>? ChapterOrder { get; set; }
 
+    // manifest only — sync-pipeline version (UTC timestamp marking when this book's content last
+    // changed). Read cheaply by the Tools sync to decide per-book push/pull/skip without loading
+    // any book content; the runtime API ignores it (it reloads off the global VersionDoc).
+    public string? Version { get; set; }
+
     // manifest only — BookMeta fields (flat, matching this doc's type-specific field convention).
     public List<string>? Tags { get; set; }
     public string? Published { get; set; }
@@ -105,6 +110,7 @@ public static class CosmosContent
             Id = Manifest,
             BookId = raw.Id,
             Type = Manifest,
+            Version = raw.Version,
             Title = m.Title,
             Tags = m.Tags.ToList(),
             Published = m.Published,
@@ -211,6 +217,8 @@ public static class CosmosContent
             .OrderBy(d => d.Code, StringComparer.Ordinal)
             .ToDictionary(d => d.Code!, d => new XrefEntry(d.Slug!, d.Markers ?? new List<XrefMarkerDto>()));
 
-        return new RawBook(bookId, meta, chapters, endings, clues, xref, selection);
+        // ContentHash isn't stored in Cosmos (the sync only needs the timestamp for direction);
+        // it's recomputed locally when a book is pulled to disk.
+        return new RawBook(bookId, meta, chapters, endings, clues, xref, selection, manifest.Version);
     }
 }

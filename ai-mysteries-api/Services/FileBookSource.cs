@@ -32,9 +32,9 @@ public sealed class FileBookSource : IBookSource
     private static RawBook LoadBook(string id, string dir)
     {
         // Book-level metadata (title, marketing copy, cover URL, payoff, share strings) plus the
-        // server-only selection rules. Optional: a book with no meta.json falls back to defaults
-        // so it still loads.
-        var (meta, selection) = ReadMeta(Path.Combine(dir, "meta.json"), id);
+        // server-only selection rules and the sync-pipeline version/contentHash. Optional: a book
+        // with no meta.json falls back to defaults so it still loads.
+        var (meta, selection, version, contentHash) = ReadMeta(Path.Combine(dir, "meta.json"), id);
 
         // Chapters: order from book.json, bodies from book/<slug>.md
         var chapterMetas = ReadJson<List<ChapterMeta>>(Path.Combine(dir, "book.json"));
@@ -53,11 +53,12 @@ public sealed class FileBookSource : IBookSource
         var xref = ReadJsonOrEmpty<Dictionary<string, XrefMeta>>(Path.Combine(dir, "xref-markers.json"))
             .ToDictionary(kv => kv.Key, kv => new XrefEntry(kv.Value.Slug, kv.Value.Markers));
 
-        return new RawBook(id, meta, chapters, endings, clues, xref, selection);
+        return new RawBook(id, meta, chapters, endings, clues, xref, selection, version, contentHash);
     }
 
-    // meta.json → BookMeta + SelectionRules. Absent file or absent fields fall back to defaults.
-    private static (BookMeta, SelectionRules) ReadMeta(string path, string id)
+    // meta.json → BookMeta + SelectionRules + sync version/contentHash. Absent file or absent
+    // fields fall back to defaults (version/contentHash null when never stamped).
+    private static (BookMeta, SelectionRules, string?, string?) ReadMeta(string path, string id)
     {
         var d = File.Exists(path)
             ? JsonSerializer.Deserialize<MetaDoc>(File.ReadAllText(path), Json) ?? new MetaDoc()
@@ -85,7 +86,7 @@ public sealed class FileBookSource : IBookSource
             SpecialShareText: d.SpecialShareText ?? fallback.SpecialShareText,
             SpecialReveal: d.SpecialReveal is { } sr
                 ? new SpecialReveal(sr.Headline ?? "", sr.Sub ?? "")
-                : fallback.SpecialReveal), selection);
+                : fallback.SpecialReveal), selection, d.Version, d.ContentHash);
     }
 
     private static string ReadMd(string dir, string sub, string slug)
@@ -129,7 +130,9 @@ public sealed class FileBookSource : IBookSource
         string? ShareText = null,
         string? SpecialShareText = null,
         SpecialRevealDoc? SpecialReveal = null,
-        SelectionDoc? Selection = null);
+        SelectionDoc? Selection = null,
+        string? Version = null,
+        string? ContentHash = null);
 
     private sealed record SpecialRevealDoc(string? Headline = null, string? Sub = null);
 

@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using AiMysteries.Api.Services;
 
@@ -55,6 +57,21 @@ public static class Differ
         Console.WriteLine($"  - book \"{id}\": {diffs.Count} difference(s):");
         foreach (var d in diffs) Console.WriteLine(d);
         return false;
+    }
+
+    // A stable content fingerprint for one book — the same canonical key->JSON map that Compare
+    // uses, hashed. It deliberately excludes RawBook.Version/ContentHash (Index never serializes
+    // them), so the fingerprint changes only when the book's actual content changes. The sync
+    // stamps a new version whenever a book's fingerprint no longer matches the one recorded in its
+    // meta.json, which is how "modified -> bump the version" stays automatic.
+    public static string Fingerprint(RawBook book)
+    {
+        var index = Index(book);
+        var sb = new StringBuilder();
+        foreach (var key in index.Keys.OrderBy(k => k, StringComparer.Ordinal))
+            sb.Append(key).Append('\t').Append(index[key]).Append('\n');
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     // Flatten a book into logical-key -> canonical JSON, including the book-level metadata.
