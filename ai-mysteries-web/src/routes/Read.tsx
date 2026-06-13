@@ -5,7 +5,6 @@ import { shareOrCopy } from "../lib/share";
 import type { TocEntry, ChapterNav, BookMeta } from "../lib/types";
 import Prose from "../components/Prose";
 import TableOfContents from "../components/TableOfContents";
-import EndingsDrawer from "../components/EndingsDrawer";
 import "../styles/read.css";
 
 const normalize = (s: string) => s.replace(/[_*`]/g, "").replace(/\s+/g, " ").trim();
@@ -22,7 +21,6 @@ export default function Read() {
   const clueId = searchParams.get("clue");
   const articleRef = useRef<HTMLElement>(null);
   const [tocOpen, setTocOpen] = useState(false);
-  const [endingsOpen, setEndingsOpen] = useState(false);
   const [toc, setToc] = useState<TocEntry[] | null>(null);
   const [meta, setMeta] = useState<BookMeta | null>(null);
   const [navState, setNavState] = useState<NavState>({ status: "loading" });
@@ -69,7 +67,6 @@ export default function Read() {
   useEffect(() => {
     if (!clueId) window.scrollTo(0, 0);
     setTocOpen(false);
-    setEndingsOpen(false);
   }, [slug, clueId]);
 
   useEffect(() => {
@@ -149,9 +146,6 @@ export default function Read() {
           <button className="read-toc-button" onClick={() => setTocOpen(true)}>
             Contents
           </button>
-          <button className="read-toc-button" onClick={() => setEndingsOpen(true)}>
-            Endings
-          </button>
           <button className="read-toc-button" onClick={handleShare}>
             Share
           </button>
@@ -171,12 +165,6 @@ export default function Read() {
         onClose={() => setTocOpen(false)}
         currentSlug={slug}
         entries={toc ?? []}
-        bookId={bookId}
-      />
-
-      <EndingsDrawer
-        open={endingsOpen}
-        onClose={() => setEndingsOpen(false)}
         bookId={bookId}
         codePlaceholder={meta?.codePlaceholder}
         secretBlurb={meta?.secretBlurb}
