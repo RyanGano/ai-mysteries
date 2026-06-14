@@ -5,6 +5,7 @@ import { shareOrCopy } from "../lib/share";
 import type { TocEntry, ChapterNav, BookMeta } from "../lib/types";
 import Prose from "../components/Prose";
 import TableOfContents from "../components/TableOfContents";
+import Loading from "../components/Loading";
 import "../styles/read.css";
 
 const normalize = (s: string) => s.replace(/[_*`]/g, "").replace(/\s+/g, " ").trim();
@@ -130,11 +131,7 @@ export default function Read() {
   }
 
   if (navState.status !== "ready") {
-    return (
-      <main className="read read--status">
-        <p className="read-status-text">Loading&hellip;</p>
-      </main>
-    );
+    return <Loading variant="read" />;
   }
 
   const { chapter, prev, next, isLast } = navState.nav;

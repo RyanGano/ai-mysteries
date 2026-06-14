@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchRandomCode } from "../lib/api";
-import "../styles/find-ending.css";
+import Loading from "../components/Loading";
 
 // /:bookId/ending always resolves straight to a weighted-random ending.
 // Entering a specific code lives on the landing page (/).
@@ -24,9 +24,5 @@ export default function FindEnding() {
     };
   }, [bookId, navigate]);
 
-  return (
-    <main className="find-ending">
-      <p className="find-ending-message">Revealing your ending&hellip;</p>
-    </main>
-  );
+  return <Loading variant="ending" />;
 }

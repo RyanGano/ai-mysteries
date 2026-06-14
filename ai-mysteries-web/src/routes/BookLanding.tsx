@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchBookMeta } from "../lib/api";
 import { shareOrCopy } from "../lib/share";
 import type { BookMeta } from "../lib/types";
+import Loading from "../components/Loading";
 import "../styles/landing.css";
 
 type State =
@@ -43,11 +44,7 @@ export default function BookLanding() {
   }, [state]);
 
   if (state.status === "loading") {
-    return (
-      <main className="landing landing--status">
-        <p className="landing-status-text">Loading&hellip;</p>
-      </main>
-    );
+    return <Loading variant="book" />;
   }
 
   if (state.status !== "ready") {

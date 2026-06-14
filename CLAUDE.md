@@ -112,7 +112,9 @@ investigator, so the tag carries no filtering signal — don't re-add it.
    secret blurb, end-of-book payoff, share text, and the special-ending reveal copy all come from
    the API (`BookMeta`). React holds only generic,
    book-agnostic UI chrome — button verbs ("Reveal another ending →", "Continue reading →",
-   "Contents"), loading/error text, the catalog tagline + footer disclaimers + privacy policy,
+   "Contents"), loading/error text (including the rotating cold-start captions in
+   `components/Loading.tsx`, which describe the *site* and its ending mechanic, never a specific
+   book), the catalog tagline + footer disclaimers + privacy policy,
    and the "AI Mysteries" site brand in `index.html`. The API is equally
    book-blind: selection rules (category weights, sentinel culprit, special-ending odds) are
    authored data (`selection` in meta.json), not constants in code. If a string or number
@@ -128,7 +130,13 @@ Two projects:
 
 - **`ai-mysteries-web/`** — React + Vite front end. Rendering only; holds **no** book data or
   wording (see principle 1). It fetches everything from the API through `src/lib/api.ts` (typed
-  client) using the shapes in `src/lib/types.ts`.
+  client) using the shapes in `src/lib/types.ts`. The API runs on a free tier that can cold-start
+  for several seconds, so every route's loading state renders the shared `components/Loading.tsx`:
+  a layout-matching skeleton (so content swaps in without a jolt) plus a caption that fades through
+  a few lines onboarding the reader to the ending mechanic. The ending reveal flow
+  (`FindEnding`/`Ending`) uses its `variant="ending"` — a centered draw, not a page skeleton, so it
+  doesn't preview the reveal. All loading copy is generic, spoiler-free site chrome and honors
+  `prefers-reduced-motion`.
 - **`ai-mysteries-api/`** — .NET 10 minimal API. Owns the selection logic and serves content. It
   loads content at startup from a pluggable **`IBookSource`** (`Services/IBookSource.cs`) into an
   immutable `Book` per book, cached by `Services/BookStore.cs`. In Cosmos mode the cache is **not**

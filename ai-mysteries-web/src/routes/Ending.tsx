@@ -4,6 +4,7 @@ import { fetchEnding, fetchRandomCode, fetchBookMeta } from "../lib/api";
 import { shareOrCopy } from "../lib/share";
 import type { Ending as EndingData, BookMeta } from "../lib/types";
 import Prose from "../components/Prose";
+import Loading from "../components/Loading";
 import "../styles/ending.css";
 
 type Status = "loading" | "ready" | "notfound" | "error";
@@ -64,11 +65,7 @@ export default function Ending() {
   }, [meta]);
 
   if (status === "loading") {
-    return (
-      <main className="ending ending--status">
-        <p className="ending-status-text">Revealing your ending&hellip;</p>
-      </main>
-    );
+    return <Loading variant="ending" />;
   }
 
   if (status !== "ready" || !ending) {

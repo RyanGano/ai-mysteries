@@ -243,8 +243,7 @@
   border-color: #c9a54e;
 }
 
-.ending--notfound,
-.ending--status {
+.ending--notfound {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -259,11 +258,4 @@
   font-size: 1.05rem;
   color: var(--color-text-muted);
   max-width: 40ch;
-}
-
-.ending-status-text {
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }

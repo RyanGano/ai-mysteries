@@ -1,0 +1,279 @@
+/* Cold-start loading states: a layout-matching skeleton + a rotating, fading caption. See
+   components/Loading.tsx. Mirrors each route's container width so the real content swaps in without
+   a jump. */
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  min-height: 100dvh;
+  padding: var(--page-pad);
+}
+
+/* Catalog / reader skeletons read top-down like the real page; the centered ones sit mid-screen. */
+.loading--catalog,
+.loading--read {
+  justify-content: flex-start;
+}
+
+.loading--book,
+.loading--ending {
+  justify-content: center;
+}
+
+.loading-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Shimmer primitives ─────────────────────────────────────────────── */
+
+.loading-bar,
+.loading-cover,
+.loading-book-cover,
+.loading-pill,
+.loading-button,
+.loading-chip,
+.loading-card {
+  background: var(--color-surface);
+  background-image: linear-gradient(
+    90deg,
+    var(--color-surface) 0,
+    #23262e 40%,
+    var(--color-surface) 80%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: loading-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -50% 0;
+  }
+}
+
+.loading-bar {
+  display: block;
+  height: 0.75rem;
+}
+
+.loading-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+}
+
+.loading-lines--prose {
+  gap: 0.85rem;
+}
+
+.loading-pills {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.loading-pills--center {
+  justify-content: center;
+}
+
+.loading-pill {
+  width: 4.5rem;
+  height: 1.1rem;
+  border-radius: 999px;
+}
+
+/* ── Catalog skeleton ───────────────────────────────────────────────── */
+
+.loading-catalog {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  margin-top: 4vh;
+}
+
+.loading-catalog-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.loading-catalog-head .loading-bar {
+  height: 1.5rem;
+  max-width: 100%;
+}
+
+.loading-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* The card wrapper itself isn't a shimmer block — only its children are. */
+.loading-card {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  animation: none;
+}
+
+.loading-cover {
+  flex-shrink: 0;
+  width: 88px;
+  height: 124px;
+  border-radius: 2px;
+}
+
+.loading-card-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ── Book-landing skeleton ──────────────────────────────────────────── */
+
+.loading-book {
+  width: 100%;
+  max-width: var(--max-prose);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.loading-book .loading-bar {
+  height: 1.75rem;
+}
+
+.loading-book-cover {
+  width: min(220px, 60vw);
+  height: min(308px, 84vw);
+  border-radius: 3px;
+}
+
+.loading-book .loading-lines {
+  margin-top: 0.5rem;
+}
+
+.loading-button {
+  width: 12rem;
+  height: 2.75rem;
+  border-radius: 3px;
+  margin-top: 0.5rem;
+}
+
+/* ── Reader skeleton ────────────────────────────────────────────────── */
+
+.loading-read {
+  width: 100%;
+  max-width: calc(var(--max-prose) + 2 * var(--page-pad));
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.loading-read-bar {
+  display: flex;
+  gap: 0.6rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.loading-chip {
+  width: 6.5rem;
+  height: 2rem;
+  border-radius: 3px;
+}
+
+.loading-read > .loading-bar {
+  height: 2rem;
+}
+
+/* ── Ending reveal ──────────────────────────────────────────────────── */
+
+.loading-ending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-ending-glyph {
+  font-size: 2.5rem;
+  color: var(--color-accent);
+  animation: loading-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes loading-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+/* ── Rotating caption ───────────────────────────────────────────────── */
+
+.loading-caption {
+  max-width: 44ch;
+  min-height: 2.8em;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.loading-caption-line {
+  display: inline-block;
+  animation: loading-fade-in 0.6s ease both;
+}
+
+@keyframes loading-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect reduced-motion: freeze the shimmer to a steady tone and drop the fade/pulse motion. */
+@media (prefers-reduced-motion: reduce) {
+  .loading-bar,
+  .loading-cover,
+  .loading-book-cover,
+  .loading-pill,
+  .loading-button,
+  .loading-chip,
+  .loading-ending-glyph,
+  .loading-caption-line {
+    animation: none;
+  }
+  .loading-ending-glyph {
+    opacity: 0.7;
+  }
+}

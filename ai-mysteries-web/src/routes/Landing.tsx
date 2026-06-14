@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchBooks } from "../lib/api";
 import type { BookMeta } from "../lib/types";
+import Loading from "../components/Loading";
 import "../styles/landing.css";
 
 type State = { status: "loading" } | { status: "ready"; books: BookMeta[] } | { status: "error" };
@@ -24,11 +25,7 @@ export default function Landing() {
   }, []);
 
   if (state.status === "loading") {
-    return (
-      <main className="catalog catalog--status">
-        <p className="catalog-status-text">Loading&hellip;</p>
-      </main>
-    );
+    return <Loading variant="catalog" />;
   }
 
   if (state.status === "error") {
