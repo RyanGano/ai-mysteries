@@ -304,14 +304,15 @@ Checklist — all of `put_book_in_site.md` §3, plus the authoring-quality check
 - [ ] Landing page lists the new book; cover URL actually loads.
 - [ ] Full read-through at the target pace — does the length match the brief?
 - [ ] Last chapter shows the payoff copy; its CTA reveals an ending.
-- [ ] "Reveal another ending" never repeats the current culprit combination.
-- [ ] Every ending's code resolves via the landing input; a made-up code is rejected.
+- [ ] **Special ending is rare.** Confirm in the `selection` rules that `specialEndingOdds`
+      is low (or `0`), then hit `GET /api/books/<bookId>/endings/random` a handful of times —
+      the special ending should not turn up. No exhaustive tally; a spot-check is enough.
+- [ ] **Random draws vary.** Reveal an ending, then "Reveal another ending" a few times —
+      each draw should be a different ending and never repeat the current culprit combination.
+- [ ] **Code round-trips.** Take one ending you got at random, enter its code on the landing
+      input, and confirm you land on that same ending; a made-up code is rejected.
 - [ ] Xref glyphs appear in endings, hover shows the chapter passage, and the deep link
       highlights it in the reader.
-- [ ] Weighting sanity: hit `GET /api/books/<bookId>/endings/random` ~200 times and tally
-      codes — solo endings should clearly dominate. **Keep the tally local; it's a
-      spoiler artifact.**
-- [ ] Special ending appears only by code entry (or at its configured odds).
 - [ ] Fair-play audit: for each ending, confirm its ≥2 clues exist in the chapters and
       that no committed file mentions any code, slug+culprit pairing, or character name.
 

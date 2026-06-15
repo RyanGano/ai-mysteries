@@ -148,8 +148,12 @@ Checklist:
 - the landing page (`/`) lists the new book with its cover and summary
 - `/<bookId>` redirects to the first chapter; TOC, prev/next work
 - the last chapter shows the payoff and its CTA reveals an ending
-- "Reveal another ending" never repeats the current culprit combination
-- entering a known code on the landing page resolves; an unknown code is rejected
+- the special ending is rare: `specialEndingOdds` is low (or `0`) in the `selection` rules,
+  and a handful of `endings/random` draws don't surface it (spot-check, not an exhaustive tally)
+- random draws vary: "Reveal another ending" a few times gives different endings and never
+  repeats the current culprit combination
+- one ending round-trips: a code you got at random resolves to that same ending on the landing
+  input; a made-up code is rejected
 
 ## 4. Ship (cover, seed, verify)
 
