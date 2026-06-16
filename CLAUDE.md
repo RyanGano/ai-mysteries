@@ -80,13 +80,14 @@ Two committed, spoiler-free playbooks at the repo root:
 
 Tags appear on catalog cards and drive filtering. **Reuse an existing tag whenever the meaning
 is close enough** — duplicate intent with different wording fragments the filter. Only add a new
-tag if nothing in the list fits. Current canonical tags (as of 2026-06-12):
+tag if nothing in the list fits. Current canonical tags (as of 2026-06-16):
 
 | Tag | When to use |
 |---|---|
 | `AI` | AI system is a character or central to the plot |
 | `Cozy` | low-stakes, warm-toned, no violence |
 | `Death` | a death occurs but murder is ambiguous or contested |
+| `Haunted` | a haunting/ghost premise is central (real or staged) |
 | `Kid Friendly` | suitable for young readers (simple vocabulary, no violence) |
 | `Medical` | hospital/clinical setting or medical negligence is central |
 | `Murder` | at least one suspect is a deliberate killer |
