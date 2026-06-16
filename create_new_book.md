@@ -35,6 +35,10 @@ request.
   `meta.json` or the content files.
 - If `Content/within-tolerance/` exists locally, skim it as the reference
   implementation (structure, tone of `meta.json` copy, ending shape). Never copy its text.
+- **No sexual or sex-related content** in the manuscript or any ending (every book, every
+  audience). Romance stays at kissing / dating / hugging / holding hands; anything beyond
+  that you do **not** write without asking the user first. See *Content boundaries* in
+  `CLAUDE.md`.
 
 ---
 

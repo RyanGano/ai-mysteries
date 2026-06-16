@@ -331,6 +331,15 @@ real idea a clue depends on (condensation, freeze-thaw) but gloss it in plain wo
 first time. A load-bearing theme word may stay (e.g. *non-essential mass*) if the prose
 around it explains it plainly. See `create_new_book.md` Phase 0 for the fuller checklist.
 
+## Content boundaries
+
+**No sexual or sex-related content in any book — manuscript or endings.** This applies to
+every book on the site regardless of audience. Romance is fine at the level of *kissing,
+dating, hugging, holding hands* — keep it there. Anything beyond that (explicit or implied
+sexual activity, sexual description, innuendo as a plot element) is out of scope: **do not
+write it without asking the user first.** If a premise seems to call for it, stop and
+confirm before authoring rather than including it.
+
 ## Character reference
 
 The character bible — a `.docx` in `source_materials/`, local-only, never committed. Contains
