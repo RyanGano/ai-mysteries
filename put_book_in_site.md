@@ -67,16 +67,18 @@ of it in the React components.
   "selection": {
     "sentinelCulprit": "<culprit value whose solo endings form their own category>",
     "categoryWeights": { "1": 45, "2": 30, "sentinel": 25 },
-    "specialEndingOdds": 0.001
+    "specialEnding": 734
   }
 }
 ```
 
 - `selection` holds the book's **server-only** random-pick rules (see *Weighted random
   selection* in `CLAUDE.md`): relative `categoryWeights` keyed by culprit-set size (plus
-  `"sentinel"` for the `sentinelCulprit`'s solo endings), and the odds of the `special: true`
-  ending. Omit it for uniform odds and no special roll. It is never returned by any API
-  endpoint — keep it that way.
+  `"sentinel"` for the `sentinelCulprit`'s solo endings), and `specialEnding` — a per-book random
+  integer 1–1000 giving the **cadence** of the `special: true` ending (every `specialEnding`-th
+  random reveal is the special one; the API tracks a per-book `readCount` for this and persists it
+  to a `stats` doc). Use `0`/omit for code-only. Omit the whole block for uniform odds and no
+  special. It is never returned by any API endpoint — keep it that way.
 
 - `version` / `contentHash` are **managed by the seeder, not authored by hand** — leave them out.
   The `seed`/`sync` tool stamps `version` (a UTC timestamp) and `contentHash` (a content
@@ -148,8 +150,9 @@ Checklist:
 - the landing page (`/`) lists the new book with its cover and summary
 - `/<bookId>` redirects to the first chapter; TOC, prev/next work
 - the last chapter shows the payoff and its CTA reveals an ending
-- the special ending is rare: `specialEndingOdds` is low (or `0`) in the `selection` rules,
-  and a handful of `endings/random` draws don't surface it (spot-check, not an exhaustive tally)
+- the special ending is rare: `specialEnding` is a random integer 1–1000 (or `0` for code-only)
+  in the `selection` rules, and a handful of `endings/random` draws don't surface it (spot-check,
+  not an exhaustive tally)
 - random draws vary: "Reveal another ending" a few times gives different endings and never
   repeats the current culprit combination
 - one ending round-trips: a code you got at random resolves to that same ending on the landing

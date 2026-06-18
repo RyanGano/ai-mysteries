@@ -17,7 +17,7 @@ public static class EndingEndpoints
         endings.MapGet("/random", (string bookId, string? excludeCode, BookStore store) =>
             {
                 if (!store.TryGetBook(bookId, out var book)) return Results.NotFound();
-                return Results.Ok(new RandomCodeDto(EndingSelector.PickCode(book, excludeCode, Random.Shared)));
+                return Results.Ok(new RandomCodeDto(store.PickRandomCode(book, excludeCode, Random.Shared)));
             })
             .WithName("GetRandomEnding");
 

@@ -21,6 +21,10 @@ public sealed class Book
 
     public IReadOnlyList<Ending> Endings { get; }
 
+    // The book's special (`special: true`) ending code, or null if it has none. Surfaced on the
+    // deterministic ReadCount cadence (see BookStore.PickRandomCode) or by entering the code.
+    public string? SpecialCode { get; }
+
     public Book(
         string id,
         BookMeta meta,
@@ -49,6 +53,8 @@ public sealed class Book
 
         _markersByCode = markersByNormalizedCode;
         _clues = clues;
+
+        SpecialCode = endings.FirstOrDefault(e => e.Special)?.Code;
     }
 
     public BookMetaDto GetMeta() => new(

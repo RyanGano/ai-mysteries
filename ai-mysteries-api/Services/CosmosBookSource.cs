@@ -5,11 +5,35 @@ namespace AiMysteries.Api.Services;
 
 // Reads book content from the Cosmos `content` container. Each book is one logical partition
 // (/bookId), so a book loads in a single-partition query. Used in prod (ContentSource=Cosmos).
-public sealed class CosmosBookSource : IBookSource
+public sealed class CosmosBookSource : IBookSource, IReadCountStore
 {
     private readonly Container _container;
 
     public CosmosBookSource(Container container) => _container = container;
+
+    // --- IReadCountStore: the one mutable, API-owned piece of book state (random-reveal counter).
+
+    // All stored counts in one cross-partition query over the `stats` docs (one tiny doc per book).
+    public IReadOnlyDictionary<string, long> LoadReadCounts()
+    {
+        var counts = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        var q = new QueryDefinition("SELECT c.bookId, c.readCount FROM c WHERE c.type = @t")
+            .WithParameter("@t", CosmosContent.Stats);
+        using var it = _container.GetItemQueryIterator<StatsRef>(q);
+        while (it.HasMoreResults)
+            foreach (var s in it.ReadNextAsync().GetAwaiter().GetResult())
+                counts[s.BookId] = s.ReadCount ?? 0;
+        return counts;
+    }
+
+    // Upsert one book's count into its own partition's `stats` doc. Deterministic id, so it
+    // upserts in place. Never bumps the global content version, so the API's own writes don't
+    // trigger a reload.
+    public void SaveReadCount(string bookId, long count) =>
+        _container.UpsertItemAsync(
+            new ContentDoc { Id = CosmosContent.StatsId, BookId = bookId, Type = CosmosContent.Stats, ReadCount = count },
+            new PartitionKey(bookId))
+            .GetAwaiter().GetResult();
 
     // BookStore builds once at startup, so blocking here is acceptable and keeps IBookSource sync.
     public IEnumerable<RawBook> LoadAll() => LoadAllAsync().GetAwaiter().GetResult();
@@ -67,4 +91,6 @@ public sealed class CosmosBookSource : IBookSource
     }
 
     private sealed record ManifestRef(string BookId);
+
+    private sealed record StatsRef(string BookId, long? ReadCount);
 }

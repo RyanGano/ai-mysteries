@@ -28,14 +28,14 @@ public static class ContentFiles
         // key at all, so a book authored without one round-trips unchanged.
         var m = book.Meta;
         var r = book.Selection;
-        var selection = r.SentinelCulprit is null && r.CategoryWeights.Count == 0 && r.SpecialEndingOdds == 0
+        var selection = r.SentinelCulprit is null && r.CategoryWeights.Count == 0 && r.SpecialEnding == 0
             ? null
             : new SelectionDoc(
                 r.SentinelCulprit,
                 r.CategoryWeights
                     .OrderBy(kv => kv.Key, StringComparer.Ordinal)
                     .ToDictionary(kv => kv.Key, kv => kv.Value),
-                r.SpecialEndingOdds);
+                r.SpecialEnding);
         WriteJson(Path.Combine(dir, "meta.json"), new MetaDoc(
             m.Title, m.Tags.ToList(), m.Published, m.WordCount, m.Summary.ToList(),
             m.CoverImage, m.CoverAlt, m.SecretBlurb,
@@ -98,5 +98,5 @@ public static class ContentFiles
     private record SelectionDoc(
         string? SentinelCulprit,
         Dictionary<string, int> CategoryWeights,
-        double SpecialEndingOdds);
+        int SpecialEnding);
 }

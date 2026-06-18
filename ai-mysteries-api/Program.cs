@@ -68,6 +68,10 @@ if (string.Equals(contentSource, "Cosmos", StringComparison.OrdinalIgnoreCase))
     // Poll the Cosmos content version and reload when a seed bumps it. File mode is static, so
     // this only runs against Cosmos.
     builder.Services.AddHostedService<BookRefreshService>();
+
+    // Persist the live random-reveal counters back to Cosmos on a timer (Cosmos source only —
+    // CosmosBookSource also implements IReadCountStore).
+    builder.Services.AddHostedService<StatsFlushService>();
 }
 else
 {

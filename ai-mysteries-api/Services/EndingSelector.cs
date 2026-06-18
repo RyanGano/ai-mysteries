@@ -3,9 +3,10 @@ using AiMysteries.Api.Models;
 namespace AiMysteries.Api.Services;
 
 // Weighted-random ending selection. Runs on the server so the browser never receives the full
-// ending registry. Every book-specific input — the category weights, the sentinel culprit, the
-// special-ending odds — comes from the book's authored SelectionRules; nothing in this class
-// knows anything about any particular book.
+// ending registry. Every book-specific input — the category weights, the sentinel culprit —
+// comes from the book's authored SelectionRules; nothing in this class knows anything about any
+// particular book. The special ending is handled by the caller (BookStore.PickRandomCode) on a
+// deterministic ReadCount cadence, not here, so this picker only ever returns ordinary endings.
 public static class EndingSelector
 {
     // Category id for an ending: a solo ending by the book's sentinel culprit (if one is
@@ -23,20 +24,15 @@ public static class EndingSelector
     public static string ComboKey(Ending e) =>
         string.Join(" & ", e.Culprits.OrderBy(c => c, StringComparer.Ordinal));
 
-    // Stage 0 — roll the book's special-ending odds. Stage 1 — pick a category by weight.
-    // Stage 2 — pick a culprit combination uniformly within the category. Stage 3 — pick
-    // uniformly among that combination's endings. Picking the combo before the ending keeps
-    // every combination equally likely regardless of how many endings it has. `excludeCode`,
-    // if set and known, removes its whole combo so "reveal another" never repeats the same
-    // culprit set.
+    // Stage 1 — pick a category by weight. Stage 2 — pick a culprit combination uniformly within
+    // the category. Stage 3 — pick uniformly among that combination's endings. Picking the combo
+    // before the ending keeps every combination equally likely regardless of how many endings it
+    // has. `excludeCode`, if set and known, removes its whole combo so "reveal another" never
+    // repeats the same culprit set. The special ending is never returned here (it is excluded from
+    // the category map); BookStore decides when to surface it on the ReadCount cadence.
     public static string PickCode(Book book, string? excludeCode, Random rng)
     {
         var rules = book.Selection;
-
-        var special = book.Endings.FirstOrDefault(e => e.Special);
-        if (special is not null && rules.SpecialEndingOdds > 0
-            && rng.NextDouble() < rules.SpecialEndingOdds)
-            return special.Code;
 
         string? excludeCombo = null;
         if (!string.IsNullOrEmpty(excludeCode) && book.TryGetEnding(excludeCode, out var ex))

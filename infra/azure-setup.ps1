@@ -33,7 +33,9 @@ $DbScope     = "/dbs/$Database"
 # --------------------------------------------------------------------------------------------
 
 # Built-in Cosmos data-plane role definition ids (stable GUIDs, same in every subscription).
-$DataReader      = '00000000-0000-0000-0000-000000000001'
+# Both the web app and you need Data Contributor (the API writes the runtime read counter); the
+# read-only Data Reader id is kept here for reference.
+$DataReader      = '00000000-0000-0000-0000-000000000001'  # unused: API needs write (see below)
 $DataContributor = '00000000-0000-0000-0000-000000000002'
 
 Write-Host "==> Resource group" -ForegroundColor Cyan
@@ -58,9 +60,11 @@ az webapp config set -g $Rg -n $WebApp --startup-file 'AiMysteries.Api' | Out-Nu
 Write-Host "==> Managed identity for the web app" -ForegroundColor Cyan
 $principalId = az webapp identity assign -g $Rg -n $WebApp --query principalId -o tsv
 
-Write-Host "==> Cosmos RBAC (scoped to the books database): web app = Data Reader, you = Data Contributor" -ForegroundColor Cyan
+# The web app needs Data Contributor (write), not just Data Reader: the API persists each book's
+# runtime read counter (random-reveal count) to a per-book `stats` doc in Cosmos.
+Write-Host "==> Cosmos RBAC (scoped to the books database): web app = Data Contributor, you = Data Contributor" -ForegroundColor Cyan
 az cosmosdb sql role assignment create -a $CosmosAcct -g $CosmosRg `
-  --role-definition-id $DataReader --principal-id $principalId --scope $DbScope | Out-Null
+  --role-definition-id $DataContributor --principal-id $principalId --scope $DbScope | Out-Null
 $me = az ad signed-in-user show --query id -o tsv
 az cosmosdb sql role assignment create -a $CosmosAcct -g $CosmosRg `
   --role-definition-id $DataContributor --principal-id $me --scope $DbScope | Out-Null

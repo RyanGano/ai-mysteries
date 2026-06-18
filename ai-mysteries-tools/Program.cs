@@ -18,6 +18,7 @@ using Microsoft.Azure.Cosmos;
 //   dotnet run --project ai-mysteries-tools -- pull      [options]   pull newer Cosmos books -> local
 //   dotnet run --project ai-mysteries-tools -- diff      [options]   compare versions, exit 1 on drift
 //   dotnet run --project ai-mysteries-tools -- full-diff [options]   deep content compare, exit 1 on drift
+//   dotnet run --project ai-mysteries-tools -- stats     [options]   report per-book random-reveal counts
 //
 // Options (fall back to env vars, then defaults):
 //   --endpoint  <uri>   Cosmos account URI         (env COSMOS_ENDPOINT)            required
@@ -27,9 +28,9 @@ using Microsoft.Azure.Cosmos;
 //   --force             (pull only) overwrite every local book regardless of version
 
 var verb = args.FirstOrDefault()?.ToLowerInvariant().Replace('_', '-');
-if (verb is not ("sync" or "seed" or "pull" or "diff" or "full-diff"))
+if (verb is not ("sync" or "seed" or "pull" or "diff" or "full-diff" or "stats"))
 {
-    Console.Error.WriteLine("Usage: sync | seed | pull | diff | full-diff   [--endpoint <uri>] [--database <name>] [--container <name>] [--content <path>] [--force]");
+    Console.Error.WriteLine("Usage: sync | seed | pull | diff | full-diff | stats   [--endpoint <uri>] [--database <name>] [--container <name>] [--content <path>] [--force]");
     return 2;
 }
 
@@ -59,6 +60,7 @@ try
         "pull" => await Pull(contentRoot, cosmosContainer, opts.ContainsKey("force")),
         "diff" => await Diff(contentRoot, cosmosContainer),
         "full-diff" => await FullDiff(contentRoot, cosmosContainer),
+        "stats" => await Stats(cosmosContainer),
         _ => 2,
     };
 }
@@ -220,6 +222,33 @@ static async Task<int> FullDiff(string contentRoot, Container container)
     return inSync ? 0 : 1;
 }
 
+// stats: read-only usage report. Prints each book's special-ending cadence and how many random
+// reveals it has served (the API's live ReadCount, persisted to Cosmos). Answers "is anyone using
+// the site, and which stories do they prefer?" without touching content.
+static async Task<int> Stats(Container container)
+{
+    var store = new CosmosStore(container);
+    var manifests = await store.ListManifestSummariesAsync();
+    var counts = await store.ListReadCountsAsync();
+
+    var rows = manifests
+        .Select(m => (Title: m.Title ?? m.BookId, m.SpecialEnding, Reads: counts.GetValueOrDefault(m.BookId)))
+        .OrderByDescending(r => r.Reads)
+        .ThenBy(r => r.Title, StringComparer.Ordinal)
+        .ToList();
+
+    var titleWidth = Math.Max(10, rows.Count == 0 ? 0 : rows.Max(r => r.Title.Length));
+    Console.WriteLine($"| {"Book Title".PadRight(titleWidth)} | SpecialEnding | Random reveals |");
+    Console.WriteLine($"|-{new string('-', titleWidth)}-|---------------|----------------|");
+    foreach (var r in rows)
+    {
+        var cadence = r.SpecialEnding is > 0 ? $"every {r.SpecialEnding}" : "code only";
+        Console.WriteLine($"| {r.Title.PadRight(titleWidth)} | {cadence,-13} | {r.Reads,14} |");
+    }
+    Console.WriteLine($"Total random reveals across {rows.Count} book(s): {rows.Sum(r => r.Reads)}.");
+    return 0;
+}
+
 // Load every local book, validate it (dup-code / weight checks via BookStore.Build), and resolve
 // its version: if the content fingerprint no longer matches the one recorded in meta.json, stamp a
 // fresh UTC timestamp + fingerprint to disk before returning. The returned RawBooks carry the
@@ -255,7 +284,10 @@ static async Task Push(CosmosStore store, RawBook book)
     foreach (var doc in docs)
         await store.UpsertAsync(doc);
 
-    foreach (var id in existingIds.Where(id => !newIds.Contains(id)))
+    // Delete stale docs that no longer exist locally — but never the API-owned `stats` doc (the
+    // runtime read counter), which ToDocuments deliberately doesn't emit. Removing it would reset
+    // the count on every seed.
+    foreach (var id in existingIds.Where(id => !newIds.Contains(id) && id != CosmosContent.StatsId))
         await store.DeleteAsync(book.Id, id);
 }
 

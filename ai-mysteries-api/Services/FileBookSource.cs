@@ -67,7 +67,7 @@ public sealed class FileBookSource : IBookSource
             ? new SelectionRules(
                 s.SentinelCulprit,
                 s.CategoryWeights ?? new Dictionary<string, int>(),
-                s.SpecialEndingOdds ?? 0)
+                s.SpecialEnding ?? 0)
             : SelectionRules.Default;
         var fallback = BookMeta.Default(id);
         return (new BookMeta(
@@ -139,5 +139,5 @@ public sealed class FileBookSource : IBookSource
     private sealed record SelectionDoc(
         string? SentinelCulprit = null,
         Dictionary<string, int>? CategoryWeights = null,
-        double? SpecialEndingOdds = null);
+        int? SpecialEnding = null);
 }

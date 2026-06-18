@@ -30,17 +30,36 @@ public sealed record RawBook(
 // Categories are derived: an ending's category is its culprit-set size as a string ("1", "2",
 // …), except a solo ending by `SentinelCulprit` (if set), which gets the dedicated "sentinel"
 // category. `CategoryWeights` maps those category ids to relative weights; when empty, every
-// category present in the book is equally likely. `SpecialEndingOdds` is the chance (0..1) that
-// a random pick short-circuits to the book's `special: true` ending; 0 means that ending is
-// reachable only by entering its code.
+// category present in the book is equally likely. `SpecialEnding` is the deterministic cadence
+// for the book's `special: true` ending: every `SpecialEnding`-th *random* reveal returns the
+// special ending (the API tracks a per-book ReadCount and short-circuits when
+// `readCount % SpecialEnding == 0`). 0 means the special ending is reachable only by entering its
+// code. (This replaced the old probabilistic `specialEndingOdds` roll so the special ending
+// surfaces on a predictable schedule and the ReadCount doubles as a per-book usage counter.)
 public sealed record SelectionRules(
     string? SentinelCulprit,
     IReadOnlyDictionary<string, int> CategoryWeights,
-    double SpecialEndingOdds)
+    int SpecialEnding)
 {
     // Inert defaults for a book that authors no rules: no sentinel, uniform categories, no
-    // special roll.
+    // special cadence.
     public static SelectionRules Default { get; } = new(null, new Dictionary<string, int>(), 0);
+}
+
+// Persists the per-book random-reveal counter (ReadCount). Separate from IBookSource's content
+// load because it is the one piece of book state mutated at runtime: the API increments a live
+// in-memory count on every random reveal and a background flusher writes it back here. The Cosmos
+// source persists it (one `stats` doc per book partition); the File source has no implementation
+// (dev counts live only in memory). Kept out of the content fingerprint/sync entirely so runtime
+// growth never looks like an authored content change.
+public interface IReadCountStore
+{
+    // Current persisted counts, bookId -> count. Books with no stored count are simply absent
+    // (treated as 0). Read once at startup to resume counting where the last process left off.
+    IReadOnlyDictionary<string, long> LoadReadCounts();
+
+    // Upsert one book's count. Called by the flusher only for books whose count changed.
+    void SaveReadCount(string bookId, long count);
 }
 
 // All book-identifying content the front end renders — title, marketing copy, cover URL, the

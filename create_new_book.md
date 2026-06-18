@@ -124,10 +124,13 @@ Categories are culprit-set **sizes** (`"1"`, `"2"`, …) — that's what the wei
    institution, the machine, the wilderness itself). Its *solo* endings form their own
    `"sentinel"` category via `selection.sentinelCulprit` so it can be weighted
    independently.
-5. **Special ending — at most one, optional.** `special: true` + `specialEndingOdds`
-   (e.g. `0.001`) makes it a rare jackpot with the `specialReveal` overlay. Good
-   candidates break the game's own frame — a culprit no reader would consider in scope.
-   Odds `0`/omitted = reachable only by typing its code.
+5. **Special ending — at most one, optional.** `special: true` + `specialEnding`
+   (a per-book integer 1–1000, e.g. `734`) makes it a rare jackpot with the `specialReveal`
+   overlay. `specialEnding` is a **deterministic cadence**, not a probability: every Nth random
+   reveal is the special one (the API tracks a per-book `readCount` and short-circuits when
+   `readCount % specialEnding == 0`). Pick a fresh **random** value 1–1000 for each new book.
+   Good candidates break the game's own frame — a culprit no reader would consider in scope.
+   `specialEnding` `0`/omitted = reachable only by typing its code.
 
 Multiple endings per culprit combination are allowed — selection picks the combination
 first, then an ending within it uniformly, so combos stay equally likely regardless of
@@ -153,7 +156,7 @@ point for 5 suspects with solos, pairs, and an everyone-ending:
 ```json
 "selection": {
   "categoryWeights": { "1": 55, "2": 30, "5": 15 },
-  "specialEndingOdds": 0.001
+  "specialEnding": 734
 }
 ```
 
@@ -163,9 +166,13 @@ With a sentinel culprit, carve its share out explicitly, keeping `"1"` dominant:
 "selection": {
   "sentinelCulprit": "<the non-human culprit's exact name as used in culprits>",
   "categoryWeights": { "1": 45, "2": 25, "sentinel": 20, "5": 10 },
-  "specialEndingOdds": 0.001
+  "specialEnding": 734
 }
 ```
+
+Pick `specialEnding` as a **fresh random integer 1–1000** for each new book (it sets how often a
+random reveal lands on the special ending — every `specialEnding`-th draw). Don't copy another
+book's value.
 
 Every category your endings actually use **must** have a positive weight — the API
 validates this at startup and refuses to load the book otherwise. The `selection` block
@@ -308,9 +315,11 @@ Checklist — all of `put_book_in_site.md` §3, plus the authoring-quality check
 - [ ] Landing page lists the new book; cover URL actually loads.
 - [ ] Full read-through at the target pace — does the length match the brief?
 - [ ] Last chapter shows the payoff copy; its CTA reveals an ending.
-- [ ] **Special ending is rare.** Confirm in the `selection` rules that `specialEndingOdds`
-      is low (or `0`), then hit `GET /api/books/<bookId>/endings/random` a handful of times —
-      the special ending should not turn up. No exhaustive tally; a spot-check is enough.
+- [ ] **Special ending is rare.** Confirm in the `selection` rules that `specialEnding`
+      is set to a random integer 1–1000 (or `0` for code-only), then hit
+      `GET /api/books/<bookId>/endings/random` a handful of times — the special ending should not
+      turn up (you'd have to draw `specialEnding` times to see it). No exhaustive tally; a
+      spot-check is enough.
 - [ ] **Random draws vary.** Reveal an ending, then "Reveal another ending" a few times —
       each draw should be a different ending and never repeat the current culprit combination.
 - [ ] **Code round-trips.** Take one ending you got at random, enter its code on the landing

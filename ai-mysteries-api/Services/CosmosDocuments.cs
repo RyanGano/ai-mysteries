@@ -43,7 +43,12 @@ public sealed class ContentDoc
     // the random picker; never mapped into any response DTO.
     public string? SentinelCulprit { get; set; }
     public Dictionary<string, int>? CategoryWeights { get; set; }
-    public double? SpecialEndingOdds { get; set; }
+    public int? SpecialEnding { get; set; }
+
+    // stats only — the per-book random-reveal counter. Lives in its own `stats` doc (one per book
+    // partition), written by the API and never by the seeder, so re-seeding a book's content never
+    // resets the count and the count never participates in the content fingerprint/sync.
+    public long? ReadCount { get; set; }
 
     // chapter / ending / xref
     public string? Slug { get; set; }
@@ -89,6 +94,11 @@ public static class CosmosContent
     public const string Clue = "clue";
     public const string Xref = "xref";
 
+    // The per-book runtime stats doc (random-reveal counter). One per book partition, owned by the
+    // API — the seeder never emits it (so ToDocuments below omits it) and Push must not delete it.
+    public const string Stats = "stats";
+    public const string StatsId = "stats";
+
     // The content-version doc (see VersionDoc) and the dedicated partition it lives in. The
     // partition holds no book content, so it stays out of every per-book query.
     public const string SystemPartition = "_system";
@@ -131,8 +141,9 @@ public static class CosmosContent
             CategoryWeights = raw.Selection.CategoryWeights.Count > 0
                 ? new Dictionary<string, int>(raw.Selection.CategoryWeights)
                 : null,
-            SpecialEndingOdds = raw.Selection.SpecialEndingOdds,
+            SpecialEnding = raw.Selection.SpecialEnding,
         };
+        // Note: no `stats` doc here — the runtime ReadCount is API-owned and must survive re-seeds.
 
         foreach (var c in raw.Chapters)
             yield return new ContentDoc
@@ -196,7 +207,7 @@ public static class CosmosContent
         var selection = new SelectionRules(
             manifest.SentinelCulprit,
             manifest.CategoryWeights ?? new Dictionary<string, int>(),
-            manifest.SpecialEndingOdds ?? 0);
+            manifest.SpecialEnding ?? 0);
 
         var chaptersBySlug = list.Where(d => d.Type == Chapter)
             .ToDictionary(d => d.Slug!, d => new ChapterDto(d.Slug!, d.Title!, d.Body!));

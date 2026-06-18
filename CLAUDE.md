@@ -27,6 +27,7 @@ dotnet run --project ai-mysteries-tools -- seed      --endpoint <cosmos-uri>   #
 dotnet run --project ai-mysteries-tools -- pull      --endpoint <cosmos-uri>   # pull newer Cosmos books → local (recovery; --force for all)
 dotnet run --project ai-mysteries-tools -- diff      --endpoint <cosmos-uri>   # compare versions, exit 1 on drift (default check)
 dotnet run --project ai-mysteries-tools -- full-diff --endpoint <cosmos-uri>   # deep content compare, exit 1 on drift
+dotnet run --project ai-mysteries-tools -- stats     --endpoint <cosmos-uri>   # per-book random-reveal counts (usage report)
 ```
 
 Reconciliation is **version-based**: every book carries a `version` (a UTC timestamp on its
@@ -117,7 +118,7 @@ investigator, so the tag carries no filtering signal — don't re-add it.
    `components/Loading.tsx`, which describe the *site* and its ending mechanic, never a specific
    book), the catalog tagline + footer disclaimers + privacy policy,
    and the "AI Mysteries" site brand in `index.html`. The API is equally
-   book-blind: selection rules (category weights, sentinel culprit, special-ending odds) are
+   book-blind: selection rules (category weights, sentinel culprit, special-ending cadence) are
    authored data (`selection` in meta.json), not constants in code. If a string or number
    describes a book, it belongs in the data.
 2. **A new book is a data-only change — zero code, zero redeploy.** Author the book's content
@@ -162,12 +163,14 @@ Two projects:
     `xref-markers.json` (generated cross-reference data).
   - **`CosmosBookSource`** (`ContentSource=Cosmos`, prod) — reads the Cosmos `content` container
     (one doc per chapter/ending/clue/xref + a `manifest` that carries the book's `BookMeta` and its
-    sync `version`, partition key `/bookId`). See `Services/CosmosDocuments.cs` for the document contract.
+    sync `version`, partition key `/bookId`). It also reads/writes a per-book `stats` doc — the
+    runtime `readCount` (see the read-counter note under *Weighted random selection*) — the only
+    document the API mutates. See `Services/CosmosDocuments.cs` for the document contract.
 
   The book data files under `Content/` are **gitignored** (not in the repo) — they are the local
   authoring source of truth, seeded into Cosmos by `ai-mysteries-tools`. The structure is
   book-agnostic; routing keys off `{bookId}` and each book is its own Cosmos partition.
-- **`ai-mysteries-tools/`** — local-only console (`sync`/`seed`/`pull`/`diff`/`full-diff`) that
+- **`ai-mysteries-tools/`** — local-only console (`sync`/`seed`/`pull`/`diff`/`full-diff`/`stats`) that
   reconciles content between the on-disk files and Cosmos by per-book version (see the Commands
   section). Reuses the API's `FileBookSource`/`CosmosBookSource` so there is one storage contract.
   Never deployed.
@@ -234,7 +237,7 @@ any endpoint** — the rules themselves are spoilers):
 "selection": {
   "sentinelCulprit": "<culprit value whose solo endings form their own category>",
   "categoryWeights": { "1": 45, "2": 30, "sentinel": 25 },
-  "specialEndingOdds": 0.001
+  "specialEnding": 734
 }
 ```
 
@@ -244,11 +247,36 @@ any endpoint** — the rules themselves are spoilers):
   present), pick a culprit combination uniformly within it, pick uniformly among that
   combination's endings. Picking the combo before the ending keeps every combination equally
   likely regardless of how many endings it has.
-- `specialEndingOdds` (0..1) is the chance a pick short-circuits to the book's `special: true`
-  ending; `0`/omitted means that ending is reachable only by entering its code.
-- A book with no `selection` key gets uniform category odds and no special roll.
+- `specialEnding` (a per-book integer, 1–1000) is a **deterministic cadence**, not a probability:
+  the API keeps a per-book **read counter** (`readCount`) that increments on every *random* reveal
+  (`endings/random`, including "reveal another"), and short-circuits to the book's `special: true`
+  ending whenever `readCount % specialEnding == 0`. So with `specialEnding: 734`, every 734th random
+  reveal is the special one. A specific code fetched via `endings/{code}` (a shared link) is **not**
+  a random reveal and never moves the counter. `0`/omitted means the special ending is reachable
+  only by entering its code. (This replaced the old probabilistic `specialEndingOdds` roll so the
+  special surfaces on a predictable schedule and `readCount` doubles as a per-book usage signal.)
+- A book with no `selection` key gets uniform category odds and no special cadence.
 - `BookStore.Build` validates at startup that authored weights give a positive weight to every
   category the book's endings actually use.
+
+#### The read counter (`readCount`) and persistence
+
+`readCount` is the **one piece of book state mutated at runtime**, so it lives apart from the
+authored, synced content:
+
+- The API holds a live per-book count in memory (`BookStore`), increments it on each random reveal,
+  and a background `StatsFlushService` writes changed counts back to the source every
+  `Stats:FlushIntervalSeconds` (default 60). On startup the counts are re-seeded from the store so
+  counting resumes across restarts.
+- In Cosmos mode the count persists in a dedicated per-book **`stats` doc** (`type: "stats"`, one
+  per `/bookId` partition), written by `CosmosBookSource` (which implements `IReadCountStore`). It
+  is **deliberately not** part of the manifest, the content fingerprint, or the sync — the seeder
+  never emits it and `Push` never deletes it, so re-seeding a book's content never resets the
+  count. The API's stats writes never bump the global content version, so they don't trigger a
+  reload. (This is why the API's managed identity now needs Cosmos **write** access — see Deployment.)
+- File mode (dev) has no `IReadCountStore`, so counts live only in memory for the process.
+- Run `ai-mysteries-tools stats` (from the repo root, after `az login`) for a per-book report of
+  the cadence and how many random reveals each book has served.
 
 ### "Reveal another ending" exclusion rule
 
@@ -384,9 +412,12 @@ container, the F1 web app, its managed identity, and Cosmos RBAC scoped to `/dbs
 scripted in [`infra/azure-setup.ps1`](infra/azure-setup.ps1).
 
 - **Auth is passwordless** — the web app's system-assigned **managed identity** holds the Cosmos
-  *Data Reader* role; the API connects with `DefaultAzureCredential` + the account endpoint URL
-  (config `Cosmos:Endpoint`, not a secret). No keys, **no Key Vault**. You hold *Data
-  Contributor* so the local Tools seeder can write.
+  *Data Contributor* role (it needs **write** access: the API persists each book's runtime
+  `readCount` to a per-book `stats` doc — see the read-counter note under *Weighted random
+  selection*); the API connects with `DefaultAzureCredential` + the account endpoint URL
+  (config `Cosmos:Endpoint`, not a secret). No keys, **no Key Vault**. You also hold *Data
+  Contributor* so the local Tools seeder can write. The role is scoped to `/dbs/books` in
+  `infra/azure-setup.ps1`.
 - **Deploy**: `.github/workflows/api.yml` publishes self-contained (`-r linux-x64
   --self-contained`, so F1 needs no preinstalled .NET 10 runtime) and pushes via publish
   profile. Repo secrets: `AZURE_WEBAPP_NAME`, `AZURE_WEBAPP_PUBLISH_PROFILE`. The artifact

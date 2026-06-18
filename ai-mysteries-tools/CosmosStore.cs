@@ -28,6 +28,34 @@ public sealed class CosmosStore
         return versions;
     }
 
+    // Each book's id, title, and special-ending cadence, from the manifest docs only — one
+    // lightweight query. Used by `stats` to label the read-count report.
+    public async Task<List<ManifestSummary>> ListManifestSummariesAsync()
+    {
+        var rows = new List<ManifestSummary>();
+        var q = new QueryDefinition("SELECT c.bookId, c.title, c.specialEnding FROM c WHERE c.type = @t")
+            .WithParameter("@t", CosmosContent.Manifest);
+        using var it = _container.GetItemQueryIterator<ManifestSummary>(q);
+        while (it.HasMoreResults)
+            foreach (var m in await it.ReadNextAsync())
+                rows.Add(m);
+        return rows;
+    }
+
+    // Each book's persisted random-reveal count, from the `stats` docs only. Books with no stats
+    // doc yet are absent (treated as 0 by the caller).
+    public async Task<Dictionary<string, long>> ListReadCountsAsync()
+    {
+        var counts = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        var q = new QueryDefinition("SELECT c.bookId, c.readCount FROM c WHERE c.type = @t")
+            .WithParameter("@t", CosmosContent.Stats);
+        using var it = _container.GetItemQueryIterator<StatsRow>(q);
+        while (it.HasMoreResults)
+            foreach (var s in await it.ReadNextAsync())
+                counts[s.BookId] = s.ReadCount ?? 0;
+        return counts;
+    }
+
     // All document ids currently stored for a book (single-partition).
     public async Task<List<string>> ListIdsAsync(string bookId)
     {
@@ -72,4 +100,8 @@ public sealed class CosmosStore
     private sealed record IdOnly(string Id);
 
     private sealed record ManifestVersion(string BookId, string? Version);
+
+    private sealed record StatsRow(string BookId, long? ReadCount);
+
+    public sealed record ManifestSummary(string BookId, string? Title, int? SpecialEnding);
 }

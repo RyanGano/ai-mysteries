@@ -86,7 +86,7 @@ public static class Differ
             CategoryWeights = b.Selection.CategoryWeights
                 .OrderBy(kv => kv.Key, StringComparer.Ordinal)
                 .ToDictionary(kv => kv.Key, kv => kv.Value),
-            b.Selection.SpecialEndingOdds,
+            b.Selection.SpecialEnding,
         }, Canon);
         foreach (var ch in b.Chapters)
             map[$"chapter:{ch.Slug}"] = JsonSerializer.Serialize(new { ch.Slug, ch.Title, ch.Body }, Canon);
