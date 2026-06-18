@@ -268,9 +268,13 @@ any endpoint** — the rules themselves are spoilers):
 authored, synced content:
 
 - The API holds a live per-book count in memory (`BookStore`), increments it on each random reveal,
-  and a background `StatsFlushService` writes changed counts back to the source every
-  `Stats:FlushIntervalSeconds` (default 60). On startup the counts are re-seeded from the store so
-  counting resumes across restarts.
+  and **writes the new count through to the store on that same request** (awaited in
+  `PickRandomCodeAsync`), so every increment is durable immediately. On startup the counts are
+  re-seeded from the store so counting resumes across restarts. (Write-through, not a background
+  timer: the App Service **free tier throttles an idle app's CPU**, so a periodic flush didn't fire
+  reliably between visits and lost the last reveals of a quiet period — which both undercounted and
+  weakened the 1-in-1000 guarantee. A persistence failure is logged and swallowed; the in-memory
+  count still advances and the next reveal re-writes it, so the store self-heals.)
 - In Cosmos mode the count persists in a dedicated per-book **`stats` doc** (`type: "stats"`, one
   per `/bookId` partition), written by `CosmosBookSource` (which implements `IReadCountStore`). It
   is **deliberately not** part of the manifest, the content fingerprint, or the sync — the seeder

@@ -15,10 +15,8 @@ public sealed class BookStore
     // Live per-book random-reveal counter. Mutated on every /random hit (the one piece of runtime
     // book state), kept separate from the immutable _books so a content reload never resets it.
     // Seeded at startup from the IReadCountStore (if the source persists counts) so counting
-    // resumes across restarts; a background flusher writes changed values back. _flushedReadCounts
-    // tracks the last persisted value per book so the flusher only writes what actually moved.
+    // resumes across restarts; each increment is written through to the store on the same request.
     private readonly ConcurrentDictionary<string, long> _readCounts;
-    private readonly ConcurrentDictionary<string, long> _flushedReadCounts;
 
     // Swapped atomically by Refresh(): readers grab the reference once, so an in-flight reload
     // never exposes a half-built dictionary. Marked volatile so a swap on the poller thread is
@@ -37,7 +35,6 @@ public sealed class BookStore
 
         var initial = SafeLoadReadCounts();
         _readCounts = new ConcurrentDictionary<string, long>(initial, StringComparer.OrdinalIgnoreCase);
-        _flushedReadCounts = new ConcurrentDictionary<string, long>(initial, StringComparer.OrdinalIgnoreCase);
     }
 
     // The special ending fires exactly once per this many random reveals (a guaranteed 1-in-1000),
@@ -46,14 +43,29 @@ public sealed class BookStore
 
     // Pick the code for a random reveal. Increments the book's read counter (this is the "normal
     // randomized request" that advances the count — a specific code fetched via /endings/{code} is
-    // a shared link and never lands here, so it doesn't move the counter). When the book has a
-    // special ending and an authored offset, the reveal whose count sits at that offset within each
-    // 1000-reveal block returns it (so SpecialEnding=246 -> reveals 246, 1246, 2246, …); otherwise
-    // the weighted picker chooses an ordinary ending. This guarantees the special ending surfaces
-    // once in every 1000 reveals rather than relying on a probability that might never hit.
-    public string PickRandomCode(Book book, string? excludeCode, Random rng)
+    // a shared link and never lands here, so it doesn't move the counter) and writes the new count
+    // through to the store on this same request, so it is durable immediately (no background timer
+    // to miss on a throttled free-tier app). When the book has a special ending and an authored
+    // offset, the reveal whose count sits at that offset within each 1000-reveal block returns it
+    // (so SpecialEnding=246 -> reveals 246, 1246, 2246, …); otherwise the weighted picker chooses
+    // an ordinary ending. This guarantees the special ending surfaces once in every 1000 reveals.
+    public async Task<string> PickRandomCodeAsync(Book book, string? excludeCode, Random rng)
     {
         var count = _readCounts.AddOrUpdate(book.Id, 1, (_, v) => v + 1);
+
+        if (_source is IReadCountStore sink)
+        {
+            try
+            {
+                await sink.SaveReadCountAsync(book.Id, count);
+            }
+            catch (Exception ex)
+            {
+                // Don't fail the reveal on a persistence hiccup — the in-memory count still
+                // advances and the next reveal writes the newer value, so the store self-heals.
+                _logger.LogWarning(ex, "Failed to persist read count for book {BookId}", book.Id);
+            }
+        }
 
         var offset = book.Selection.SpecialEnding;
         if (book.SpecialCode is { } special
@@ -62,29 +74,6 @@ public sealed class BookStore
             return special;
 
         return EndingSelector.PickCode(book, excludeCode, rng);
-    }
-
-    // Write any counts that changed since the last flush back to the source. Called on a timer by
-    // StatsFlushService; a no-op when the source doesn't persist counts (File mode).
-    public void FlushReadCounts()
-    {
-        if (_source is not IReadCountStore sink)
-            return;
-
-        foreach (var (bookId, count) in _readCounts)
-        {
-            if (_flushedReadCounts.TryGetValue(bookId, out var last) && last == count)
-                continue;
-            try
-            {
-                sink.SaveReadCount(bookId, count);
-                _flushedReadCounts[bookId] = count;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to persist read count for book {BookId}; will retry", bookId);
-            }
-        }
     }
 
     public bool TryGetBook(string bookId, out Book book) => _books.TryGetValue(bookId, out book!);

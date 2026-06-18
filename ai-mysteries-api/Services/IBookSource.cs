@@ -50,9 +50,13 @@ public sealed record SelectionRules(
 
 // Persists the per-book random-reveal counter (ReadCount). Separate from IBookSource's content
 // load because it is the one piece of book state mutated at runtime: the API increments a live
-// in-memory count on every random reveal and a background flusher writes it back here. The Cosmos
-// source persists it (one `stats` doc per book partition); the File source has no implementation
-// (dev counts live only in memory). Kept out of the content fingerprint/sync entirely so runtime
+// in-memory count on every random reveal and **writes it through** to the store on that same
+// request. (An earlier design flushed on a 60s background timer, but the App Service free tier
+// throttles an idle app's CPU so the timer didn't fire reliably between visits — under sparse
+// traffic the last reveals of a quiet period were lost, undercounting and weakening the
+// 1-in-1000 guarantee. Write-through removes that dependence on a timer.) The Cosmos source
+// persists it (one `stats` doc per book partition); the File source has no implementation (dev
+// counts live only in memory). Kept out of the content fingerprint/sync entirely so runtime
 // growth never looks like an authored content change.
 public interface IReadCountStore
 {
@@ -60,8 +64,9 @@ public interface IReadCountStore
     // (treated as 0). Read once at startup to resume counting where the last process left off.
     IReadOnlyDictionary<string, long> LoadReadCounts();
 
-    // Upsert one book's count. Called by the flusher only for books whose count changed.
-    void SaveReadCount(string bookId, long count);
+    // Upsert one book's count. Awaited on the random-reveal request so the increment is durable
+    // before the response returns.
+    Task SaveReadCountAsync(string bookId, long count);
 }
 
 // All book-identifying content the front end renders — title, marketing copy, cover URL, the

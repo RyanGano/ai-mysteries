@@ -14,10 +14,11 @@ public static class EndingEndpoints
 
         // Weighted-random ending code. `excludeCode` (the currently shown ending) removes its
         // whole culprit combo so "reveal another" never repeats the same combination.
-        endings.MapGet("/random", (string bookId, string? excludeCode, BookStore store) =>
+        endings.MapGet("/random", async (string bookId, string? excludeCode, BookStore store) =>
             {
                 if (!store.TryGetBook(bookId, out var book)) return Results.NotFound();
-                return Results.Ok(new RandomCodeDto(store.PickRandomCode(book, excludeCode, Random.Shared)));
+                var code = await store.PickRandomCodeAsync(book, excludeCode, Random.Shared);
+                return Results.Ok(new RandomCodeDto(code));
             })
             .WithName("GetRandomEnding");
 

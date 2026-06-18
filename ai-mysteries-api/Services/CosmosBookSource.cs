@@ -29,11 +29,10 @@ public sealed class CosmosBookSource : IBookSource, IReadCountStore
     // Upsert one book's count into its own partition's `stats` doc. Deterministic id, so it
     // upserts in place. Never bumps the global content version, so the API's own writes don't
     // trigger a reload.
-    public void SaveReadCount(string bookId, long count) =>
+    public Task SaveReadCountAsync(string bookId, long count) =>
         _container.UpsertItemAsync(
             new ContentDoc { Id = CosmosContent.StatsId, BookId = bookId, Type = CosmosContent.Stats, ReadCount = count },
-            new PartitionKey(bookId))
-            .GetAwaiter().GetResult();
+            new PartitionKey(bookId));
 
     // BookStore builds once at startup, so blocking here is acceptable and keeps IBookSource sync.
     public IEnumerable<RawBook> LoadAll() => LoadAllAsync().GetAwaiter().GetResult();
