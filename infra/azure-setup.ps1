@@ -37,7 +37,7 @@ $DbScope     = "/dbs/$Database"
 # stale docs. The web app gets a tighter CUSTOM role instead (read + query + upsert, no delete):
 # it only ever upserts the per-book `stats` doc (the runtime read counter), so it must never be
 # able to delete or otherwise mutate book content. See the custom-role block below.
-$DataReader      = '00000000-0000-0000-0000-000000000001'  # unused (kept for reference)
+# (Built-in Data Reader is 00000000-...-0001 if you ever need read-only.)
 $DataContributor = '00000000-0000-0000-0000-000000000002'
 
 # Name of the least-privilege custom role assigned to the web app's managed identity.
@@ -89,7 +89,7 @@ if (-not $counterRoleId) {
     "DataActions": [
       "Microsoft.DocumentDB/databaseAccounts/readMetadata",
       "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read",
-      "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/executeQuery",
+      "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/executeQuery",
       "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/upsert"
     ]
   }]
