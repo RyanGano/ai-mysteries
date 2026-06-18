@@ -411,12 +411,14 @@ reads content from **Azure Cosmos DB (NoSQL)** — a `books` database + `content
 container, the F1 web app, its managed identity, and Cosmos RBAC scoped to `/dbs/books`) is
 scripted in [`infra/azure-setup.ps1`](infra/azure-setup.ps1).
 
-- **Auth is passwordless** — the web app's system-assigned **managed identity** holds the Cosmos
-  *Data Contributor* role (it needs **write** access: the API persists each book's runtime
-  `readCount` to a per-book `stats` doc — see the read-counter note under *Weighted random
-  selection*); the API connects with `DefaultAzureCredential` + the account endpoint URL
-  (config `Cosmos:Endpoint`, not a secret). No keys, **no Key Vault**. You also hold *Data
-  Contributor* so the local Tools seeder can write. The role is scoped to `/dbs/books` in
+- **Auth is passwordless** — the web app's system-assigned **managed identity** holds a tight
+  **custom Cosmos role** (`Books Counter Writer`: read + query + **upsert**, *no delete*), scoped
+  to just the `content` container. It needs write because the API persists each book's runtime
+  `readCount` to a per-book `stats` doc (see the read-counter note under *Weighted random
+  selection*), but it must never be able to delete or corrupt book content. The API connects with
+  `DefaultAzureCredential` + the account endpoint URL (config `Cosmos:Endpoint`, not a secret). No
+  keys, **no Key Vault**. You separately hold *Data Contributor* on `/dbs/books` so the local Tools
+  seeder can write **and delete** stale docs. Both role assignments are scripted in
   `infra/azure-setup.ps1`.
 - **Deploy**: `.github/workflows/api.yml` publishes self-contained (`-r linux-x64
   --self-contained`, so F1 needs no preinstalled .NET 10 runtime) and pushes via publish

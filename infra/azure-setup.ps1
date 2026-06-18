@@ -33,10 +33,17 @@ $DbScope     = "/dbs/$Database"
 # --------------------------------------------------------------------------------------------
 
 # Built-in Cosmos data-plane role definition ids (stable GUIDs, same in every subscription).
-# Both the web app and you need Data Contributor (the API writes the runtime read counter); the
-# read-only Data Reader id is kept here for reference.
-$DataReader      = '00000000-0000-0000-0000-000000000001'  # unused: API needs write (see below)
+# You (running the Tools seeder) need Data Contributor — it create/replace/upserts AND deletes
+# stale docs. The web app gets a tighter CUSTOM role instead (read + query + upsert, no delete):
+# it only ever upserts the per-book `stats` doc (the runtime read counter), so it must never be
+# able to delete or otherwise mutate book content. See the custom-role block below.
+$DataReader      = '00000000-0000-0000-0000-000000000001'  # unused (kept for reference)
 $DataContributor = '00000000-0000-0000-0000-000000000002'
+
+# Name of the least-privilege custom role assigned to the web app's managed identity.
+$CounterRoleName = 'Books Counter Writer'
+# Scope the web app's access to just the one container it touches (tighter than the DB scope).
+$ContainerScope  = "/dbs/$Database/colls/$Container"
 
 Write-Host "==> Resource group" -ForegroundColor Cyan
 az group create -n $Rg -l $Location | Out-Null
@@ -60,14 +67,41 @@ az webapp config set -g $Rg -n $WebApp --startup-file 'AiMysteries.Api' | Out-Nu
 Write-Host "==> Managed identity for the web app" -ForegroundColor Cyan
 $principalId = az webapp identity assign -g $Rg -n $WebApp --query principalId -o tsv
 
-# The web app needs Data Contributor (write), not just Data Reader: the API persists each book's
-# runtime read counter (random-reveal count) to a per-book `stats` doc in Cosmos.
-Write-Host "==> Cosmos RBAC (scoped to the books database): web app = Data Contributor, you = Data Contributor" -ForegroundColor Cyan
-az cosmosdb sql role assignment create -a $CosmosAcct -g $CosmosRg `
-  --role-definition-id $DataContributor --principal-id $principalId --scope $DbScope | Out-Null
+# Cosmos RBAC. You (the seeder) get Data Contributor on the books DB. The web app gets a tighter
+# custom role (read + query + upsert, no delete) on just the content container — it only persists
+# the runtime read counter and must never be able to delete book content.
+Write-Host "==> Cosmos RBAC: you = Data Contributor (DB); web app = '$CounterRoleName' (content container)" -ForegroundColor Cyan
 $me = az ad signed-in-user show --query id -o tsv
 az cosmosdb sql role assignment create -a $CosmosAcct -g $CosmosRg `
   --role-definition-id $DataContributor --principal-id $me --scope $DbScope | Out-Null
+
+# Create the custom role once (re-runnable: reuse it if it already exists). AssignableScopes "/"
+# means "anywhere in this account"; the *assignment* below narrows it to the content container.
+$counterRoleId = az cosmosdb sql role definition list -a $CosmosAcct -g $CosmosRg `
+  --query "[?roleName=='$CounterRoleName'].id | [0]" -o tsv
+if (-not $counterRoleId) {
+  $roleBody = @"
+{
+  "RoleName": "$CounterRoleName",
+  "Type": "CustomRole",
+  "AssignableScopes": ["/"],
+  "Permissions": [{
+    "DataActions": [
+      "Microsoft.DocumentDB/databaseAccounts/readMetadata",
+      "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read",
+      "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/executeQuery",
+      "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/upsert"
+    ]
+  }]
+}
+"@
+  $tmp = New-TemporaryFile
+  Set-Content -Path $tmp -Value $roleBody -Encoding utf8
+  $counterRoleId = az cosmosdb sql role definition create -a $CosmosAcct -g $CosmosRg --body "@$tmp" --query id -o tsv
+  Remove-Item $tmp
+}
+az cosmosdb sql role assignment create -a $CosmosAcct -g $CosmosRg `
+  --role-definition-id $counterRoleId --principal-id $principalId --scope $ContainerScope | Out-Null
 
 Write-Host "==> App settings (endpoint is not a secret; auth is via managed identity)" -ForegroundColor Cyan
 $endpoint = az cosmosdb show -n $CosmosAcct -g $CosmosRg --query documentEndpoint -o tsv
