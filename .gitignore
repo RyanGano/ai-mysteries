@@ -9,6 +9,10 @@ bin/
 obj/
 .vs/
 
+# stray local run/test logs (redirected stdout/stderr from ad-hoc API runs)
+api-*.out
+api-*.err
+
 # local-only source materials (never commit)
 source_materials/
 
