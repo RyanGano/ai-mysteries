@@ -5,8 +5,8 @@ namespace AiMysteries.Api.Services;
 // Weighted-random ending selection. Runs on the server so the browser never receives the full
 // ending registry. Every book-specific input — the category weights, the sentinel culprit —
 // comes from the book's authored SelectionRules; nothing in this class knows anything about any
-// particular book. The special ending is handled by the caller (BookStore.PickRandomCode) on a
-// deterministic ReadCount cadence, not here, so this picker only ever returns ordinary endings.
+// particular book. The special ending is handled by the caller (BookStore.PickRandomCodeAsync) on
+// a deterministic ReadCount offset, not here, so this picker only ever returns ordinary endings.
 public static class EndingSelector
 {
     // Category id for an ending: a solo ending by the book's sentinel culprit (if one is

@@ -22,7 +22,7 @@ public sealed class Book
     public IReadOnlyList<Ending> Endings { get; }
 
     // The book's special (`special: true`) ending code, or null if it has none. Surfaced on the
-    // deterministic ReadCount cadence (see BookStore.PickRandomCode) or by entering the code.
+    // ReadCount offset (see BookStore.PickRandomCodeAsync) or by entering the code.
     public string? SpecialCode { get; }
 
     public Book(
