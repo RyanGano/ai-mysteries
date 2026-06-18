@@ -30,12 +30,14 @@ public sealed record RawBook(
 // Categories are derived: an ending's category is its culprit-set size as a string ("1", "2",
 // …), except a solo ending by `SentinelCulprit` (if set), which gets the dedicated "sentinel"
 // category. `CategoryWeights` maps those category ids to relative weights; when empty, every
-// category present in the book is equally likely. `SpecialEnding` is the deterministic cadence
-// for the book's `special: true` ending: every `SpecialEnding`-th *random* reveal returns the
-// special ending (the API tracks a per-book ReadCount and short-circuits when
-// `readCount % SpecialEnding == 0`). 0 means the special ending is reachable only by entering its
-// code. (This replaced the old probabilistic `specialEndingOdds` roll so the special ending
-// surfaces on a predictable schedule and the ReadCount doubles as a per-book usage counter.)
+// category present in the book is equally likely. `SpecialEnding` is the **offset** (1–1000)
+// within each fixed 1000-reveal block at which the book's `special: true` ending fires: the API
+// tracks a per-book ReadCount over *random* reveals and short-circuits to the special ending when
+// `readCount % 1000 == SpecialEnding` (so SpecialEnding=246 hits reveals 246, 1246, 2246, …; 1000
+// maps to the block boundary 1000, 2000, …). This guarantees the special ending shows up exactly
+// once in every 1000 reveals. 0 means the special ending is reachable only by entering its code.
+// (This replaced the old probabilistic `specialEndingOdds` roll, which could in principle never
+// hit; ReadCount also doubles as a per-book usage counter.)
 public sealed record SelectionRules(
     string? SentinelCulprit,
     IReadOnlyDictionary<string, int> CategoryWeights,

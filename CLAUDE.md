@@ -247,14 +247,17 @@ any endpoint** — the rules themselves are spoilers):
   present), pick a culprit combination uniformly within it, pick uniformly among that
   combination's endings. Picking the combo before the ending keeps every combination equally
   likely regardless of how many endings it has.
-- `specialEnding` (a per-book integer, 1–1000) is a **deterministic cadence**, not a probability:
-  the API keeps a per-book **read counter** (`readCount`) that increments on every *random* reveal
-  (`endings/random`, including "reveal another"), and short-circuits to the book's `special: true`
-  ending whenever `readCount % specialEnding == 0`. So with `specialEnding: 734`, every 734th random
-  reveal is the special one. A specific code fetched via `endings/{code}` (a shared link) is **not**
-  a random reveal and never moves the counter. `0`/omitted means the special ending is reachable
-  only by entering its code. (This replaced the old probabilistic `specialEndingOdds` roll so the
-  special surfaces on a predictable schedule and `readCount` doubles as a per-book usage signal.)
+- `specialEnding` (a per-book integer, 1–1000) is a **guaranteed 1-in-1000 offset**, not a
+  probability: the API keeps a per-book **read counter** (`readCount`) that increments on every
+  *random* reveal (`endings/random`, including "reveal another"), and short-circuits to the book's
+  `special: true` ending whenever `readCount % 1000 == specialEnding`. So with `specialEnding: 246`,
+  the special ending is the 246th, 1246th, 2246th… random reveal — exactly one in every 1000, at a
+  fixed (randomly-chosen, per-book) position rather than a probability that might never land.
+  (`1000` maps to the block boundary: reveals 1000, 2000, ….) A specific code fetched via
+  `endings/{code}` (a shared link) is **not** a random reveal and never moves the counter.
+  `0`/omitted means the special ending is reachable only by entering its code. The 1000-reveal
+  period is the constant `SpecialEndingPeriod` in `BookStore`. (This replaced the old probabilistic
+  `specialEndingOdds` roll; `readCount` also doubles as a per-book usage signal.)
 - A book with no `selection` key gets uniform category odds and no special cadence.
 - `BookStore.Build` validates at startup that authored weights give a positive weight to every
   category the book's endings actually use.

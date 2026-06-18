@@ -75,10 +75,11 @@ of it in the React components.
 - `selection` holds the book's **server-only** random-pick rules (see *Weighted random
   selection* in `CLAUDE.md`): relative `categoryWeights` keyed by culprit-set size (plus
   `"sentinel"` for the `sentinelCulprit`'s solo endings), and `specialEnding` — a per-book random
-  integer 1–1000 giving the **cadence** of the `special: true` ending (every `specialEnding`-th
-  random reveal is the special one; the API tracks a per-book `readCount` for this and persists it
-  to a `stats` doc). Use `0`/omit for code-only. Omit the whole block for uniform odds and no
-  special. It is never returned by any API endpoint — keep it that way.
+  integer 1–1000 giving the **1-in-1000 offset** of the `special: true` ending (it fires when
+  `readCount % 1000 == specialEnding`, i.e. the Nth, 1000+Nth, 2000+Nth… random reveal — exactly
+  once per 1000; the API tracks a per-book `readCount` for this and persists it to a `stats` doc).
+  Use `0`/omit for code-only. Omit the whole block for uniform odds and no special. It is never
+  returned by any API endpoint — keep it that way.
 
 - `version` / `contentHash` are **managed by the seeder, not authored by hand** — leave them out.
   The `seed`/`sync` tool stamps `version` (a UTC timestamp) and `contentHash` (a content

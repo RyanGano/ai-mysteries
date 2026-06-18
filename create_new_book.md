@@ -125,10 +125,11 @@ Categories are culprit-set **sizes** (`"1"`, `"2"`, …) — that's what the wei
    `"sentinel"` category via `selection.sentinelCulprit` so it can be weighted
    independently.
 5. **Special ending — at most one, optional.** `special: true` + `specialEnding`
-   (a per-book integer 1–1000, e.g. `734`) makes it a rare jackpot with the `specialReveal`
-   overlay. `specialEnding` is a **deterministic cadence**, not a probability: every Nth random
-   reveal is the special one (the API tracks a per-book `readCount` and short-circuits when
-   `readCount % specialEnding == 0`). Pick a fresh **random** value 1–1000 for each new book.
+   (a per-book integer 1–1000, e.g. `246`) makes it a rare jackpot with the `specialReveal`
+   overlay. `specialEnding` is a **guaranteed 1-in-1000 offset**, not a probability: the API tracks
+   a per-book `readCount` over random reveals and surfaces the special ending when
+   `readCount % 1000 == specialEnding` — so it lands on the Nth, (1000+N)th, (2000+N)th… reveal,
+   exactly once per 1000. Pick a fresh **random** value 1–1000 for each new book.
    Good candidates break the game's own frame — a culprit no reader would consider in scope.
    `specialEnding` `0`/omitted = reachable only by typing its code.
 
@@ -170,9 +171,9 @@ With a sentinel culprit, carve its share out explicitly, keeping `"1"` dominant:
 }
 ```
 
-Pick `specialEnding` as a **fresh random integer 1–1000** for each new book (it sets how often a
-random reveal lands on the special ending — every `specialEnding`-th draw). Don't copy another
-book's value.
+Pick `specialEnding` as a **fresh random integer 1–1000** for each new book (it sets *which* draw
+in each block of 1000 lands on the special ending — `readCount % 1000 == specialEnding`, so always
+exactly one per 1000 reveals). Don't copy another book's value.
 
 Every category your endings actually use **must** have a positive weight — the API
 validates this at startup and refuses to load the book otherwise. The `selection` block

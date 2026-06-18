@@ -40,18 +40,25 @@ public sealed class BookStore
         _flushedReadCounts = new ConcurrentDictionary<string, long>(initial, StringComparer.OrdinalIgnoreCase);
     }
 
+    // The special ending fires exactly once per this many random reveals (a guaranteed 1-in-1000),
+    // at the phase chosen by the book's SpecialEnding offset.
+    private const long SpecialEndingPeriod = 1000;
+
     // Pick the code for a random reveal. Increments the book's read counter (this is the "normal
     // randomized request" that advances the count — a specific code fetched via /endings/{code} is
     // a shared link and never lands here, so it doesn't move the counter). When the book has a
-    // special ending and an authored cadence, every SpecialEnding-th reveal returns it; otherwise
-    // the weighted picker chooses an ordinary ending.
+    // special ending and an authored offset, the reveal whose count sits at that offset within each
+    // 1000-reveal block returns it (so SpecialEnding=246 -> reveals 246, 1246, 2246, …); otherwise
+    // the weighted picker chooses an ordinary ending. This guarantees the special ending surfaces
+    // once in every 1000 reveals rather than relying on a probability that might never hit.
     public string PickRandomCode(Book book, string? excludeCode, Random rng)
     {
         var count = _readCounts.AddOrUpdate(book.Id, 1, (_, v) => v + 1);
 
+        var offset = book.Selection.SpecialEnding;
         if (book.SpecialCode is { } special
-            && book.Selection.SpecialEnding > 0
-            && count % book.Selection.SpecialEnding == 0)
+            && offset > 0
+            && count % SpecialEndingPeriod == offset % SpecialEndingPeriod)
             return special;
 
         return EndingSelector.PickCode(book, excludeCode, rng);
