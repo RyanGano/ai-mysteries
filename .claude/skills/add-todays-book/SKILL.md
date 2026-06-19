@@ -43,6 +43,12 @@ Two gitignored, local-only files:
    - **Content boundaries:** no sexual content, any book (per `CLAUDE.md`).
    - **Spoiler rules:** all book data + design docs stay in gitignored locations; nothing
      committed names codes, culprits, or clue maps.
+   - **Final report:** end your reply with a one-row summary table (see `create_new_book.md`
+     → *Final report*):
+
+     | Title | Read Time | Tags | SpecialEnding |
+     |---|---|---|---|
+     | <book title> | <displayed reading time> | <final tags> | <`selection.specialEnding`, or `0`/none> |
 
 4. **Record it — move the row to the archive.** When the book is verified live:
    - **Delete** the row from `docs/book-ideas.md` (built stories don't stay in the active queue).

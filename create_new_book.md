@@ -393,3 +393,18 @@ manuscript. Concretely, all of these hold:
 
 If the user explicitly asked to stop before shipping, "done" is the local equivalent (verified
 on localhost) plus a clear note of the remaining ship steps. Otherwise, not-live is not-done.
+
+## Final report (always end with a summary table)
+
+When the book is done, close your reply with a one-row summary table so the key facts are at a
+glance:
+
+| Title | Read Time | Tags | SpecialEnding |
+|---|---|---|---|
+| <book title> | <the displayed reading time, e.g. ~10 min read> | <comma-separated tags> | <the `specialEnding` integer, or `0`/none for code-only> |
+
+`Read Time` is the value the API derives from `wordCount` (what the catalog shows). `Tags` is the
+final `tags` list. `SpecialEnding` is the book's `selection.specialEnding` offset (the 1-in-1000
+position — see *Weighted random selection* in `CLAUDE.md`). This table is part of the report to
+the user, not a committed file, so it's fine to state `specialEnding` here even though the
+`selection` rules never ship in any API response.
