@@ -86,6 +86,70 @@ way), make the prose easy to *read*, not just easy to stomach:
 - A theme word can stay if it carries the book (e.g. *non-essential mass*) — but the prose
   around it must explain it plainly, so the term teaches itself.
 
+## Phase 0.5 — The Distinctness Contract (read before designing)
+
+**The site's whole value is "one book, many endings" — across *many* books. If two books feel
+like the same book reskinned, repeat readers stop coming back.** A new setting is **not** enough:
+the cozy/No-Crime books drifted into being one template find-replaced (a precious thing goes
+missing → a "quiet one who solves by going still and remembering" → an "empty-X / two-duplicates /
+second-pass / deadline" chapter spine → endings that *all* resolve the same gentle way). Never do
+that again.
+
+**Hard gate: a new book must differ from every already-shipped book on at least *three* of these
+five axes** — and may never reuse another book's opening sentences or its detective-method sentence
+verbatim. Check your design against the registry below *before* writing prose.
+
+1. **Mystery type** — what actually happened. Don't default to "an object is lost." Menu: a thing
+   is **lost** / **damaged or changed** / **swapped** / an **impossible event** / **a person is
+   behaving strangely** / **sabotage that wasn't** / **a kindness misread** / **a thing that was
+   never gone**. Pick one not already over-used.
+2. **Detective archetype + method** — *how* they solve it. The "goes still and remembers" voice is
+   **used up — do not reuse it.** Vary the method: maps or **draws** the scene; **talks** people
+   into contradicting themselves; **re-enacts** the event physically; reasons from a **written
+   list**; deduces from the **senses** (taste, smell, sound, temperature); is a **skeptic** out to
+   debunk.
+3. **Chapter architecture** — the spine. Not always *empty-X → one spotlight per suspect → second
+   pass → ticking-clock finale.* Alternatives: reverse chronology; two interleaved timelines; the
+   detective is also a suspect; a leisurely unspool with no clock; a frame story.
+4. **Resolution-type spread across the endings** — *the most important one.* A book's endings must
+   **not all resolve the same way.** Across the matrix, include a **mix of resolution kinds**: at
+   least one **accident / real consequence**, one **deliberate act with a motive**, one **genuine
+   misunderstanding / it was never gone**, and one **reversal that re-colours an earlier scene**.
+   An all-"benign person harmlessly had it, nothing harmed, nobody unkind" matrix is the failure
+   mode — kill it. (Kid-friendly books may stay **ultimately reassuring**, but the *cause* and the
+   *path* must still vary: a real near-loss that's recovered, a deliberate hide, a swap, a thing
+   tucked away as a surprise, a thing that was never lost.)
+5. **Voice register + opening beat** — invent this book's own first beat. **Banned because it's
+   been lifted before:** "made a small sound," "the way you pat a pocket the second time — faster,
+   both hands," "her chin began to crumple," "the room was getting loud, so she went very quiet and
+   started to think," and a bare "N minutes/hours until …" countdown. Write a fresh opening.
+
+### Registry of shipped books (differ from these)
+
+Spoiler-free structural fingerprints — **no codes, culprits, or special-ending identities.** Add a
+row each time you ship; consult it each time you design. Two books may share at most two axes.
+
+| Book | Mystery type | Detective method | Structure spine |
+|---|---|---|---|
+| within-tolerance | death — how/why | methodical procedural, timeline reconstruction | scene → system explainer → suspect-per-chapter → "the gap" |
+| non-essential-mass | a keepsake **damaged**, no one admits it | inspector works the **systems/records** | systems tour → night-shift reconstruction |
+| standard-of-care | a death from **diffuse causation** (each did an ordinary thing) | takes the "machine" apart, fault-tree | one spotlight per link in the chain |
+| first-in-right | a death amid a **resource war** (drought/water rights) | outside company investigator, follows the money/right | spotlight per claimant → the night |
+| something-borrowed | a small thing **lost** at a ceremony | calm teacher, recovers small things by routine | one spotlight per helper → the hour-before finale |
+| mate-for-life | **is the staged crime real?** (game-within-a-game) | guests interrogate **each other**, no lone sleuth | ensemble cross-examination → high water |
+| wheres-sunny | a live animal **gone** from its pen | trainer-kid who knows the animal's habits | habit-led search of the grounds |
+| siege-perilous | an **impossible/locked-room** death (cursed seat) | court official, physical locked-room logic | examine seat → cup → vigil reconstruction |
+| holloway-house | **is the haunting real?** (staged vs. genuine) | hired **skeptic** out to debunk | sit the house overnight → the small hours |
+| field-trip | a small thing **lost** on a journey | kid who **draws/maps** the journey to reconstruct it | map the trip → red-herring duplicate → the gate |
+| lighthouse-ledger | a person **vanished**, ledger as evidence | relief keeper reads the **record** left behind | the relief → reckonings → last entry |
+| sourdough-starter | a living thing **seemingly ruined/changed** (not lost) | neighbour deduces from the **senses** (smell/taste/temp) + a list | what-happened post-mortem, sense by sense |
+| cabin-pressure | a death **mid-flight, sealed cabin** (locked-room) | cabin crew lead works **witness stories that lean** | who-sat-where → contradicting accounts → descent |
+
+If your design's row would duplicate three+ axes of any row above, change the design — not the
+paint. (When two books legitimately share the engine's *mechanic* — a non-human **sentinel**
+culprit and a rare **special** ending — that's fine; the engine is shared on purpose. It's the
+*story shape* above that must differ.)
+
 ## Phase 1 — Design the mystery (the dossier)
 
 Create `docs/<bookId>/` (gitignored) and write the design **before** any prose. Pick the
@@ -132,6 +196,15 @@ Categories are culprit-set **sizes** (`"1"`, `"2"`, …) — that's what the wei
    exactly once per 1000. Pick a fresh **random** value 1–1000 for each new book.
    Good candidates break the game's own frame — a culprit no reader would consider in scope.
    `specialEnding` `0`/omitted = reachable only by typing its code.
+
+**Resolution-type spread (required — Distinctness Contract axis 4).** In `EndingMatrix.md`,
+annotate every ending with its **resolution *kind***, not just its culprit set —
+*accident/consequence*, *deliberate act + motive*, *misunderstanding / never-gone*, *reversal that
+re-colours an earlier scene*, *the sentinel/world did it*. The matrix as a whole must span **at
+least three kinds.** If every row reads "this person harmlessly had it / did a benign thing and
+nothing came of it," the book is the failure mode — go back and give some endings real teeth (a
+genuine accident, a deliberate motive, a red herring that *bites*, a twist). This is the single
+biggest thing that stops a book feeling like the last one.
 
 Multiple endings per culprit combination are allowed — selection picks the combination
 first, then an ending within it uniformly, so combos stay equally likely regardless of
@@ -219,6 +292,11 @@ Files: `Content/<bookId>/book.json` (reading order, `[{ "slug", "title" }]`) +
 `Content/<bookId>/book/<slug>.md` (markdown body only — the title lives in `book.json`).
 Paragraphs separated by blank lines; `_italics_` and `**bold**` render.
 
+**Before writing a word, re-read the Distinctness Contract (Phase 0.5).** Do **not** open with — or
+paraphrase — another book's first beat, and do **not** reuse its detective-method sentence. Each
+book invents its own opening image and its own way of describing how the sleuth thinks. The
+template below is a *spine*, not a script; vary it per axis 3.
+
 Structure that works at any length:
 
 1. **Hook + crime** (1–2 chapters) — establish the world, the victim/loss, the stakes.
@@ -254,7 +332,12 @@ Then for each row of your ending matrix:
 1. Write `Content/<bookId>/endings/<slug>.md`: shared opening verbatim → the accusation →
    the mechanism walked back through the planted clues → an emotional close. 600–1,000
    words (shorter for kid books). The reveal must *use* the planted clues — readers who
-   spotted them should feel vindicated.
+   spotted them should feel vindicated. **Honour the resolution-kind you assigned this ending in
+   the matrix** (Phase 1) — an "accident" ending must actually cost something, a "reversal" must
+   re-colour an earlier scene, a "misunderstanding" must land as *never-gone*. Do not let every
+   ending collapse back into the same gentle "they harmlessly had it the whole time" beat, and do
+   not reuse another book's reveal scaffolding (e.g. "stopped looking and started remembering — the
+   truth, all of it except the very last bit").
 2. Add the entry to `Content/<bookId>/endings.json`. Full field rules in
    `put_book_in_site.md` §2 — the load-bearing ones:
    - `code`: unique 4-char canonical (uppercase; `O` not `0`, `I` not `1`/`L`), and it

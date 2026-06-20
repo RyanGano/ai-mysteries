@@ -77,6 +77,15 @@ Two committed, spoiler-free playbooks at the repo root:
 - **`put_book_in_site.md`** — the underlying file contract (`meta.json`, `book.json`,
   `endings.json`, …) and the Cosmos seeding + go-live procedure. Reference for the mechanics.
 
+**Distinctness is non-negotiable.** A new setting is not a new book. Before designing, read
+**Phase 0.5 — The Distinctness Contract** in `create_new_book.md` and its registry of shipped
+books: every book must differ from every existing one on at least three of five axes (mystery
+*type*, detective *method*, chapter *spine*, **resolution-kind spread across the endings**, and
+opening *voice*), and may never reuse another book's opening or detective-method sentences. Reuse
+the engine (sentinel + special ending), never the story shape. Same rule of thumb as Tags below:
+reuse where the meaning is genuinely close, but never clone — fragmenting the catalog into
+near-duplicates is the failure mode.
+
 ### Tags
 
 Tags appear on catalog cards and drive filtering. **Reuse an existing tag whenever the meaning
