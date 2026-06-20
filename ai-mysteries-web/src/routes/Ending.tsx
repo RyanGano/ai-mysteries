@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { fetchEnding, fetchRandomCode, fetchBookMeta } from "../lib/api";
 import { shareOrCopy } from "../lib/share";
@@ -7,6 +7,7 @@ import Prose from "../components/Prose";
 import Loading from "../components/Loading";
 import ReadAloudControls from "../components/ReadAloudControls";
 import { useReadAloud } from "../lib/read-aloud-context";
+import { useReadAlong } from "../lib/use-read-along";
 import "../styles/ending.css";
 
 type Status = "loading" | "ready" | "notfound" | "error";
@@ -20,6 +21,8 @@ export default function Ending() {
   const [shareNote, setShareNote] = useState("");
   const [revealDone, setRevealDone] = useState(false);
   const { playEnding } = useReadAloud();
+  const bodyRef = useRef<HTMLElement>(null);
+  useReadAlong(bodyRef);
 
   // Book metadata (title for the document title, share strings, special-reveal copy). Once per book.
   useEffect(() => {
@@ -195,7 +198,7 @@ export default function Ending() {
         )}
         <h1 className="ending-title">{ending.title}</h1>
       </header>
-      <article className="ending-body">
+      <article className="ending-body" ref={bodyRef}>
         <Prose markers={ending.markers} clues={ending.clues}>
           {ending.body}
         </Prose>

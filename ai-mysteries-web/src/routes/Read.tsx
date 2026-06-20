@@ -8,6 +8,7 @@ import TableOfContents from "../components/TableOfContents";
 import Loading from "../components/Loading";
 import ReadAloudControls from "../components/ReadAloudControls";
 import { useReadAloud } from "../lib/read-aloud-context";
+import { useReadAlong } from "../lib/use-read-along";
 import "../styles/read.css";
 
 const normalize = (s: string) => s.replace(/[_*`]/g, "").replace(/\s+/g, " ").trim();
@@ -30,6 +31,7 @@ export default function Read() {
   const [error, setError] = useState(false);
   const [shareNote, setShareNote] = useState("");
   const { playChapter } = useReadAloud();
+  useReadAlong(articleRef);
 
   // The table of contents (drawer + first-chapter fallback) and the book metadata (title for the
   // document title, end-of-book payoff copy). Fetched once per book.

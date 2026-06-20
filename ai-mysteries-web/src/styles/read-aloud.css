@@ -69,3 +69,25 @@
 .ra-speed-select:hover {
   border-color: var(--color-accent);
 }
+
+/* Read-along follow: the paragraph being read gets a soft block tint (the box-shadow spreads the
+   tint past the text box without nudging layout), and the exact sentence is tinted harder via the
+   CSS Custom Highlight API where available. */
+.prose p.ra-current {
+  border-radius: 3px;
+  background-color: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  box-shadow: 0 0 0 0.4rem color-mix(in srgb, var(--color-accent) 8%, transparent);
+  transition:
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+::highlight(read-aloud) {
+  background-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prose p.ra-current {
+    transition: none;
+  }
+}

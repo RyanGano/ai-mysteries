@@ -22,6 +22,10 @@ interface ReadAloud {
   playChapter: (bookId: string, slug: string) => void;
   playEnding: (bookId: string, code: string) => void;
   stop: () => void;
+  // Subscribe to the sentence currently being spoken (null when nothing is). The callback fires
+  // imperatively so a page can scroll/highlight without re-rendering on every sentence. Returns an
+  // unsubscribe fn; the callback is also invoked once on subscribe with the current value.
+  subscribeReading: (cb: (text: string | null) => void) => () => void;
 }
 
 const ReadAloudContext = createContext<ReadAloud | null>(null);
@@ -43,11 +47,34 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
   const rateRef = useRef(rate);
   rateRef.current = rate;
 
+  // The sentence currently being spoken, plus the set of follow-along listeners. Kept in refs and
+  // pushed imperatively so broadcasting each sentence doesn't re-render the provider's consumers.
+  const currentRef = useRef<string | null>(null);
+  const listenersRef = useRef(new Set<(text: string | null) => void>());
+  const notify = useCallback((text: string | null) => {
+    currentRef.current = text;
+    listenersRef.current.forEach((cb) => cb(text));
+  }, []);
+
+  const subscribeReading = useCallback((cb: (text: string | null) => void) => {
+    listenersRef.current.add(cb);
+    cb(currentRef.current);
+    return () => {
+      listenersRef.current.delete(cb);
+    };
+  }, []);
+
   const isCurrent = (gen: number) => gen === genRef.current;
 
-  const finish = useCallback((gen: number) => {
-    if (gen === genRef.current) setStatus("idle");
-  }, []);
+  const finish = useCallback(
+    (gen: number) => {
+      if (gen === genRef.current) {
+        notify(null);
+        setStatus("idle");
+      }
+    },
+    [notify]
+  );
 
   // Speak an ordered list of chunks, one utterance at a time, resolving when the list drains or the
   // session is superseded. Reads the live rate per utterance so a speed change applies promptly.
@@ -60,7 +87,9 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
             resolve();
             return;
           }
-          const u = new SpeechSynthesisUtterance(chunks[i++]);
+          const text = chunks[i++];
+          notify(text);
+          const u = new SpeechSynthesisUtterance(text);
           if (voice) u.voice = voice;
           u.rate = rateRef.current;
           u.onend = () => (isCurrent(gen) ? next() : resolve());
@@ -69,7 +98,7 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
         };
         next();
       }),
-    []
+    [notify]
   );
 
   // Read one ending aloud, announcing the special ending first (same spirit as the on-screen reveal).
@@ -160,8 +189,9 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
   const stop = useCallback(() => {
     genRef.current++;
     if (SPEECH_SUPPORTED) window.speechSynthesis.cancel();
+    notify(null);
     setStatus("idle");
-  }, []);
+  }, [notify]);
 
   const setRate = useCallback((r: number) => {
     rateRef.current = r;
@@ -179,7 +209,16 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ReadAloudContext.Provider
-      value={{ supported: SPEECH_SUPPORTED, status, rate, setRate, playChapter, playEnding, stop }}
+      value={{
+        supported: SPEECH_SUPPORTED,
+        status,
+        rate,
+        setRate,
+        playChapter,
+        playEnding,
+        stop,
+        subscribeReading,
+      }}
     >
       {children}
     </ReadAloudContext.Provider>
