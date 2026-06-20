@@ -74,7 +74,8 @@ public sealed class Book
         Meta.ShareText,
         Meta.SpecialShareText,
         new SpecialRevealDto(Meta.SpecialReveal.Headline, Meta.SpecialReveal.Sub),
-        _chapters.Count > 0 ? _chapters[0].Slug : string.Empty);
+        _chapters.Count > 0 ? _chapters[0].Slug : string.Empty,
+        Meta.NarrationGender);
 
     public IReadOnlyList<TocEntryDto> GetToc() =>
         _chapters.Select(c => new TocEntryDto(c.Slug, c.Title)).ToList();

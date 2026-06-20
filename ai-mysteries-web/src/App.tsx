@@ -6,10 +6,11 @@ import Ending from "./routes/Ending";
 import Read from "./routes/Read";
 import Privacy from "./routes/Privacy";
 import Footer from "./components/Footer";
+import { ReadAloudProvider } from "./lib/read-aloud-context";
 
 export default function App() {
   return (
-    <>
+    <ReadAloudProvider>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/privacy" element={<Privacy />} />
@@ -21,6 +22,6 @@ export default function App() {
         <Route path="/:bookId/:slug" element={<Read />} />
       </Routes>
       <Footer />
-    </>
+    </ReadAloudProvider>
   );
 }

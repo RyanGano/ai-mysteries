@@ -86,7 +86,8 @@ public sealed class FileBookSource : IBookSource
             SpecialShareText: d.SpecialShareText ?? fallback.SpecialShareText,
             SpecialReveal: d.SpecialReveal is { } sr
                 ? new SpecialReveal(sr.Headline ?? "", sr.Sub ?? "")
-                : fallback.SpecialReveal), selection, d.Version, d.ContentHash);
+                : fallback.SpecialReveal,
+            NarrationGender: d.NarrationGender ?? fallback.NarrationGender), selection, d.Version, d.ContentHash);
     }
 
     private static string ReadMd(string dir, string sub, string slug)
@@ -130,6 +131,7 @@ public sealed class FileBookSource : IBookSource
         string? ShareText = null,
         string? SpecialShareText = null,
         SpecialRevealDoc? SpecialReveal = null,
+        string? NarrationGender = null,
         SelectionDoc? Selection = null,
         string? Version = null,
         string? ContentHash = null);

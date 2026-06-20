@@ -87,7 +87,12 @@ public sealed record BookMeta(
     string ShareTitle,
     string ShareText,
     string SpecialShareText,
-    SpecialReveal SpecialReveal)
+    SpecialReveal SpecialReveal,
+    // The protagonist's gender ("male" / "female"), used by the web read-aloud feature to pick a
+    // matching text-to-speech voice. Empty when the book has no single lead (or it's unknown), in
+    // which case the browser's default voice is used. Book-identifying data, so it lives here, not
+    // in code.
+    string NarrationGender)
 {
     // Fallback used when a book has no meta.json / manifest fields yet: title = id, everything
     // else empty so the API and web still render without throwing.
@@ -105,7 +110,8 @@ public sealed record BookMeta(
         ShareTitle: bookId,
         ShareText: "",
         SpecialShareText: "",
-        SpecialReveal: new SpecialReveal("", ""));
+        SpecialReveal: new SpecialReveal("", ""),
+        NarrationGender: "");
 }
 
 // The special-ending reveal overlay copy (e.g. "One in a thousand." / "You found it.").

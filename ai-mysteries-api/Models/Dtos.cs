@@ -61,6 +61,9 @@ public record BookMetaDto(
     // Slug of the book's first chapter, so the catalog can deep-link straight into the reading
     // (the per-book landing page is the share target; the catalog card skips it). Empty if the
     // book has no chapters.
-    string FirstChapterSlug);
+    string FirstChapterSlug,
+    // Protagonist gender ("male"/"female", or "" when unknown), so the web read-aloud feature can
+    // pick a matching text-to-speech voice.
+    string NarrationGender);
 
 public record SpecialRevealDto(string Headline, string Sub);

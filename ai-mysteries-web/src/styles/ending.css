@@ -6,6 +6,11 @@
 }
 
 .ending-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
   margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
 }
 

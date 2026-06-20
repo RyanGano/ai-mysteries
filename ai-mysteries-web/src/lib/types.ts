@@ -31,6 +31,9 @@ export interface BookMeta {
   // Slug of the first chapter — the catalog deep-links straight into the reading, bypassing the
   // per-book landing page. Empty when the book has no chapters.
   firstChapterSlug: string;
+  // Protagonist gender ("male"/"female", or "" when unknown) — the read-aloud feature uses it to
+  // pick a matching text-to-speech voice. Empty falls back to the browser's default voice.
+  narrationGender: string;
 }
 
 export interface TocEntry {

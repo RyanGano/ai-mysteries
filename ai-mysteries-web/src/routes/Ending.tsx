@@ -5,6 +5,8 @@ import { shareOrCopy } from "../lib/share";
 import type { Ending as EndingData, BookMeta } from "../lib/types";
 import Prose from "../components/Prose";
 import Loading from "../components/Loading";
+import ReadAloudControls from "../components/ReadAloudControls";
+import { useReadAloud } from "../lib/read-aloud-context";
 import "../styles/ending.css";
 
 type Status = "loading" | "ready" | "notfound" | "error";
@@ -17,6 +19,7 @@ export default function Ending() {
   const [status, setStatus] = useState<Status>("loading");
   const [shareNote, setShareNote] = useState("");
   const [revealDone, setRevealDone] = useState(false);
+  const { playEnding } = useReadAloud();
 
   // Book metadata (title for the document title, share strings, special-reveal copy). Once per book.
   useEffect(() => {
@@ -177,6 +180,7 @@ export default function Ending() {
         <Link to="/" className="ending-home">
           &larr; AI Mysteries
         </Link>
+        <ReadAloudControls onPlay={() => playEnding(bookId, canonical)} />
       </div>
       <header className="ending-header">
         {meta && (

@@ -6,6 +6,8 @@ import type { TocEntry, ChapterNav, BookMeta } from "../lib/types";
 import Prose from "../components/Prose";
 import TableOfContents from "../components/TableOfContents";
 import Loading from "../components/Loading";
+import ReadAloudControls from "../components/ReadAloudControls";
+import { useReadAloud } from "../lib/read-aloud-context";
 import "../styles/read.css";
 
 const normalize = (s: string) => s.replace(/[_*`]/g, "").replace(/\s+/g, " ").trim();
@@ -27,6 +29,7 @@ export default function Read() {
   const [navState, setNavState] = useState<NavState>({ status: "loading" });
   const [error, setError] = useState(false);
   const [shareNote, setShareNote] = useState("");
+  const { playChapter } = useReadAloud();
 
   // The table of contents (drawer + first-chapter fallback) and the book metadata (title for the
   // document title, end-of-book payoff copy). Fetched once per book.
@@ -146,6 +149,7 @@ export default function Read() {
           <button className="read-toc-button" onClick={handleShare}>
             Share
           </button>
+          <ReadAloudControls onPlay={() => playChapter(bookId, slug)} />
           {shareNote && (
             <span className="read-share-note" role="status">
               {shareNote}

@@ -38,6 +38,7 @@ public sealed class ContentDoc
     public string? SpecialShareText { get; set; }
     public string? SpecialRevealHeadline { get; set; }
     public string? SpecialRevealSub { get; set; }
+    public string? NarrationGender { get; set; }
 
     // manifest only — server-side selection rules (see SelectionRules). Read by the API for
     // the random picker; never mapped into any response DTO.
@@ -137,6 +138,7 @@ public static class CosmosContent
             SpecialShareText = m.SpecialShareText,
             SpecialRevealHeadline = m.SpecialReveal.Headline,
             SpecialRevealSub = m.SpecialReveal.Sub,
+            NarrationGender = m.NarrationGender,
             SentinelCulprit = raw.Selection.SentinelCulprit,
             CategoryWeights = raw.Selection.CategoryWeights.Count > 0
                 ? new Dictionary<string, int>(raw.Selection.CategoryWeights)
@@ -202,7 +204,8 @@ public static class CosmosContent
             SpecialShareText: manifest.SpecialShareText ?? fallback.SpecialShareText,
             SpecialReveal: new SpecialReveal(
                 manifest.SpecialRevealHeadline ?? "",
-                manifest.SpecialRevealSub ?? ""));
+                manifest.SpecialRevealSub ?? ""),
+            NarrationGender: manifest.NarrationGender ?? fallback.NarrationGender);
 
         var selection = new SelectionRules(
             manifest.SentinelCulprit,
