@@ -96,7 +96,7 @@ export default function Ending() {
           Reveal a random ending &rarr;
         </button>
         <Link to="/" className="ending-home">
-          &larr; AI Mysteries
+          &larr; Home
         </Link>
       </main>
     );
@@ -181,7 +181,7 @@ export default function Ending() {
       )}
       <div className="ending-bar">
         <Link to="/" className="ending-home">
-          &larr; AI Mysteries
+          &larr; Home
         </Link>
         <ReadAloudControls onPlay={() => playEnding(bookId, canonical)} />
       </div>
