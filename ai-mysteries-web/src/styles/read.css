@@ -26,17 +26,30 @@
 
 .read-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.6rem;
   padding-bottom: 1.5rem;
   margin-bottom: clamp(1.5rem, 4vh, 3rem);
   border-bottom: 1px solid var(--color-border);
 }
 
-.read-bar-actions {
-  display: flex;
-  gap: 0.6rem;
+/* Wide layout: Contents | Share | Listen | Speed … Home (Home pushed to the right).
+   The read-aloud controls sit before the Home link; Home is right-aligned. */
+.read-bar .ra-controls {
+  order: 3;
+}
+
+/* When the bar runs out of room, wrap to two lines:
+   line 1 → Contents | Share | Home, line 2 → Listen | Speed. */
+@media (max-width: 540px) {
+  .read-bar .read-home {
+    order: 3;
+  }
+  .read-bar .ra-controls {
+    order: 4;
+    flex-basis: 100%;
+  }
 }
 
 .read-toc-button {
@@ -60,6 +73,8 @@
 }
 
 .read-home {
+  order: 4;
+  margin-left: auto;
   font-family: var(--font-serif);
   font-size: 0.95rem;
   letter-spacing: 0.04em;
@@ -71,9 +86,10 @@
   text-decoration: none;
 }
 
-/* Transient "Link copied" note next to the Share button in the top bar. */
+/* Transient "Link copied" note in the top bar — sits on its own line below the controls. */
 .read-share-note {
-  align-self: center;
+  order: 5;
+  flex-basis: 100%;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.05em;

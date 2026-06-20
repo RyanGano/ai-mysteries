@@ -56,7 +56,7 @@ export default function BookLanding() {
       <main className="landing landing--status">
         <p className="landing-status-text">{message}</p>
         <Link to="/" className="landing-back">
-          &larr; AI Mysteries
+          &larr; Home
         </Link>
       </main>
     );
@@ -80,7 +80,7 @@ export default function BookLanding() {
     <main className="book-landing">
       <div className="book-landing-bar">
         <Link to="/" className="landing-back">
-          &larr; AI Mysteries
+          &larr; Home
         </Link>
       </div>
 

@@ -129,7 +129,7 @@ export default function Read() {
           The book couldn&rsquo;t be loaded right now. Please try again in a moment.
         </p>
         <Link to="/" className="read-home">
-          AI Mysteries
+          Home
         </Link>
       </main>
     );
@@ -144,23 +144,21 @@ export default function Read() {
   return (
     <main className="read">
       <div className="read-bar">
-        <div className="read-bar-actions">
-          <button className="read-toc-button" onClick={() => setTocOpen(true)}>
-            Contents
-          </button>
-          <button className="read-toc-button" onClick={handleShare}>
-            Share
-          </button>
-          <ReadAloudControls onPlay={() => playChapter(bookId, slug)} />
-          {shareNote && (
-            <span className="read-share-note" role="status">
-              {shareNote}
-            </span>
-          )}
-        </div>
+        <button className="read-toc-button" onClick={() => setTocOpen(true)}>
+          Contents
+        </button>
+        <button className="read-toc-button" onClick={handleShare}>
+          Share
+        </button>
         <Link to="/" className="read-home">
-          AI Mysteries
+          Home
         </Link>
+        <ReadAloudControls onPlay={() => playChapter(bookId, slug)} />
+        {shareNote && (
+          <span className="read-share-note" role="status">
+            {shareNote}
+          </span>
+        )}
       </div>
 
       <TableOfContents
