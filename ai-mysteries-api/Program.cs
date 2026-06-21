@@ -87,8 +87,9 @@ app.UseRateLimiter();
 app.Services.GetRequiredService<BookStore>();
 
 // Liveness/keep-alive ping. No content, no DB call — just enough to spin the free-tier instance
-// back up so a real request doesn't pay the cold start. Returns 204.
-app.MapGet("/warmup", () => Results.NoContent());
+// back up so a real request doesn't pay the cold start. Returns 204. Accepts HEAD too so a
+// lightweight pinger can poke it without even pulling a body.
+app.MapMethods("/warmup", ["GET", "HEAD"], () => Results.NoContent());
 
 // Book-level metadata: the catalog (/api/books) and single-book lookup (/api/books/{bookId}).
 app.MapBookEndpoints();
