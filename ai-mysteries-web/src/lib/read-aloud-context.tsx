@@ -6,8 +6,9 @@ import { useNavigate } from "react-router-dom";
 import { fetchChapterNav, fetchEnding, fetchRandomCode, fetchBookMeta } from "./api";
 import { SPEECH_SUPPORTED, markdownToSpeech, getVoicesAsync, pickVoice } from "./tts";
 
-// Generic, book-agnostic chrome (like the button verbs) — never book-specific copy.
-const SPECIAL_ANNOUNCE = "You got the special ending!";
+// Generic, book-agnostic chrome (like the button verbs) — never book-specific copy. Exported so the
+// whole-book reader, which assembles its own chunk list, can prepend the same announce.
+export const SPECIAL_ANNOUNCE = "You got the special ending!";
 
 export const SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 const RATE_KEY = "readAloudRate";
@@ -21,6 +22,11 @@ interface ReadAloud {
   setRate: (rate: number) => void;
   playChapter: (bookId: string, slug: string) => void;
   playEnding: (bookId: string, code: string) => void;
+  // Read a fully pre-built list of utterance chunks straight through — no page navigation and no
+  // network calls on the speech critical path, so playback survives a locked screen. Used by the
+  // whole-book reader, which has already fetched every chapter and the chosen ending and rendered
+  // them on one page before calling this.
+  playList: (bookId: string, chunks: string[]) => void;
   pause: () => void;
   resume: () => void;
   // Re-speak the previous sentence of the current chapter/ending. Bounded to the active run — it
@@ -232,6 +238,21 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     [begin, prepareVoice, readEnding, finish]
   );
 
+  // Speak a caller-assembled chunk list (whole book + ending) with no navigation or mid-read fetch,
+  // so it plays through even with the screen off — the page already holds all the content.
+  const playList = useCallback(
+    (bookId: string, chunks: string[]) => {
+      const gen = begin();
+      if (gen < 0) return;
+      prepareVoice(bookId).then(async (voice) => {
+        if (!isCurrent(gen)) return;
+        await speakChunks(gen, chunks, voice);
+        finish(gen);
+      });
+    },
+    [begin, prepareVoice, speakChunks, finish]
+  );
+
   const pause = useCallback(() => {
     if (!SPEECH_SUPPORTED) return;
     window.speechSynthesis.pause();
@@ -288,6 +309,7 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
         setRate,
         playChapter,
         playEnding,
+        playList,
         pause,
         resume,
         skipBack,

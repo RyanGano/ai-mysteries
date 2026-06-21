@@ -4,6 +4,7 @@ import BookLanding from "./routes/BookLanding";
 import FindEnding from "./routes/FindEnding";
 import Ending from "./routes/Ending";
 import Read from "./routes/Read";
+import ReadAll from "./routes/ReadAll";
 import Privacy from "./routes/Privacy";
 import Footer from "./components/Footer";
 import { ReadAloudProvider } from "./lib/read-aloud-context";
@@ -17,6 +18,9 @@ export default function App() {
         {/* /:bookId is the book's landing page — the share target (cover + blurb). The catalog
             card deep-links past it straight into the first chapter. */}
         <Route path="/:bookId" element={<BookLanding />} />
+        {/* The whole-book reader — one page, read straight through. Registered before /:bookId/:slug
+            so "all" is a reserved sub-path, not a chapter slug (same as the ending routes). */}
+        <Route path="/:bookId/all" element={<ReadAll />} />
         <Route path="/:bookId/ending" element={<FindEnding />} />
         <Route path="/:bookId/ending/:code" element={<Ending />} />
         <Route path="/:bookId/:slug" element={<Read />} />

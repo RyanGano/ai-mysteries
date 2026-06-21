@@ -96,6 +96,34 @@
   color: var(--color-accent);
 }
 
+/* ── Whole-book reader (/:bookId/all) ──────────────────────────────────
+   Every chapter on one page, then the random ending once Listen is pressed. */
+
+.read-all-hint {
+  margin-top: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  max-width: var(--max-prose);
+}
+
+/* Space + a hairline rule between stacked chapters so the seams stay legible. */
+.read-all-chapter + .read-all-chapter {
+  margin-top: 3.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.read-all-chapter-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--color-text);
+  margin-bottom: 1.5rem;
+}
+
 /* ── Chapter header + body ─────────────────────────────────────────── */
 
 .read-header {
@@ -247,6 +275,24 @@
 
 .toc-close:hover {
   color: var(--color-text);
+}
+
+/* "Read the whole book →" — sits above the chapter list as the one-page alternative. */
+.toc-readall {
+  display: block;
+  padding: 0.6rem 1.5rem 1rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--color-accent);
+  transition: color 0.12s;
+}
+
+.toc-readall:hover {
+  color: var(--color-accent-hover);
+  text-decoration: none;
 }
 
 .toc-list {

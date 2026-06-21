@@ -428,6 +428,7 @@
   font-size: 0.95rem;
   letter-spacing: 0.02em;
   color: var(--color-text-muted);
+  text-decoration: none;
   transition:
     color 0.15s,
     border-color 0.15s;
@@ -436,6 +437,7 @@
 .book-landing-secondary:hover {
   color: var(--color-text);
   border-color: var(--color-accent);
+  text-decoration: none;
 }
 
 .book-landing-share-note {

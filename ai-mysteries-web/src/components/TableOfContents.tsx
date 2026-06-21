@@ -73,6 +73,9 @@ export default function TableOfContents({
             &times;
           </button>
         </div>
+        <Link to={`/${bookId}/all`} className="toc-readall" onClick={onClose}>
+          Read the whole book &rarr;
+        </Link>
         <ul className="toc-list">
           {entries.map((ch) => (
             <li key={ch.slug}>

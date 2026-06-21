@@ -118,6 +118,9 @@ export default function BookLanding() {
         <Link to={startTo} className="cta-button">
           Start reading &rarr;
         </Link>
+        <Link to={`/${bookId}/all`} className="book-landing-secondary">
+          Read the whole book on one page &rarr;
+        </Link>
         <button type="button" className="book-landing-secondary" onClick={handleShare}>
           Share this story
         </button>
