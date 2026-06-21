@@ -12,7 +12,7 @@ const SPECIAL_ANNOUNCE = "You got the special ending!";
 export const SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 const RATE_KEY = "readAloudRate";
 
-type Status = "idle" | "playing";
+type Status = "idle" | "playing" | "paused";
 
 interface ReadAloud {
   supported: boolean;
@@ -21,6 +21,12 @@ interface ReadAloud {
   setRate: (rate: number) => void;
   playChapter: (bookId: string, slug: string) => void;
   playEnding: (bookId: string, code: string) => void;
+  pause: () => void;
+  resume: () => void;
+  // Re-speak the previous sentence of the current chapter/ending. Bounded to the active run — it
+  // never crosses back into a prior chapter — so `canSkipBack` is false on the first sentence.
+  skipBack: () => void;
+  canSkipBack: boolean;
   stop: () => void;
   // Subscribe to the sentence currently being spoken (null when nothing is). The callback fires
   // imperatively so a page can scroll/highlight without re-rendering on every sentence. Returns an
@@ -39,6 +45,9 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [status, setStatus] = useState<Status>("idle");
   const [rate, setRateState] = useState<number>(() => (SPEECH_SUPPORTED ? loadRate() : 1));
+  // True once we're past the first sentence of the current chapter/ending, so the skip-back control
+  // can be disabled at the start of a run (going further back would mean a previous chapter).
+  const [canSkipBack, setCanSkipBack] = useState(false);
 
   // A monotonically increasing token. Every play() bumps it; stop() bumps it. Async steps capture
   // the token they started under and bail the moment it no longer matches, so a stale fetch or an
@@ -46,6 +55,21 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
   const genRef = useRef(0);
   const rateRef = useRef(rate);
   rateRef.current = rate;
+
+  // The chunk list currently being spoken and our position in it, plus the live utterance and a
+  // handle to re-enter the speak loop — all in refs so the pause/resume/skip-back controls can act
+  // on the in-flight session without tearing down and rebuilding it.
+  const chunksRef = useRef<string[]>([]);
+  const chunkIndexRef = useRef(0);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const speakRef = useRef<(() => void) | null>(null);
+
+  // Chrome leaves speech wedged if you cancel() while paused; resume() first so cancel() takes hold.
+  const hardCancel = useCallback(() => {
+    if (!SPEECH_SUPPORTED) return;
+    window.speechSynthesis.resume();
+    window.speechSynthesis.cancel();
+  }, []);
 
   // The sentence currently being spoken, plus the set of follow-along listeners. Kept in refs and
   // pushed imperatively so broadcasting each sentence doesn't re-render the provider's consumers.
@@ -77,26 +101,47 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
   );
 
   // Speak an ordered list of chunks, one utterance at a time, resolving when the list drains or the
-  // session is superseded. Reads the live rate per utterance so a speed change applies promptly.
+  // session is superseded. The position lives in `chunkIndexRef` (not a closure) so skip-back can
+  // rewind it and re-enter the loop via `speakRef`. Reads the live rate per utterance so a speed
+  // change applies promptly.
   const speakChunks = useCallback(
     (gen: number, chunks: string[], voice: SpeechSynthesisVoice | null) =>
       new Promise<void>((resolve) => {
-        let i = 0;
-        const next = () => {
-          if (!isCurrent(gen) || i >= chunks.length) {
+        chunksRef.current = chunks;
+        chunkIndexRef.current = 0;
+        const speak = () => {
+          if (!isCurrent(gen) || chunkIndexRef.current >= chunks.length) {
+            utteranceRef.current = null;
+            speakRef.current = null;
+            setCanSkipBack(false);
             resolve();
             return;
           }
-          const text = chunks[i++];
+          const idx = chunkIndexRef.current;
+          setCanSkipBack(idx > 0);
+          const text = chunks[idx];
           notify(text);
           const u = new SpeechSynthesisUtterance(text);
           if (voice) u.voice = voice;
           u.rate = rateRef.current;
-          u.onend = () => (isCurrent(gen) ? next() : resolve());
-          u.onerror = () => (isCurrent(gen) ? next() : resolve());
+          utteranceRef.current = u;
+          // Advance to the next chunk — but only when this is still the live utterance. A skip-back
+          // or stop swaps `utteranceRef` and cancels, so the cancelled utterance's onend is a no-op.
+          const advance = () => {
+            if (u !== utteranceRef.current) return;
+            if (!isCurrent(gen)) {
+              resolve();
+              return;
+            }
+            chunkIndexRef.current += 1;
+            speak();
+          };
+          u.onend = advance;
+          u.onerror = advance;
           window.speechSynthesis.speak(u);
         };
-        next();
+        speakRef.current = speak;
+        speak();
       }),
     [notify]
   );
@@ -157,10 +202,11 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
   const begin = useCallback(() => {
     if (!SPEECH_SUPPORTED) return -1;
     const gen = ++genRef.current;
-    window.speechSynthesis.cancel();
+    hardCancel();
+    setCanSkipBack(false);
     setStatus("playing");
     return gen;
-  }, []);
+  }, [hardCancel]);
 
   const playChapter = useCallback(
     (bookId: string, slug: string) => {
@@ -186,12 +232,38 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     [begin, prepareVoice, readEnding, finish]
   );
 
+  const pause = useCallback(() => {
+    if (!SPEECH_SUPPORTED) return;
+    window.speechSynthesis.pause();
+    setStatus("paused");
+  }, []);
+
+  const resume = useCallback(() => {
+    if (!SPEECH_SUPPORTED) return;
+    window.speechSynthesis.resume();
+    setStatus("playing");
+  }, []);
+
+  // Rewind one sentence within the current run and re-speak from there. Bounded to the active chunk
+  // list, so it never re-enters a previous chapter (the button is disabled at the first sentence).
+  const skipBack = useCallback(() => {
+    if (chunkIndexRef.current <= 0 || !speakRef.current) return;
+    chunkIndexRef.current -= 1;
+    utteranceRef.current = null; // make the in-flight utterance's onend a no-op before we cancel
+    hardCancel(); // also clears any paused state, so the rewound sentence plays
+    setStatus("playing");
+    speakRef.current();
+  }, [hardCancel]);
+
   const stop = useCallback(() => {
     genRef.current++;
-    if (SPEECH_SUPPORTED) window.speechSynthesis.cancel();
+    utteranceRef.current = null;
+    speakRef.current = null;
+    hardCancel();
+    setCanSkipBack(false);
     notify(null);
     setStatus("idle");
-  }, [notify]);
+  }, [notify, hardCancel]);
 
   const setRate = useCallback((r: number) => {
     rateRef.current = r;
@@ -216,6 +288,10 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
         setRate,
         playChapter,
         playEnding,
+        pause,
+        resume,
+        skipBack,
+        canSkipBack,
         stop,
         subscribeReading,
       }}
