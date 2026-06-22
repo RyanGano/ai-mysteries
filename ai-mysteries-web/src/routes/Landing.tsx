@@ -106,23 +106,22 @@ function Catalog({ books }: { books: BookMeta[] }) {
           Every story here is written by AI &mdash; and every one has more than one ending.
         </p>
       </header>
-      <div className="catalog-filters">
-        <FilterBar
-          selectedTags={selectedTags}
-          availableTags={availableTags}
-          onAddTag={addTag}
-          onRemoveTag={removeTag}
-        />
-        {bounds && lo !== null && hi !== null && (
-          <ReadingTimeFilter
-            bounds={bounds}
-            value={[lo, hi]}
-            onChange={(next) =>
-              setRange(next[0] <= bounds.min && next[1] >= bounds.max ? null : next)
-            }
-          />
-        )}
-      </div>
+      <FilterBar
+        selectedTags={selectedTags}
+        availableTags={availableTags}
+        onAddTag={addTag}
+        onRemoveTag={removeTag}
+        readingTime={
+          bounds && lo !== null && hi !== null
+            ? {
+                bounds,
+                value: [lo, hi],
+                onChange: (next) =>
+                  setRange(next[0] <= bounds.min && next[1] >= bounds.max ? null : next),
+              }
+            : null
+        }
+      />
       {visible.length === 0 ? (
         <p className="catalog-empty">No stories match these filters.</p>
       ) : (
@@ -146,14 +145,28 @@ function FilterBar({
   availableTags,
   onAddTag,
   onRemoveTag,
+  readingTime,
 }: {
   selectedTags: string[];
   availableTags: { tag: string; count: number }[];
   onAddTag: (tag: string) => void;
   onRemoveTag: (tag: string) => void;
+  readingTime: {
+    bounds: { min: number; max: number };
+    value: [number, number];
+    onChange: (next: [number, number]) => void;
+  } | null;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // The reading-time range counts as one active filter once it's narrowed off its full bounds.
+  const rangeNarrowed = readingTime
+    ? readingTime.value[0] > readingTime.bounds.min || readingTime.value[1] < readingTime.bounds.max
+    : false;
+  const activeCount = selectedTags.length + (rangeNarrowed ? 1 : 0);
+  // The popup is worth opening if there are tags to pick or a reading-time slider to drag.
+  const hasControls = availableTags.length > 0 || readingTime !== null;
 
   // Close the popup on an outside click or Escape.
   useEffect(() => {
@@ -180,19 +193,22 @@ function FilterBar({
           className="catalog-filter-button"
           aria-haspopup="true"
           aria-expanded={open}
-          disabled={availableTags.length === 0}
+          disabled={!hasControls}
           onClick={() => setOpen((v) => !v)}
         >
-          Filter{selectedTags.length > 0 ? ` (${selectedTags.length})` : ""}
+          Filter{activeCount > 0 ? ` (${activeCount})` : ""}
         </button>
-        {open && availableTags.length > 0 && (
-          <div className="catalog-filter-popup" role="menu">
+        {open && hasControls && (
+          <div className="catalog-filter-popup" role="group" aria-label="Filters">
+            {readingTime && <ReadingTimeFilter {...readingTime} />}
+            {readingTime && availableTags.length > 0 && (
+              <div className="catalog-filter-divider" role="separator" />
+            )}
             {availableTags.map(({ tag, count }) => (
               <button
                 key={tag}
                 type="button"
                 className="catalog-filter-option"
-                role="menuitem"
                 onClick={() => {
                   onAddTag(tag);
                   setOpen(false);
@@ -227,10 +243,12 @@ function FilterBar({
 }
 
 // The reading-time range filter: a dual-thumb slider (a min handle and a max handle, like a price
-// range picker) over a track whose coloured fill spans the chosen span. Two native range inputs are
-// stacked on the same track so each is keyboard-accessible and screen-reader-labelled; CSS lets
-// only the thumbs take pointer events so either handle stays grabbable where they overlap. The min
-// handle can't cross above the max and vice-versa.
+// range picker) over a track whose coloured fill spans the chosen span, with a scale of minute
+// ticks/labels beneath so the reader can see the stops they're choosing. Two native range inputs are
+// stacked on the same track so each is keyboard-accessible and screen-reader-labelled; CSS lets only
+// the thumbs take pointer events so either handle stays grabbable where they overlap. The min handle
+// can't cross above the max and vice-versa. The track and scale are inset by the thumb radius so the
+// fill edges and ticks line up with the handle centres at the extremes.
 function ReadingTimeFilter({
   bounds,
   value,
@@ -245,6 +263,12 @@ function ReadingTimeFilter({
   const pct = (v: number) => ((v - min) / (max - min)) * 100;
   const narrowed = lo > min || hi < max;
   const label = lo === hi ? `${lo} min` : `${lo}–${hi} min`;
+
+  // One stop per STEP across the range. Every stop gets a tick; the numbers thin out when there are
+  // too many to fit, but the two endpoints are always labelled.
+  const stops: number[] = [];
+  for (let v = min; v <= max; v += STEP) stops.push(v);
+  const labelEvery = stops.length <= 7 ? 1 : Math.ceil((stops.length - 1) / 6);
 
   return (
     <div className="catalog-readtime">
@@ -262,11 +286,12 @@ function ReadingTimeFilter({
         )}
       </div>
       <div className="catalog-readtime-slider">
-        <div className="catalog-readtime-track" />
-        <div
-          className="catalog-readtime-fill"
-          style={{ left: `${pct(lo)}%`, right: `${100 - pct(hi)}%` }}
-        />
+        <div className="catalog-readtime-rail">
+          <div
+            className="catalog-readtime-fill"
+            style={{ left: `${pct(lo)}%`, right: `${100 - pct(hi)}%` }}
+          />
+        </div>
         <input
           type="range"
           min={min}
@@ -285,6 +310,13 @@ function ReadingTimeFilter({
           aria-label="Maximum reading time, minutes"
           onChange={(e) => onChange([lo, Math.max(Number(e.target.value), lo)])}
         />
+      </div>
+      <div className="catalog-readtime-scale" aria-hidden="true">
+        {stops.map((v, i) => (
+          <span key={v} className="catalog-readtime-scale-mark" style={{ left: `${pct(v)}%` }}>
+            {i % labelEvery === 0 || i === stops.length - 1 ? v : ""}
+          </span>
+        ))}
       </div>
     </div>
   );
