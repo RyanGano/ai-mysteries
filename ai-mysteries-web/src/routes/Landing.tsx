@@ -49,9 +49,34 @@ function Catalog({ books }: { books: BookMeta[] }) {
   const sorted = useMemo(() => [...books].sort(byPublishedDesc), [books]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  // Reading-time range filter. Bounds are derived from the catalog itself (no hard-coded times),
+  // snapped out to clean 5-minute stops. `range` stays null ("full range") until the user moves a
+  // handle, so lo/hi fall back to the bounds. Only rendered when the catalog spans >1 bucket.
+  const bounds = useMemo(() => {
+    const mins = sorted.map((b) => displayMinutes(b.wordCount)).filter((m) => m > 0);
+    if (mins.length === 0) return null;
+    const lo = Math.floor(Math.min(...mins) / STEP) * STEP;
+    const hi = Math.ceil(Math.max(...mins) / STEP) * STEP;
+    return lo < hi ? { min: lo, max: hi } : null;
+  }, [sorted]);
+
+  const [range, setRange] = useState<[number, number] | null>(null);
+  const lo = range ? range[0] : (bounds?.min ?? null);
+  const hi = range ? range[1] : (bounds?.max ?? null);
+
+  // A book shows only if it carries every selected tag (AND) and its reading time is within the
+  // selected range. Both filters compose here so the tag counts below reflect the active range too.
   const visible = useMemo(
-    () => sorted.filter((book) => selectedTags.every((tag) => book.tags.includes(tag))),
-    [sorted, selectedTags]
+    () =>
+      sorted.filter((book) => {
+        if (!selectedTags.every((tag) => book.tags.includes(tag))) return false;
+        if (lo !== null && hi !== null) {
+          const m = displayMinutes(book.wordCount);
+          if (m > 0 && (m < lo || m > hi)) return false;
+        }
+        return true;
+      }),
+    [sorted, selectedTags, lo, hi]
   );
 
   // Tags still worth offering: those on the currently-visible books that aren't already selected,
@@ -81,19 +106,34 @@ function Catalog({ books }: { books: BookMeta[] }) {
           Every story here is written by AI &mdash; and every one has more than one ending.
         </p>
       </header>
-      <FilterBar
-        selectedTags={selectedTags}
-        availableTags={availableTags}
-        onAddTag={addTag}
-        onRemoveTag={removeTag}
-      />
-      <ul className="catalog-list">
-        {visible.map((book) => (
-          <li key={book.id}>
-            <CatalogCard book={book} />
-          </li>
-        ))}
-      </ul>
+      <div className="catalog-filters">
+        <FilterBar
+          selectedTags={selectedTags}
+          availableTags={availableTags}
+          onAddTag={addTag}
+          onRemoveTag={removeTag}
+        />
+        {bounds && lo !== null && hi !== null && (
+          <ReadingTimeFilter
+            bounds={bounds}
+            value={[lo, hi]}
+            onChange={(next) =>
+              setRange(next[0] <= bounds.min && next[1] >= bounds.max ? null : next)
+            }
+          />
+        )}
+      </div>
+      {visible.length === 0 ? (
+        <p className="catalog-empty">No stories match these filters.</p>
+      ) : (
+        <ul className="catalog-list">
+          {visible.map((book) => (
+            <li key={book.id}>
+              <CatalogCard book={book} />
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }
@@ -186,6 +226,70 @@ function FilterBar({
   );
 }
 
+// The reading-time range filter: a dual-thumb slider (a min handle and a max handle, like a price
+// range picker) over a track whose coloured fill spans the chosen span. Two native range inputs are
+// stacked on the same track so each is keyboard-accessible and screen-reader-labelled; CSS lets
+// only the thumbs take pointer events so either handle stays grabbable where they overlap. The min
+// handle can't cross above the max and vice-versa.
+function ReadingTimeFilter({
+  bounds,
+  value,
+  onChange,
+}: {
+  bounds: { min: number; max: number };
+  value: [number, number];
+  onChange: (next: [number, number]) => void;
+}) {
+  const { min, max } = bounds;
+  const [lo, hi] = value;
+  const pct = (v: number) => ((v - min) / (max - min)) * 100;
+  const narrowed = lo > min || hi < max;
+  const label = lo === hi ? `${lo} min` : `${lo}–${hi} min`;
+
+  return (
+    <div className="catalog-readtime">
+      <div className="catalog-readtime-head">
+        <span className="catalog-readtime-label">Reading time</span>
+        <span className="catalog-readtime-value">{label}</span>
+        {narrowed && (
+          <button
+            type="button"
+            className="catalog-readtime-reset"
+            onClick={() => onChange([min, max])}
+          >
+            Reset
+          </button>
+        )}
+      </div>
+      <div className="catalog-readtime-slider">
+        <div className="catalog-readtime-track" />
+        <div
+          className="catalog-readtime-fill"
+          style={{ left: `${pct(lo)}%`, right: `${100 - pct(hi)}%` }}
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={STEP}
+          value={lo}
+          aria-label="Minimum reading time, minutes"
+          onChange={(e) => onChange([Math.min(Number(e.target.value), hi), hi])}
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={STEP}
+          value={hi}
+          aria-label="Maximum reading time, minutes"
+          onChange={(e) => onChange([lo, Math.max(Number(e.target.value), lo)])}
+        />
+      </div>
+    </div>
+  );
+}
+
 // One row in the catalog: cover, title, tags, reading time + published date, and a short teaser.
 // The whole card links into the book (stretched link off the title) — it deep-links straight into
 // the first chapter (the per-book landing page at /:bookId is the share target, reached by sharing
@@ -219,6 +323,22 @@ function CatalogCard({ book }: { book: BookMeta }) {
       </div>
     </article>
   );
+}
+
+// Reading-time range filter granularity (minutes per slider step).
+const STEP = 5;
+
+// Average adult prose reading speed — must match the API's ReadingTime constant.
+const WORDS_PER_MINUTE = 250;
+
+// A book's reading time in whole minutes for the range filter, derived from its raw word count.
+// This deliberately mirrors the rounding in the API's ReadingTime.Estimate (exact under 10 min,
+// nearest 5 above) so the number we filter on matches the "~N min read" the card shows — otherwise
+// a book labelled "~15 min read" could be hidden by a "≤ 15 min" filter. Keep the two in lockstep.
+function displayMinutes(wordCount: number): number {
+  if (wordCount <= 0) return 0;
+  const raw = Math.max(1, Math.round(wordCount / WORDS_PER_MINUTE));
+  return raw < 10 ? raw : Math.round(raw / STEP) * STEP;
 }
 
 // Newest-first by published date. ISO "YYYY-MM-DD" strings sort lexicographically the same as by
