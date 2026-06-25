@@ -376,7 +376,20 @@ real idea a clue depends on (condensation, freeze-thaw) but gloss it in plain wo
 first time. A load-bearing theme word may stay (e.g. *non-essential mass*) if the prose
 around it explains it plainly. See `create_new_book.md` Phase 0 for the fuller checklist.
 
-## Content boundaries
+### Spelling: American English (en-US) by default
+
+**Every book uses American (en-US) spelling** — manuscript, endings, and all `meta.json` copy.
+Write *color*, *gray*, *theater*, *realize*, *recognize*, *traveled*, *defense*, *toward*, *aluminum*
+— never *colour*, *grey*, *theatre*, *realise*, *travelled*, *defence*, *aluminium*. This covers the
+usual UK→US classes: `-our`→`-or`, `-re`→`-er`, `-ise/-yse`→`-ize/-yze`, doubled `-ll-`→single
+(*travelled*→*traveled*), `-ence`→`-ense` (*defence*→*defense*), and one-offs (*grey/mould/smoulder/
+draught/kerb/storey/cheque/pyjamas/sceptic/sulphur/artefact* → *gray/mold/smolder/draft/curb/story/
+check/pajamas/skeptic/sulfur/artifact*).
+
+**The only exception is deliberate, in-world diction**: a book explicitly set in a place where British
+spelling is the natural register (a story set in London, a 1920s Scottish lighthouse keeper's own
+written ledger, etc.) may use UK spelling *where it's doing characterization work* — and even then,
+keep it intentional and consistent, not accidental. Absent that, default to en-US everywhere.
 
 **No sexual or sex-related content in any book — manuscript or endings.** This applies to
 every book on the site regardless of audience. Romance is fine at the level of *kissing,

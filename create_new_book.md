@@ -39,6 +39,11 @@ request.
   audience). Romance stays at kissing / dating / hugging / holding hands; anything beyond
   that you do **not** write without asking the user first. See *Content boundaries* in
   `CLAUDE.md`.
+- **Write American (en-US) spelling** throughout — manuscript, endings, and `meta.json` copy
+  (*color/gray/theater/realize/traveled/defense*, never *colour/grey/theatre/realise/travelled/
+  defence*). The **only** exception is a book deliberately set somewhere British spelling is the
+  natural in-world register (a London setting, a Scottish keeper's own ledger) — and even then,
+  keep it intentional and consistent. Absent that, default to en-US. See *Spelling* in `CLAUDE.md`.
 
 ---
 
