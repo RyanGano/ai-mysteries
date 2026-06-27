@@ -40,6 +40,11 @@ Two gitignored, local-only files:
    - **Length / audience:** hit the row's target reading time and audience. Kid-friendly rows get
      the easy-reading treatment (simple names, plain words) per `CLAUDE.md` and `create_new_book.md`
      Phase 0.
+   - **Voice:** default to the author's house voice (warm, plain-spoken, short-punch rhythm,
+     everyday analogies, humane narrator) as the connective texture — see *Voice* in `CLAUDE.md`
+     and `.claude/skills/write-in-my-voice/`. This is baseline *feel*, not sameness: still vary
+     each book's opening register per the Distinctness Contract. Deviate only if the genre truly
+     calls for a different voice. Optionally grade a chapter/ending with **check-my-voice** (~80%+).
    - **Content boundaries:** no sexual content, any book (per `CLAUDE.md`).
    - **Spoiler rules:** all book data + design docs stay in gitignored locations; nothing
      committed names codes, culprits, or clue maps.

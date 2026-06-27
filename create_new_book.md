@@ -44,6 +44,13 @@ request.
   defence*). The **only** exception is a book deliberately set somewhere British spelling is the
   natural in-world register (a London setting, a Scottish keeper's own ledger) — and even then,
   keep it intentional and consistent. Absent that, default to en-US. See *Spelling* in `CLAUDE.md`.
+- **Default to the author's house voice** — warm, plain-spoken, conversational clarity, varied
+  rhythm with short-sentence punches, everyday analogies walked through, gentle humor, a humane
+  narrator who never lectures. This is the connective *texture* under every book, **not** sameness
+  and **not** the per-book opening voice (which still varies — see Phase 0.5). Deviate only when
+  the genre truly calls for a different voice (noir, a formal period ledger, a clinical register),
+  and then do it on purpose. Profile + skills: `.claude/skills/write-in-my-voice/` (draft with
+  **write-in-my-voice**, grade with **check-my-voice**). See *Voice* in `CLAUDE.md`.
 
 ---
 
@@ -128,6 +135,10 @@ verbatim. Check your design against the registry below *before* writing prose.
    been lifted before:** "made a small sound," "the way you pat a pocket the second time — faster,
    both hands," "her chin began to crumple," "the room was getting loud, so she went very quiet and
    started to think," and a bare "N minutes/hours until …" countdown. Write a fresh opening.
+   *(This axis varies the **surface** — the opening register and first beat — on purpose. It does
+   **not** mean abandoning the house voice: the underlying texture stays warm and plain-spoken
+   across books per the* Voice *default in `CLAUDE.md`. Vary the register; keep the hand. The
+   failure mode this axis kills is sameness of opening, not the shared baseline feel.)*
 
 ### Registry of shipped books (differ from these)
 
@@ -326,7 +337,11 @@ one clue; no clue gives the ending away on its own.
 
 First finish `docs/<bookId>/EndingStyleGuide.md`:
 
-- **Voice rules** matched to the audience and genre.
+- **Voice rules** matched to the audience and genre — but **start from the author's house voice**
+  (the *Voice* default in `CLAUDE.md`) and tune it for *this* book's register, rather than
+  inventing a voice from scratch. Most books just inherit the baseline (warm, plain-spoken, short
+  punches, everyday analogies, humane narrator); write rules here only for where this book
+  *deviates* (e.g. a noir clip, a period ledger's formality, a kid-book's extra-simple sentences).
 - A **mandatory shared opening** — every ending of the book starts with the *same* one or
   two paragraphs (the scene where the reveal is about to happen). This prevents an
   ending's opening from hinting at its culprit and gives readers a recognizable beat.

@@ -376,6 +376,34 @@ real idea a clue depends on (condensation, freeze-thaw) but gloss it in plain wo
 first time. A load-bearing theme word may stay (e.g. *non-essential mass*) if the prose
 around it explains it plainly. See `create_new_book.md` Phase 0 for the fuller checklist.
 
+### Voice: the author's house voice by default
+
+**Lean toward the author's (Ryan's) house voice unless the story genuinely calls for a different
+one** — the same default-with-exception shape as en-US spelling below. The house voice is warm,
+plain-spoken, and conversational: short common words (anything technical glossed in kitchen-table
+language the first time), contractions, varied rhythm with deliberate short-sentence punches,
+everyday analogies *walked through*, gentle and usually self-aware humor, and a humane narrator
+who is clear without ever showing off or lecturing. It is captured — with fiction vs. nonfiction
+modes and approved exemplars — in
+[`.claude/skills/write-in-my-voice/voice-profile.md`](.claude/skills/write-in-my-voice/voice-profile.md).
+Use the **write-in-my-voice** skill to draft/rewrite and **check-my-voice** to score a draft
+(aim ~80%+).
+
+**This is *texture*, not *sameness* — and it does not override the Distinctness Contract.** The
+house voice is the connective *feel* under every book (clarity, warmth, rhythm); it is **not** the
+per-book *opening voice*, register, or motifs, which must still **vary** book to book per Phase 0.5
+of `create_new_book.md` (and may never reuse another book's opening or detective-method sentences).
+Think of it like a familiar author writing across genres: a reader senses the same hand at work,
+but a cozy, a kid-friendly aquarium romp, and a tense locked-room each still open in their own
+register. Default to the house voice as the baseline; vary the surface deliberately for distinctness.
+
+**The exception (deliberate, like in-world UK spelling):** when a story's genre or register truly
+needs a different voice — a hard-boiled noir narrator, a formal period ledger, a clinical/technical
+voice doing characterization — deviate on purpose and keep it consistent. Absent that real call,
+default to the house voice. (Note: the house voice's plain-spoken warmth is an especially natural
+fit for the cozy / kid-friendly / all-ages books — it pairs cleanly with the easy-reading rule
+above.)
+
 ### Spelling: American English (en-US) by default
 
 **Every book uses American (en-US) spelling** — manuscript, endings, and all `meta.json` copy.
