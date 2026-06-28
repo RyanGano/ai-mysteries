@@ -31,6 +31,9 @@ Two gitignored, local-only files:
    design the mystery, write the manuscript + weighted endings, plant clues, wire
    cross-references, verify, generate + upload the cover, seed Cosmos, and confirm it's serving
    from the prod API. Honor every standing rule:
+   - **Distinctness:** read **only** [`docs/book-registry.md`](../../../docs/book-registry.md) for
+     the 3-of-5-axis check (`create_new_book.md` Phase 0.5) — don't re-read other books' memories or
+     `Content/` to "learn the pattern." The registry is the current, compact source.
    - **Ship to live by default** — don't stop at local files or localhost (per `CLAUDE.md`
      "Adding a book" and the user's standing preference). Only stop short if the user said
      "just draft it" or a ship step needs a credential you lack — then report the one blocker.
@@ -55,14 +58,18 @@ Two gitignored, local-only files:
      |---|---|---|---|
      | <book title> | <displayed reading time> | <final tags> | <`selection.specialEnding`, or `0`/none> |
 
-4. **Record it — move the row to the archive.** When the book is verified live:
-   - **Delete** the row from `docs/book-ideas.md` (built stories don't stay in the active queue).
-   - **Append** it to the "Built" table in `docs/book-ideas-archive.md` with status `✅ built`,
-     the build date, and the final `bookId`.
+4. **Record it.** When the book is verified live, do all three (cheap, keeps every tracker current):
+   - **Move the queue row:** delete it from `docs/book-ideas.md` and **append** it to the "Built"
+     table in `docs/book-ideas-archive.md` with status `✅ built`, the build date, and final `bookId`.
+   - **Append a fingerprint row** to [`docs/book-registry.md`](../../../docs/book-registry.md) — the
+     single distinctness source the next build reads. Fill setting · mystery type · detective method ·
+     structure spine · length · audience · tags. **Structural and spoiler-light only** (no codes,
+     culprits, or sentinel/special identities). This is what stops the registry going stale.
 
-5. **Save a memory.** Add a memory file for the new book (mirror the existing per-book memories,
-   e.g. `holloway-house-book.md`) and a one-line pointer in `MEMORY.md`, so the book is tracked
-   across sessions like the others.
+5. **Save a slim memory.** Add a **short pointer** memory file (a few lines: title, bookId, one-line
+   premise, "see `docs/book-registry.md` row N for the fingerprint") plus a one-line entry in
+   `MEMORY.md`. Don't write the old ~40-line full record — the registry row + the gitignored design
+   docs hold the detail now; the memory just makes the book discoverable across sessions.
 
 6. **Refill the queue when it runs out — big batch, infrequently.** After building, count the
    remaining `⬜ queued` rows in `docs/book-ideas.md`. Only when the queue is **empty** (the row

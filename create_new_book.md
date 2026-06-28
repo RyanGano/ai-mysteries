@@ -33,8 +33,11 @@ request.
 - Adding a book is **data-only** — zero code edits, zero redeploy. If you find yourself
   editing React or C# to make a book work, stop: the thing you're hardcoding belongs in
   `meta.json` or the content files.
-- If `Content/within-tolerance/` exists locally, skim it as the reference
-  implementation (structure, tone of `meta.json` copy, ending shape). Never copy its text.
+- **Don't re-read other books' `Content/` to "learn the pattern" — it's pure token cost.** The
+  shared engine + the structural scan in `docs/book-registry.md` are enough. The one thing you may
+  pull from an existing book is the **mandatory shared-opening shape** of an ending (Phase 4) — and
+  even then copy the *structure*, never the text. If a `meta.json` field's shape is unclear, the
+  contract is `put_book_in_site.md` §2, not another book.
 - **No sexual or sex-related content** in the manuscript or any ending (every book, every
   audience). Romance stays at kissing / dating / hugging / holding hands; anything beyond
   that you do **not** write without asking the user first. See *Content boundaries* in
@@ -51,6 +54,30 @@ request.
   the genre truly calls for a different voice (noir, a formal period ledger, a clinical register),
   and then do it on purpose. Profile + skills: `.claude/skills/write-in-my-voice/` (draft with
   **write-in-my-voice**, grade with **check-my-voice**). See *Voice* in `CLAUDE.md`.
+
+---
+
+## Build fast path (the whole job at a glance)
+
+Follow these in order. Each step links the phase with the detail; **read a phase's detail only when
+you're on that step** — don't pre-read the whole doc. The *Reference* sections at the bottom (worked
+parameter sheets, definition-of-done) are consult-when-needed, not part of the linear read.
+
+1. **Interpret the brief** → word budget, suspect count, ending count (Phase 0).
+2. **Pass the Distinctness Contract** → read `docs/book-registry.md`, confirm ≥3-of-5-axis novelty
+   (Phase 0.5). Do this *before* writing prose.
+3. **Design the dossier** in `docs/<bookId>/` → outline, character bible, ending matrix (with a
+   resolution-kind spread), style guide, cover prompt (Phase 1).
+4. **Author `meta.json`** → copy + selection weights; field contract is `put_book_in_site.md` §2
+   (Phase 2).
+5. **Generate the cover** → `node scripts/gen-cover.cjs <bookId>` (Phase 2, house style there).
+6. **Write the manuscript**, logging clue quotes as you go (Phase 3).
+7. **Write the endings** (shared opening + the matrix) (Phase 4).
+8. **Wire cross-references** → `gen-xrefs.cjs` + `check-xrefs.cjs` (Phase 5).
+9. **Verify locally** → `dotnet run` (it's the schema validator) + `npm run dev` (Phase 6).
+10. **Ship** → cover upload, seed, diff, confirm live; exact commands in `put_book_in_site.md` §4
+    (Phase 7).
+11. **Final report** → the one-row summary table.
 
 ---
 
@@ -142,29 +169,20 @@ verbatim. Check your design against the registry below *before* writing prose.
 
 ### Registry of shipped books (differ from these)
 
-Spoiler-free structural fingerprints — **no codes, culprits, or special-ending identities.** Add a
-row each time you ship; consult it each time you design. Two books may share at most two axes.
+**The registry lives in [`docs/book-registry.md`](docs/book-registry.md)** (gitignored) — one
+compact, spoiler-light row per shipped book (setting · mystery type · detective method · structure
+spine · length · tags). It is the **single source of truth** for this check; read it now and confirm
+your design differs from every row on ≥3 of the five axes. Two books may share at most two axes.
 
-| Book | Mystery type | Detective method | Structure spine |
-|---|---|---|---|
-| within-tolerance | death — how/why | methodical procedural, timeline reconstruction | scene → system explainer → suspect-per-chapter → "the gap" |
-| non-essential-mass | a keepsake **damaged**, no one admits it | inspector works the **systems/records** | systems tour → night-shift reconstruction |
-| standard-of-care | a death from **diffuse causation** (each did an ordinary thing) | takes the "machine" apart, fault-tree | one spotlight per link in the chain |
-| first-in-right | a death amid a **resource war** (drought/water rights) | outside company investigator, follows the money/right | spotlight per claimant → the night |
-| something-borrowed | a small thing **lost** at a ceremony | calm teacher, recovers small things by routine | one spotlight per helper → the hour-before finale |
-| mate-for-life | **is the staged crime real?** (game-within-a-game) | guests interrogate **each other**, no lone sleuth | ensemble cross-examination → high water |
-| wheres-sunny | a live animal **gone** from its pen | trainer-kid who knows the animal's habits | habit-led search of the grounds |
-| siege-perilous | an **impossible/locked-room** death (cursed seat) | court official, physical locked-room logic | examine seat → cup → vigil reconstruction |
-| holloway-house | **is the haunting real?** (staged vs. genuine) | hired **skeptic** out to debunk | sit the house overnight → the small hours |
-| field-trip | a small thing **lost** on a journey | kid who **draws/maps** the journey to reconstruct it | map the trip → red-herring duplicate → the gate |
-| lighthouse-ledger | a person **vanished**, ledger as evidence | relief keeper reads the **record** left behind | the relief → reckonings → last entry |
-| sourdough-starter | a living thing **seemingly ruined/changed** (not lost) | neighbour deduces from the **senses** (smell/taste/temp) + a list | what-happened post-mortem, sense by sense |
-| cabin-pressure | a death **mid-flight, sealed cabin** (locked-room) | cabin crew lead works **witness stories that lean** | who-sat-where → contradicting accounts → descent |
+Keeping the registry in its own file (instead of inline here) is deliberate: the `add-todays-book`
+skill appends a row on every ship, so it never goes stale, and this playbook stops growing as the
+catalog does. **Don't re-derive distinctness from the per-book memories or old `Content/`** — the
+one file is enough.
 
-If your design's row would duplicate three+ axes of any row above, change the design — not the
+If your design's row would duplicate three+ axes of any registry row, change the design — not the
 paint. (When two books legitimately share the engine's *mechanic* — a non-human **sentinel**
 culprit and a rare **special** ending — that's fine; the engine is shared on purpose. It's the
-*story shape* above that must differ.)
+*story shape* in the registry that must differ.)
 
 ## Phase 1 — Design the mystery (the dossier)
 
@@ -204,14 +222,12 @@ Categories are culprit-set **sizes** (`"1"`, `"2"`, …) — that's what the wei
    institution, the machine, the wilderness itself). Its *solo* endings form their own
    `"sentinel"` category via `selection.sentinelCulprit` so it can be weighted
    independently.
-5. **Special ending — at most one, optional.** `special: true` + `specialEnding`
-   (a per-book integer 1–1000, e.g. `246`) makes it a rare jackpot with the `specialReveal`
-   overlay. `specialEnding` is a **guaranteed 1-in-1000 offset**, not a probability: the API tracks
-   a per-book `readCount` over random reveals and surfaces the special ending when
-   `readCount % 1000 == specialEnding` — so it lands on the Nth, (1000+N)th, (2000+N)th… reveal,
-   exactly once per 1000. Pick a fresh **random** value 1–1000 for each new book.
-   Good candidates break the game's own frame — a culprit no reader would consider in scope.
-   `specialEnding` `0`/omitted = reachable only by typing its code.
+5. **Special ending — at most one, optional.** `special: true` + a per-book `specialEnding`
+   integer 1–1000 makes it a rare 1-in-1000 jackpot with the `specialReveal` overlay (the exact
+   `readCount % 1000` mechanic is in `CLAUDE.md` → *Weighted random selection*; don't restate it
+   here). Authoring guidance: good candidates **break the game's own frame** — a culprit no reader
+   would consider in scope. Pick a **fresh random value 1–1000** per book; `0`/omitted = reachable
+   only by typing its code.
 
 **Resolution-type spread (required — Distinctness Contract axis 4).** In `EndingMatrix.md`,
 annotate every ending with its **resolution *kind***, not just its culprit set —
@@ -260,9 +276,8 @@ With a sentinel culprit, carve its share out explicitly, keeping `"1"` dominant:
 }
 ```
 
-Pick `specialEnding` as a **fresh random integer 1–1000** for each new book (it sets *which* draw
-in each block of 1000 lands on the special ending — `readCount % 1000 == specialEnding`, so always
-exactly one per 1000 reveals). Don't copy another book's value.
+Pick `specialEnding` as a **fresh random integer 1–1000** for each new book — don't copy another
+book's value. (What the number does is in `CLAUDE.md` → *Weighted random selection*.)
 
 Every category your endings actually use **must** have a positive weight — the API
 validates this at startup and refuses to load the book otherwise. The `selection` block
@@ -436,33 +451,24 @@ Checklist — all of `put_book_in_site.md` §3, plus the authoring-quality check
 ## Phase 7 — Ship (turn-key, and not optional)
 
 **This phase is mandatory unless the user told you to stop short.** A book that only exists
-under `Content/` is unfinished — "done" means *live on the production site*. Shipping is
-automated end-to-end. After generating the cover (Phase 2 — `gen-cover.cjs`), the agent runs
-the rest from the repo root (after `az login`); see `put_book_in_site.md` §4 for the exact
-commands:
+under `Content/` is unfinished — "done" means *live on the production site*. **The exact commands
+(cover upload, seed, diff, the prod endpoints) live in `put_book_in_site.md` §4 — run them from
+there; this is just the checklist.** From the repo root, after `az login`:
 
-1. **Upload the cover** (`ai-mysteries-web/public/covers/<bookId>.webp`) to the assets
-   blob account's `covers` container as `<bookId>.webp`, and confirm `coverImage` in
-   `meta.json` points at that public URL.
-2. **Seed** Cosmos (`ai-mysteries-tools -- seed --endpoint <cosmos-uri>`) — it stamps the book's
-   `version` and pushes it (a new book is always newer than the empty Cosmos copy).
-3. **Verify** parity (`-- diff` — cheap per-book version check, must report in sync; `-- full-diff`
-   for a deep field-by-field check).
-4. **Push site updates** — normally **none**: a new book is data-only, and `Content/` +
-   `public/covers/` are gitignored. Only push if the brief required a genuine UI/API
-   change (a new generic field, new chrome) — that's the rare exception, not the rule.
-5. **Confirm it's live.** The prod API picks the book up within one refresh poll (~60s) — no
-   App Service restart, no front-end or API redeploy. Poll the prod API's `/api/books` until
-   the new title appears, resolve one ending code against prod, and check the public cover URL
-   returns `200 image/webp`. Only then is the task done. (The prod API host and the assets blob
-   account are subscription-specific — kept out of this public file; the agent has them.)
-
-The prod API picks the book up within one refresh poll (~60s) — no App Service restart,
-no front-end or API redeploy.
+1. **Cover** — uploaded to the assets blob `covers` container as `<bookId>.webp`; `coverImage` in
+   `meta.json` points at that public URL and it loads anonymously (`200 image/webp`).
+2. **Seed + verify** — `seed` pushes the book and bumps the global version; `diff` must report in
+   sync (`full-diff` for a deep check).
+3. **No site push** — a new book is data-only (`Content/` + `public/covers/` are gitignored). Push
+   only if the brief required a genuine generic UI/API change — the rare exception.
+4. **Confirm live** — within one refresh poll (~60s) prod serves it with no restart/redeploy: prod
+   `/api/books` lists the title, one ending code resolves against prod, the cover URL returns `200`.
 
 ---
 
-## Worked parameter sheets (the example prompts)
+## Reference (consult when needed — not part of the linear read)
+
+### Worked parameter sheets (the example prompts)
 
 **"Space station, 2218, advanced tech"** — adult; default length (8,000–9,000 words,
 10 chapters); 5 suspects, each owning one station system; strong sentinel candidate:
