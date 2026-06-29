@@ -78,11 +78,13 @@ Two committed, spoiler-free playbooks at the repo root:
   `endings.json`, …) and the Cosmos seeding + go-live procedure. Reference for the mechanics.
 
 **Distinctness is non-negotiable.** A new setting is not a new book. Before designing, read
-**Phase 0.5 — The Distinctness Contract** in `create_new_book.md` and its registry of shipped
-books: every book must differ from every existing one on at least three of five axes (mystery
-*type*, detective *method*, chapter *spine*, **resolution-kind spread across the endings**, and
-opening *voice*), and may never reuse another book's opening or detective-method sentences. Reuse
-the engine (sentinel + special ending), never the story shape. Same rule of thumb as Tags below:
+**Phase 0.5 — The Distinctness Contract** in `create_new_book.md` and the registry of shipped books
+(now in the gitignored `docs/book-registry.md`): every book must differ from every existing one on at
+least three of **six** axes (mystery *type*, **setting/world**, detective *method*, chapter *spine*,
+**resolution-kind spread across the endings**, and opening *voice*), and may never reuse another
+book's opening or detective-method sentences. Lean on the roomy axes (setting, type, voice); the
+playbook flags the crowding, over-used *method* ("reads a written record") and *spine*
+("spotlight-per-suspect"). Reuse the engine (sentinel + special ending), never the story shape. Same rule of thumb as Tags below:
 reuse where the meaning is genuinely close, but never clone — fragmenting the catalog into
 near-duplicates is the failure mode.
 

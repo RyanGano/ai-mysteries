@@ -32,7 +32,7 @@ Two gitignored, local-only files:
    cross-references, verify, generate + upload the cover, seed Cosmos, and confirm it's serving
    from the prod API. Honor every standing rule:
    - **Distinctness:** read **only** [`docs/book-registry.md`](../../../docs/book-registry.md) for
-     the 3-of-5-axis check (`create_new_book.md` Phase 0.5) — don't re-read other books' memories or
+     the 3-of-6-axis check (`create_new_book.md` Phase 0.5) — don't re-read other books' memories or
      `Content/` to "learn the pattern." The registry is the current, compact source.
    - **Ship to live by default** — don't stop at local files or localhost (per `CLAUDE.md`
      "Adding a book" and the user's standing preference). Only stop short if the user said

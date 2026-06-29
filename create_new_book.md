@@ -64,7 +64,7 @@ you're on that step** — don't pre-read the whole doc. The *Reference* sections
 parameter sheets, definition-of-done) are consult-when-needed, not part of the linear read.
 
 1. **Interpret the brief** → word budget, suspect count, ending count (Phase 0).
-2. **Pass the Distinctness Contract** → read `docs/book-registry.md`, confirm ≥3-of-5-axis novelty
+2. **Pass the Distinctness Contract** → read `docs/book-registry.md`, confirm ≥3-of-6-axis novelty
    (Phase 0.5). Do this *before* writing prose.
 3. **Design the dossier** in `docs/<bookId>/` → outline, character bible, ending matrix (with a
    resolution-kind spread), style guide, cover prompt (Phase 1).
@@ -135,30 +135,51 @@ second-pass / deadline" chapter spine → endings that *all* resolve the same ge
 that again.
 
 **Hard gate: a new book must differ from every already-shipped book on at least *three* of these
-five axes** — and may never reuse another book's opening sentences or its detective-method sentence
-verbatim. Check your design against the registry below *before* writing prose.
+six axes** — and may never reuse another book's opening sentences or its detective-method sentence
+verbatim. Check your design against the registry below *before* writing prose. The axes are not
+equally roomy: **setting, mystery type, and voice are high-cardinality** (lots of room — lean on
+them), while **method, structure, and resolution-kind are low-cardinality** (few real options and
+already crowding — see the over-used flags below). Earn your three differences on the roomy axes
+first.
 
 1. **Mystery type** — what actually happened. Don't default to "an object is lost." Menu: a thing
    is **lost** / **damaged or changed** / **swapped** / an **impossible event** / **a person is
    behaving strangely** / **sabotage that wasn't** / **a kindness misread** / **a thing that was
-   never gone**. Pick one not already over-used.
-2. **Detective archetype + method** — *how* they solve it. The "goes still and remembers" voice is
-   **used up — do not reuse it.** Vary the method: maps or **draws** the scene; **talks** people
-   into contradicting themselves; **re-enacts** the event physically; reasons from a **written
-   list**; deduces from the **senses** (taste, smell, sound, temperature); is a **skeptic** out to
-   debunk.
-3. **Chapter architecture** — the spine. Not always *empty-X → one spotlight per suspect → second
-   pass → ticking-clock finale.* Alternatives: reverse chronology; two interleaved timelines; the
-   detective is also a suspect; a leisurely unspool with no clock; a frame story.
-4. **Resolution-type spread across the endings** — *the most important one.* A book's endings must
-   **not all resolve the same way.** Across the matrix, include a **mix of resolution kinds**: at
-   least one **accident / real consequence**, one **deliberate act with a motive**, one **genuine
-   misunderstanding / it was never gone**, and one **reversal that re-colours an earlier scene**.
-   An all-"benign person harmlessly had it, nothing harmed, nobody unkind" matrix is the failure
-   mode — kill it. (Kid-friendly books may stay **ultimately reassuring**, but the *cause* and the
-   *path* must still vary: a real near-loss that's recovered, a deliberate hide, a swap, a thing
-   tucked away as a surprise, a thing that was never lost.)
-5. **Voice register + opening beat** — invent this book's own first beat. **Banned because it's
+   never gone** / **two crimes tangled** / **the victim/subject isn't who we think**. Pick one not
+   already over-used.
+2. **Setting / world** — *where and when.* The one lever that **never runs out**, so use it: a
+   genuinely new world (era, place, milieu) earns one of your three differences outright. **Don't
+   reskin a shipped world** — another present-day cozy small-community, another sealed vehicle,
+   another period theater/court. Jump era, place, *or* milieu. See the registry's setting column for
+   what's taken.
+3. **Detective archetype + method** — *how* they solve it. **Two methods are over-used — avoid
+   unless the premise truly demands one:** *reasons from a written record / list / document* (~8
+   books already) and the retired *"goes still and remembers"* voice (**banned outright**). Reach
+   for a fresher method: maps or **draws** the scene; **talks** people into contradicting
+   themselves; **re-enacts / re-times** the event physically; deduces from the **senses** (taste,
+   smell, sound, temperature); is a **skeptic** out to debunk; works **backward from the one
+   impossible detail**; **follows the money / incentives**; **catches a lie in real time**;
+   reconstructs from what's **absent** (the dog that didn't bark); is the **domain expert** who sees
+   what others miss; **sets a trap** to flush the culprit; reads **numbers / accounts** (not prose);
+   is **fooled first, then realizes**.
+4. **Chapter architecture** — the spine. *"One spotlight per suspect → finale"* is **over-used
+   (~10+ books) — don't default to it.** Actively reach for a shape barely used yet: reverse
+   chronology (open at the reveal, walk it back); two **interleaved timelines** (then / now);
+   **real-time** single scene (one room, one hour); a **frame story** (someone recounting it);
+   **POV that rotates** among the suspects (each chapter one suspect's account); an **inventory**
+   structure (a chapter per item / room / clue); the detective is also a suspect; a leisurely
+   unspool with no clock.
+5. **Resolution-type spread across the endings** — *the most important one.* A book's endings must
+   **not all resolve the same way.** Across the matrix, **span at least three** of these kinds: an
+   **accident / real consequence**; a **deliberate act with a motive**; a **genuine
+   misunderstanding / it was never gone**; a **reversal that re-colors an earlier scene**;
+   **self-inflicted (the victim/subject did it to themselves)**; **the system/institution is to
+   blame (no single villain)**; **collective guilt (everyone a little responsible)**; a
+   **sympathetic or justified culprit**. An all-"benign person harmlessly had it, nothing harmed,
+   nobody unkind" matrix is the failure mode — kill it. (Kid-friendly books may stay **ultimately
+   reassuring**, but the *cause* and the *path* must still vary: a real near-loss that's recovered, a
+   deliberate hide, a swap, a thing tucked away as a surprise, a thing that was never lost.)
+6. **Voice register + opening beat** — invent this book's own first beat. **Banned because it's
    been lifted before:** "made a small sound," "the way you pat a pocket the second time — faster,
    both hands," "her chin began to crumple," "the room was getting loud, so she went very quiet and
    started to think," and a bare "N minutes/hours until …" countdown. Write a fresh opening.
@@ -172,7 +193,7 @@ verbatim. Check your design against the registry below *before* writing prose.
 **The registry lives in [`docs/book-registry.md`](docs/book-registry.md)** (gitignored) — one
 compact, spoiler-light row per shipped book (setting · mystery type · detective method · structure
 spine · length · tags). It is the **single source of truth** for this check; read it now and confirm
-your design differs from every row on ≥3 of the five axes. Two books may share at most two axes.
+your design differs from every row on ≥3 of the six axes. Two books may share at most three axes.
 
 Keeping the registry in its own file (instead of inline here) is deliberate: the `add-todays-book`
 skill appends a row on every ship, so it never goes stale, and this playbook stops growing as the
