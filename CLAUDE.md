@@ -92,7 +92,7 @@ near-duplicates is the failure mode.
 
 Tags appear on catalog cards and drive filtering. **Reuse an existing tag whenever the meaning
 is close enough** — duplicate intent with different wording fragments the filter. Only add a new
-tag if nothing in the list fits. Current canonical tags (as of 2026-06-16):
+tag if nothing in the list fits. Current canonical tags (as of 2026-07-01):
 
 | Tag | When to use |
 |---|---|
@@ -105,6 +105,7 @@ tag if nothing in the list fits. Current canonical tags (as of 2026-06-16):
 | `Murder` | at least one suspect is a deliberate killer |
 | `No Crime` | no crime has been committed — the mystery is a misunderstanding or loss |
 | `Technology` | tech system or industrial setting is load-bearing to the plot |
+| `Theft` | a genuine theft of a valuable object is the crime (a real culprit, not a misunderstanding) |
 | `Wedding` | wedding or ceremony setting |
 | `Western` | frontier/Western US historical setting |
 
