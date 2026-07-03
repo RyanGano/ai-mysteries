@@ -42,7 +42,9 @@ export default function Ending() {
     setStatus("loading");
     setRevealDone(false);
     setShareNote("");
-    window.scrollTo(0, 0);
+    // Instant jump (not the global smooth scroll): the smooth animation would start on the old
+    // ending and be canceled by the DOM swap, leaving the reader stranded partway down.
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     fetchEnding(bookId, code)
       .then((e) => {
         if (!active) return;

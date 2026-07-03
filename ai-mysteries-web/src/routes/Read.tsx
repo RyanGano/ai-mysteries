@@ -71,7 +71,10 @@ export default function Read() {
   // Start each chapter from the top and close the drawer when the slug changes — unless we
   // arrived via a ?clue= deep link, in which case the highlight effect scrolls instead.
   useEffect(() => {
-    if (!clueId) window.scrollTo(0, 0);
+    // Instant, not the global smooth scroll: a smooth animation starts on the old (tall) chapter
+    // and gets canceled when the DOM swaps to the loading skeleton, leaving the reader stranded
+    // near the bottom. An instant jump lands at the top before the new chapter paints.
+    if (!clueId) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     setTocOpen(false);
   }, [slug, clueId]);
 
