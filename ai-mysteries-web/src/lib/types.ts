@@ -86,3 +86,7 @@ export interface Ending {
   markers: XrefMarker[];
   clues: Record<string, Clue>;
 }
+
+// Result of a weighted-random reveal: the next code to show, or exhausted once the reader has
+// seen every ordinary ending this session.
+export type RandomEnding = { code: string } | { exhausted: true };

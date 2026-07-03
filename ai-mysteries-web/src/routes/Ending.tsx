@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { fetchEnding, fetchRandomCode, fetchBookMeta } from "../lib/api";
+import { fetchEnding, fetchRandomEnding, fetchBookMeta } from "../lib/api";
 import { shareOrCopy } from "../lib/share";
+import { getSeen, addSeen } from "../lib/seen-endings";
 import type { Ending as EndingData, BookMeta } from "../lib/types";
 import Prose from "../components/Prose";
 import Loading from "../components/Loading";
+import EndingsExhausted from "../components/EndingsExhausted";
 import ReadAloudControls from "../components/ReadAloudControls";
 import { useReadAloud } from "../lib/read-aloud-context";
 import { useReadAlong } from "../lib/use-read-along";
@@ -20,6 +22,7 @@ export default function Ending() {
   const [status, setStatus] = useState<Status>("loading");
   const [shareNote, setShareNote] = useState("");
   const [revealDone, setRevealDone] = useState(false);
+  const [exhausted, setExhausted] = useState(false);
   const { playEnding } = useReadAloud();
   const bodyRef = useRef<HTMLElement>(null);
   useReadAlong(bodyRef);
@@ -42,6 +45,7 @@ export default function Ending() {
     setStatus("loading");
     setRevealDone(false);
     setShareNote("");
+    setExhausted(false);
     // Instant jump (not the global smooth scroll): the smooth animation would start on the old
     // ending and be canceled by the DOM swap, leaving the reader stranded partway down.
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -55,6 +59,9 @@ export default function Ending() {
         }
         setEnding(e);
         setStatus("ready");
+        // Remember every ending the reader is actually shown (ordinary, special, or a shared link)
+        // so this session never reveals the same one twice.
+        addSeen(bookId, e.code);
         if (e.special) {
           window.history.replaceState(null, "", `/${bookId}/ending`);
         } else if (e.code !== code) {
@@ -72,6 +79,10 @@ export default function Ending() {
     document.title = meta ? `AI Mysteries — ${meta.title}` : "AI Mysteries";
   }, [meta]);
 
+  if (exhausted) {
+    return <EndingsExhausted bookId={bookId} />;
+  }
+
   if (status === "loading") {
     return <Loading variant="ending" />;
   }
@@ -88,8 +99,12 @@ export default function Ending() {
           className="cta-button"
           onClick={async () => {
             try {
-              const random = await fetchRandomCode(bookId);
-              navigate(`/${bookId}/ending/${random}`, { replace: true });
+              const random = await fetchRandomEnding(bookId, getSeen(bookId));
+              if ("exhausted" in random) {
+                setExhausted(true);
+                return;
+              }
+              navigate(`/${bookId}/ending/${random.code}`, { replace: true });
             } catch {
               /* leave the message in place */
             }
@@ -108,8 +123,12 @@ export default function Ending() {
 
   async function handleNewEnding() {
     try {
-      const next = await fetchRandomCode(bookId, ending!.code);
-      navigate(`/${bookId}/ending/${next}`);
+      const next = await fetchRandomEnding(bookId, getSeen(bookId), ending!.code);
+      if ("exhausted" in next) {
+        setExhausted(true);
+        return;
+      }
+      navigate(`/${bookId}/ending/${next.code}`);
     } catch {
       /* keep the current ending on a transient failure */
     }

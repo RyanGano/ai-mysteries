@@ -41,15 +41,28 @@ public sealed class BookStore
     // at the phase chosen by the book's SpecialEnding offset.
     private const long SpecialEndingPeriod = 1000;
 
+    // The outcome of a random reveal: either a code to show, or Exhausted (the reader has already
+    // seen every ordinary ending this session and the special cadence didn't fire).
+    public readonly record struct RandomPick(string? Code, bool Exhausted)
+    {
+        public static RandomPick Of(string code) => new(code, false);
+        public static readonly RandomPick ExhaustedPick = new(null, true);
+    }
+
     // Pick the code for a random reveal. Increments the book's read counter (this is the "normal
     // randomized request" that advances the count — a specific code fetched via /endings/{code} is
     // a shared link and never lands here, so it doesn't move the counter) and writes the new count
     // through to the store on this same request, so it is durable immediately (no background timer
-    // to miss on a throttled free-tier app). When the book has a special ending and an authored
-    // offset, the reveal whose count sits at that offset within each 1000-reveal block returns it
-    // (so SpecialEnding=246 -> reveals 246, 1246, 2246, …); otherwise the weighted picker chooses
-    // an ordinary ending. This guarantees the special ending surfaces once in every 1000 reveals.
-    public async Task<string> PickRandomCodeAsync(Book book, string? excludeCode, Random rng)
+    // to miss on a throttled free-tier app). The counter advances on *every* reveal, even one that
+    // ends up exhausted, because it is the special ending's clock: when the book has a special
+    // ending and an authored offset, the reveal whose count sits at that offset within each
+    // 1000-reveal block returns it (so SpecialEnding=246 -> reveals 246, 1246, 2246, …) — even if
+    // the ordinary endings are all seen. Otherwise the weighted picker chooses an ordinary ending
+    // the reader hasn't seen yet (`seenCodes`); when there are none left it returns Exhausted so the
+    // caller can show the "found them all" end-state. This guarantees the special surfaces once in
+    // every 1000 reveals.
+    public async Task<RandomPick> PickRandomCodeAsync(
+        Book book, string? excludeCode, IReadOnlyCollection<string> seenCodes, Random rng)
     {
         var count = _readCounts.AddOrUpdate(book.Id, 1, (_, v) => v + 1);
 
@@ -71,9 +84,10 @@ public sealed class BookStore
         if (book.SpecialCode is { } special
             && offset > 0
             && count % SpecialEndingPeriod == offset % SpecialEndingPeriod)
-            return special;
+            return RandomPick.Of(special);
 
-        return EndingSelector.PickCode(book, excludeCode, rng);
+        var picked = EndingSelector.PickCode(book, excludeCode, seenCodes, rng);
+        return picked is null ? RandomPick.ExhaustedPick : RandomPick.Of(picked);
     }
 
     public bool TryGetBook(string bookId, out Book book) => _books.TryGetValue(bookId, out book!);

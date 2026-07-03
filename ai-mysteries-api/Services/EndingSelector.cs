@@ -27,22 +27,35 @@ public static class EndingSelector
     // Stage 1 — pick a category by weight. Stage 2 — pick a culprit combination uniformly within
     // the category. Stage 3 — pick uniformly among that combination's endings. Picking the combo
     // before the ending keeps every combination equally likely regardless of how many endings it
-    // has. `excludeCode`, if set and known, removes its whole combo so "reveal another" never
-    // repeats the same culprit set. The special ending is never returned here (it is excluded from
-    // the category map); BookStore decides when to surface it on the ReadCount cadence.
-    public static string PickCode(Book book, string? excludeCode, Random rng)
+    // has. The special ending is never returned here (it is excluded from the category map);
+    // BookStore decides when to surface it on the ReadCount cadence.
+    //
+    // `seenCodes` are the exact ending codes the reader has already been shown this session; they
+    // are removed from the pool so a session never repeats an ending. When every ordinary ending
+    // has been seen the pool is empty and this returns null (the caller shows the "found them all"
+    // end-state). `excludeCode` (the currently shown ending) is a *soft* preference: its whole
+    // culprit combo is dropped so "reveal another" doesn't show a sibling of the same combo
+    // back-to-back — but only when doing so still leaves a candidate, so it never causes a false
+    // exhaustion.
+    public static string? PickCode(
+        Book book, string? excludeCode, IReadOnlyCollection<string> seenCodes, Random rng)
     {
         var rules = book.Selection;
+
+        var seen = seenCodes.Count == 0
+            ? null
+            : seenCodes.Select(CodeNormalizer.Normalize).ToHashSet(StringComparer.Ordinal);
 
         string? excludeCombo = null;
         if (!string.IsNullOrEmpty(excludeCode) && book.TryGetEnding(excludeCode, out var ex))
             excludeCombo = ComboKey(ex);
 
-        // category -> comboKey -> codes
+        // category -> comboKey -> codes, excluding the special ending and every already-seen code.
         var byCategory = new Dictionary<string, Dictionary<string, List<string>>>();
         foreach (var e in book.Endings)
         {
             if (e.Special) continue; // reachable only via the odds roll (or its code)
+            if (seen is not null && seen.Contains(CodeNormalizer.Normalize(e.Code))) continue;
             var cat = CategoryOf(e, rules);
             if (!byCategory.TryGetValue(cat, out var combos))
                 byCategory[cat] = combos = new Dictionary<string, List<string>>();
@@ -52,13 +65,19 @@ public static class EndingSelector
             codes.Add(e.Code);
         }
 
+        // Every ordinary ending already seen this session.
+        if (byCategory.Count == 0) return null;
+
+        // Soft combo preference: drop the current combo, but keep it if that would empty the pool.
         if (excludeCombo is not null)
         {
-            foreach (var (cat, combos) in byCategory.ToList())
-            {
-                combos.Remove(excludeCombo);
-                if (combos.Count == 0) byCategory.Remove(cat);
-            }
+            var trimmed = byCategory.ToDictionary(
+                kv => kv.Key,
+                kv => kv.Value.Where(c => c.Key != excludeCombo)
+                    .ToDictionary(c => c.Key, c => c.Value));
+            foreach (var cat in trimmed.Keys.ToList())
+                if (trimmed[cat].Count == 0) trimmed.Remove(cat);
+            if (trimmed.Count > 0) byCategory = trimmed;
         }
 
         var categories = byCategory.Keys.ToList();

@@ -12,13 +12,17 @@ public static class EndingEndpoints
     {
         var endings = books.MapGroup("/endings").RequireRateLimiting(rateLimitPolicy);
 
-        // Weighted-random ending code. `excludeCode` (the currently shown ending) removes its
-        // whole culprit combo so "reveal another" never repeats the same combination.
-        endings.MapGet("/random", async (string bookId, string? excludeCode, BookStore store) =>
+        // Weighted-random ending code. POST (not GET) so the seen-list travels in the body and its
+        // codes never land in access logs. `excludeCode` (the currently shown ending) removes its
+        // whole culprit combo so "reveal another" doesn't repeat the same combination back-to-back;
+        // `seen` is every ending the reader has viewed this session, excluded so a session never
+        // repeats an ending. Returns { exhausted: true } once every ordinary ending has been seen.
+        endings.MapPost("/random", async (string bookId, RandomRequest? req, BookStore store) =>
             {
                 if (!store.TryGetBook(bookId, out var book)) return Results.NotFound();
-                var code = await store.PickRandomCodeAsync(book, excludeCode, Random.Shared);
-                return Results.Ok(new RandomCodeDto(code));
+                var seen = req?.Seen ?? Array.Empty<string>();
+                var pick = await store.PickRandomCodeAsync(book, req?.ExcludeCode, seen, Random.Shared);
+                return Results.Ok(new RandomCodeDto(pick.Code, pick.Exhausted));
             })
             .WithName("GetRandomEnding");
 

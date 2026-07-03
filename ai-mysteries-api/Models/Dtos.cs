@@ -35,7 +35,14 @@ public record EndingDto(
     IReadOnlyList<XrefMarkerDto> Markers,
     IReadOnlyDictionary<string, ClueDto> Clues);
 
-public record RandomCodeDto(string Code);
+// The result of a random reveal: a code to show, or Exhausted=true when the reader has already
+// seen every ordinary ending this session (Code is null then).
+public record RandomCodeDto(string? Code, bool Exhausted = false);
+
+// Body of POST /endings/random. `ExcludeCode` is the currently shown ending (soft combo de-dup);
+// `Seen` is every ending code the reader has been shown this session, excluded so a session never
+// repeats an ending. Sent in the body (not the query string) so the codes never land in access logs.
+public record RandomRequest(string? ExcludeCode, string[]? Seen);
 
 public record ExistsDto(bool Exists);
 

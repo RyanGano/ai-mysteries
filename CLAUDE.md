@@ -202,7 +202,7 @@ Per-book content (the `/api/books/{bookId}` group; routes below are relative to 
 |---|---|
 | `chapters`              | `[{ slug, title }]` table of contents |
 | `chapters/{slug}`       | chapter body + prev/next neighbours (404 if unknown) |
-| `endings/random?excludeCode=` | `{ code }` — weighted-random; excludes the given code's combo |
+| `endings/random` (POST `{ excludeCode?, seen? }`) | `{ code }` — weighted-random, excluding every `seen` code (session de-dup) and soft-avoiding `excludeCode`'s combo; returns `{ exhausted: true }` once every ordinary ending has been seen. POST (not GET) so the seen codes stay out of access logs |
 | `endings/{code}`        | the single ending + its markers + only the clues it references (404 if unknown) |
 | `endings/{code}/exists` | `{ exists }` — lightweight check for the landing code input |
 | `clues/{id}`            | a single clue, for the reader's deep-link highlight (404 if unknown) |
@@ -297,19 +297,29 @@ authored, synced content:
 - Run `ai-mysteries-tools stats` (from the repo root, after `az login`) for a per-book report of
   the cadence and how many random reveals each book has served.
 
-### "Reveal another ending" exclusion rule
+### No repeated endings within a session
 
-When a reader clicks **Reveal another ending**, the next pick excludes any ending that shares
-the same culprit combination as the one currently displayed. For example, if you're reading an
-ending where suspect A acted alone you won't see another A-solo ending; if you're reading an
-A+B pair you won't see another A+B ending. Endings that merely _include_ A or B in a different
-combination are still eligible.
+A reader never sees the same ending twice in one browsing session. The client keeps a per-book
+**seen list** in `sessionStorage` (`seen:<bookId>`, helpers in
+`ai-mysteries-web/src/lib/seen-endings.ts`) — every ending it displays (ordinary, special, or a
+shared link) is recorded — and posts that list to `endings/random`. `EndingSelector.PickCode`
+removes every seen code (exact match) from the weighted pool, so each **Reveal another ending**
+yields something new. It's session-scoped: closing the tab clears the memory.
 
-This is enforced by `EndingSelector.PickCode(book, excludeCode, …)` in
-`ai-mysteries-api/Services/EndingSelector.cs` — the client passes the currently displayed
-**code** to `endings/random?excludeCode=`, and the server derives its combo key (sorted
-culprit names joined by ` & `) and excludes that whole combo. It applies automatically to
-every ending, including newly added ones. No extra steps needed when authoring an ending.
+On top of that, the currently-displayed **code** is still passed as `excludeCode` and its whole
+culprit combo (sorted culprit names joined by ` & `) is dropped as a **soft** preference — so you
+won't see a *different* ending of the same combo back-to-back — but only when the pool has another
+candidate, so it never causes a false "exhausted".
+
+**When every ordinary ending has been seen**, `PickCode` returns null and the API responds with
+`{ exhausted: true }`. The client shows a generic "you've found every ending" end-state
+(`components/EndingsExhausted.tsx`) with a **Start over** button (clears the seen list) and a hint
+that a rare special ending still hides. The special ending is **never** force-served on exhaustion —
+its rarity is protected. It still surfaces only on its exact read number: the read counter keeps
+ticking on every reveal (see `BookStore.PickRandomCodeAsync`, which checks the special cadence
+*before* the exhaustion check), so a reader can legitimately land on the special even mid-exhaustion,
+but never just for running out. All of this applies automatically to every ending, including newly
+added ones — no extra steps when authoring.
 
 ## How to add an ending
 

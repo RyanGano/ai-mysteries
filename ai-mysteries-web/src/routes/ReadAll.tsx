@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { fetchToc, fetchChapterNav, fetchBookMeta, fetchRandomCode, fetchEnding } from "../lib/api";
+import {
+  fetchToc,
+  fetchChapterNav,
+  fetchBookMeta,
+  fetchRandomEnding,
+  fetchEnding,
+} from "../lib/api";
+import { getSeen, addSeen } from "../lib/seen-endings";
 import { shareOrCopy } from "../lib/share";
 import { markdownToSpeech } from "../lib/tts";
 import type { Chapter, Ending, BookMeta } from "../lib/types";
@@ -73,8 +80,11 @@ export default function ReadAll() {
     let theEnding = ending;
     if (!theEnding) {
       try {
-        const code = await fetchRandomCode(bookId);
-        theEnding = await fetchEnding(bookId, code);
+        const res = await fetchRandomEnding(bookId, getSeen(bookId));
+        if (!("exhausted" in res)) {
+          theEnding = await fetchEnding(bookId, res.code);
+          if (theEnding) addSeen(bookId, theEnding.code);
+        }
       } catch {
         /* speak the chapters even if the ending can't be reached */
       }

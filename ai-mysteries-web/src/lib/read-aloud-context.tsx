@@ -3,7 +3,8 @@
 // component routes unmount as the page follows along, but this provider and the speech do not.
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchChapterNav, fetchEnding, fetchRandomCode, fetchBookMeta } from "./api";
+import { fetchChapterNav, fetchEnding, fetchRandomEnding, fetchBookMeta } from "./api";
+import { getSeen } from "./seen-endings";
 import { SPEECH_SUPPORTED, markdownToSpeech, getVoicesAsync, pickVoice } from "./tts";
 
 // Generic, book-agnostic chrome (like the button verbs) — never book-specific copy. Exported so the
@@ -187,11 +188,13 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
           slug = nav.next.slug;
           continue;
         }
-        // End of the book — pick, show, and read a random ending.
-        const code = await fetchRandomCode(bookId);
+        // End of the book — pick, show, and read a random ending. If the reader has already seen
+        // every ending this session, there's nothing new to read, so just finish.
+        const res = await fetchRandomEnding(bookId, getSeen(bookId));
         if (!isCurrent(gen)) return;
-        navigate(`/${bookId}/ending/${code}`);
-        await readEnding(gen, bookId, code, voice);
+        if ("exhausted" in res) break;
+        navigate(`/${bookId}/ending/${res.code}`);
+        await readEnding(gen, bookId, res.code, voice);
         break;
       }
       finish(gen);

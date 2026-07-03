@@ -1,6 +1,6 @@
 // Typed client for the book API. All book data (chapters, endings, clues) and the
 // weighted-random selection live behind this service; the web app only renders what it returns.
-import type { TocEntry, ChapterNav, Ending, Clue, BookMeta } from "./types";
+import type { TocEntry, ChapterNav, Ending, Clue, BookMeta, RandomEnding } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5180";
 
@@ -38,11 +38,23 @@ export function fetchEnding(bookId: string, code: string): Promise<Ending | null
   return getJson<Ending>(`${base(bookId)}/endings/${encodeURIComponent(code)}`);
 }
 
-export async function fetchRandomCode(bookId: string, excludeCode?: string): Promise<string> {
-  const q = excludeCode ? `?excludeCode=${encodeURIComponent(excludeCode)}` : "";
-  const res = await getJson<{ code: string }>(`${base(bookId)}/endings/random${q}`);
-  if (!res) throw new Error("Random ending unavailable");
-  return res.code;
+// Weighted-random reveal. `seen` (every ending the reader has viewed this session) and the current
+// `excludeCode` travel in the POST body so their codes never land in access logs. Returns the next
+// code, or { exhausted: true } once the reader has seen every ordinary ending.
+export async function fetchRandomEnding(
+  bookId: string,
+  seen: string[],
+  excludeCode?: string
+): Promise<RandomEnding> {
+  const res = await fetch(`${base(bookId)}/endings/random`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ excludeCode, seen }),
+  });
+  if (!res.ok) throw new Error(`API ${res.status} for random ending`);
+  const data = (await res.json()) as { code: string | null; exhausted: boolean };
+  if (data.exhausted || !data.code) return { exhausted: true };
+  return { code: data.code };
 }
 
 export async function checkCode(bookId: string, code: string): Promise<boolean> {
