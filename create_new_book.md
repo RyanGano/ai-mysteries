@@ -35,7 +35,7 @@ request.
   `meta.json` or the content files.
 - **Don't re-read other books' `Content/` to "learn the pattern" — it's pure token cost.** The
   shared engine + the structural scan in `docs/book-registry.md` are enough. The one thing you may
-  pull from an existing book is the **mandatory shared-opening shape** of an ending (Phase 4) — and
+  pull from an existing book is the **shared opening-beat shape** of an ending (Phase 4) — and
   even then copy the *structure*, never the text. If a `meta.json` field's shape is unclear, the
   contract is `put_book_in_site.md` §2, not another book.
 - **No sexual or sex-related content** in the manuscript or any ending (every book, every
@@ -72,7 +72,7 @@ parameter sheets, definition-of-done) are consult-when-needed, not part of the l
    (Phase 2).
 5. **Generate the cover** → `node scripts/gen-cover.cjs <bookId>` (Phase 2, house style there).
 6. **Write the manuscript**, logging clue quotes as you go (Phase 3).
-7. **Write the endings** (shared opening + the matrix) (Phase 4).
+7. **Write the endings** (shared opening beat, varied per ending + the matrix) (Phase 4).
 8. **Wire cross-references** → `gen-xrefs.cjs` + `check-xrefs.cjs` (Phase 5).
 9. **Verify locally** → `dotnet run` (it's the schema validator) + `npm run dev` (Phase 6).
 10. **Ship** → cover upload, seed, diff, confirm live; exact commands in `put_book_in_site.md` §4
@@ -222,8 +222,8 @@ partition key (see `put_book_in_site.md` §1).
 - **`EndingMatrix.md`** — the table of endings you'll write: culprit set, mechanism
   (how that combination actually did it), code, slug. Plus the selection weights you'll
   put in `meta.json`.
-- **`EndingStyleGuide.md`** — the book's voice rules and its **mandatory shared opening**
-  (see Phase 4).
+- **`EndingStyleGuide.md`** — the book's voice rules and its **shared opening beat** (the scene
+  every ending opens on, worded as a variant per ending — see Phase 4).
 - **`CoverPrompt.md`** — the image-generation prompt for the book's cover, in the house
   style (see Phase 2). The user generates the art from this prompt (e.g. in Copilot).
 - **`EndingClueMap.md`** — grows during Phases 3–5; the machine-parsed clue map
@@ -378,14 +378,21 @@ First finish `docs/<bookId>/EndingStyleGuide.md`:
   inventing a voice from scratch. Most books just inherit the baseline (warm, plain-spoken, short
   punches, everyday analogies, humane narrator); write rules here only for where this book
   *deviates* (e.g. a noir clip, a period ledger's formality, a kid-book's extra-simple sentences).
-- A **mandatory shared opening** — every ending of the book starts with the *same* one or
-  two paragraphs (the scene where the reveal is about to happen). This prevents an
-  ending's opening from hinting at its culprit and gives readers a recognizable beat.
+- A **shared opening beat** — every ending of the book opens on the *same scene* (the moment
+  the reveal is about to happen: the cast gathered, the object on the table, the sleuth about to
+  speak). This keeps an ending's opening from hinting at its culprit and gives readers a
+  recognizable beat. **But the wording must vary ending-to-ending** — write each ending's opening
+  as a *variant* of that beat, not a copy-pasted block. No two endings in the book may share a
+  byte-identical opening (near-variants are fine; exact clones are not, because a reader who meets
+  the identical opening on their second reveal assumes they drew the same ending). Vary the small
+  moves — time-of-day image, how the sleuth calls them in, which detail sits on the table, the
+  first line spoken — while keeping the beat and the register constant.
 - The **single shared `title`** used by every ending entry — it must never vary or hint.
 
 Then for each row of your ending matrix:
 
-1. Write `Content/<bookId>/endings/<slug>.md`: shared opening verbatim → the accusation →
+1. Write `Content/<bookId>/endings/<slug>.md`: a *variant* of the shared opening beat (not a
+   copy-paste — see above) → the accusation →
    the mechanism walked back through the planted clues → an emotional close. 600–1,000
    words (shorter for kid books). The reveal must *use* the planted clues — readers who
    spotted them should feel vindicated. **Honour the resolution-kind you assigned this ending in

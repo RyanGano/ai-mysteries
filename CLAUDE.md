@@ -315,10 +315,14 @@ every ending, including newly added ones. No extra steps needed when authoring a
 
 1. Write `ai-mysteries-api/Content/within-tolerance/endings/<slug>.md` in the book's voice
    (see style guide below).
-2. Every ending must open with the book's mandatory two-paragraph header. Copy it **verbatim**
-   from any existing ending in `Content/within-tolerance/endings/` (or from
-   `docs/within-tolerance/EndingStyleGuide.md`) — both local-only. Never reproduce it in a
-   committed file.
+2. Every ending must open on the book's **same reveal beat** — the scene where the accusation is
+   about to land (the cast gathered, the object on the table, the sleuth about to speak). This is
+   a **recognizable opening beat, not a verbatim block**: every ending's opening must be a *variant*
+   — reword the sentences so no two endings in a book share a byte-identical opening (near-variants
+   are fine; exact clones are not, because a reader who sees the same opening twice thinks they got
+   the same ending). The opening must still never hint at the culprit. See any existing ending in
+   `Content/within-tolerance/endings/` (or `docs/within-tolerance/EndingStyleGuide.md`) for the beat
+   — both local-only. Never reproduce that text in a committed file.
 3. Add an entry to `ai-mysteries-api/Content/within-tolerance/endings.json` (`slug` links the
    entry to the `.md` file you just wrote):
    ```json
