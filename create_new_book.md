@@ -188,6 +188,28 @@ first.
    across books per the* Voice *default in `CLAUDE.md`. Vary the register; keep the hand. The
    failure mode this axis kills is sameness of opening, not the shared baseline feel.)*
 
+### Sentence-level anti-echo (applies on top of the six axes)
+
+The axes catch *design* sameness; this rule catches *prose* sameness. Books have shipped whose
+designs passed the contract but whose sentences were near-clones of an earlier book's — the same
+victim-description sentence with nouns swapped, the same two-clause reveal-scene scaffold ("here
+is the easy explanation everyone would prefer … but the detective knows better and need only say
+so before the deadline"), the same one-line reveal in the no-culprit ending. A reader who has read
+two books notices instantly, and it reads as find-replace.
+
+**Hard rule: never reuse another book's sentence-level scaffolding.** That covers, at minimum:
+character/victim introduction sentences; the shared paragraph structure of the endings' reveal
+beat (each *book* needs its own scaffold in its detective's idiom — within one book the endings
+may stay near-variants of that book's own beat); the "gathered to hear the name" summons sentence;
+and the signature one-line reveal of the sentinel/no-culprit ending.
+
+**Mechanical check before shipping:** take the new book's most distinctive recurring sentences —
+the reveal-beat scaffold clause, the victim/detective intro, the sentinel reveal line — and `grep`
+their distinctive 4–8-word substrings across `ai-mysteries-api/Content/`. Any hit in another book
+means rewrite yours (the new book yields; shipped books stay). A phrase-ownership list of scaffolds
+already claimed by shipped books is kept in `docs/book-registry.md` — add your book's new scaffold
+phrases to it when you ship.
+
 ### Registry of shipped books (differ from these)
 
 **The registry lives in [`docs/book-registry.md`](docs/book-registry.md)** (gitignored) — one

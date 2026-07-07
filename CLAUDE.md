@@ -84,7 +84,13 @@ least three of **six** axes (mystery *type*, **setting/world**, detective *metho
 **resolution-kind spread across the endings**, and opening *voice*), and may never reuse another
 book's opening or detective-method sentences. Lean on the roomy axes (setting, type, voice); the
 playbook flags the crowding, over-used *method* ("reads a written record") and *spine*
-("spotlight-per-suspect"). Reuse the engine (sentinel + special ending), never the story shape. Same rule of thumb as Tags below:
+("spotlight-per-suspect"). Reuse the engine (sentinel + special ending), never the story shape.
+Distinctness also applies at the **sentence level**: never reuse another book's prose scaffolding —
+victim/character intro sentences, the endings' reveal-beat paragraph structure, the "gathered to
+hear the name" summons sentence, or the sentinel ending's one-line reveal. See *Sentence-level
+anti-echo* in `create_new_book.md` Phase 0.5, and grep the new book's distinctive phrases against
+`ai-mysteries-api/Content/` before shipping (the claimed scaffold phrases are listed in the
+gitignored `docs/book-registry.md`). Same rule of thumb as Tags below:
 reuse where the meaning is genuinely close, but never clone — fragmenting the catalog into
 near-duplicates is the failure mode.
 
