@@ -15,7 +15,9 @@ references it rather than repeating it.
 
 **The deliverable is a book live on the production site — not a folder of local files.**
 When a user asks for a book ("I want a mystery set in…"), the default, expected end state is
-that a stranger can open `therealending.com`, see the new book in the catalog, read it, and
+that a stranger can open `ai-mysteries.ryangano.com` (the live production site — `therealending.com`
+is the not-yet-registered domain printed inside the book itself, a separate thing), see the new
+book in the catalog, read it, and
 hit its endings. That means you run the pipeline **all the way through Phase 7**: generate and
 upload the cover, seed Cosmos, verify parity, and confirm the book is serving from the prod
 API. Do **not** stop at "authored locally and verified on localhost" and ask whether to ship —

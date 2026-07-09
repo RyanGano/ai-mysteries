@@ -6,6 +6,7 @@ import { getSeen, addSeen } from "../lib/seen-endings";
 import type { Ending as EndingData, BookMeta, GlossaryEntry } from "../lib/types";
 import Prose from "../components/Prose";
 import Loading from "../components/Loading";
+import ShopShelf from "../components/ShopShelf";
 import EndingsExhausted from "../components/EndingsExhausted";
 import ReadAloudControls from "../components/ReadAloudControls";
 import { useReadAloud } from "../lib/read-aloud-context";
@@ -244,6 +245,8 @@ export default function Ending() {
           </span>
         )}
       </div>
+
+      <ShopShelf items={meta?.shopItems} />
     </main>
   );
 }

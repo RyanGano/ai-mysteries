@@ -491,7 +491,9 @@ The repo is **public**. Treat every committed file as reader-visible.
 - The `staticwebapp.config.json` handles SPA fallback and `noindex` headers.
 - Build output is `ai-mysteries-web/dist/`. App location is `ai-mysteries-web`.
 - Azure GitHub Actions workflow auto-deploys on push to `main`.
-- Domain to configure: `therealending.com` (printed in the book — register this first).
+- Live production domain: `ai-mysteries.ryangano.com`. (`therealending.com` is the URL printed in
+  the book itself — see the ending mechanic note above — and is a separate, not-yet-registered
+  domain from the one the site actually deploys to.)
 
 ### API deployment (App Service + Cosmos)
 

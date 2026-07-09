@@ -649,66 +649,6 @@
   color: var(--color-accent-hover);
 }
 
-/* "From the story" shelf — curated Amazon links for props from the book. Quiet by design: it
-   reads as an afterword, never as an ad block. */
-.book-landing-shop {
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--color-border);
-  max-width: var(--max-prose);
-  width: 100%;
-  text-align: left;
-}
-
-.book-landing-shop-title {
-  font-family: var(--font-sans);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  margin-bottom: 0.9rem;
-}
-
-.book-landing-shop-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.book-landing-shop-item {
-  font-family: var(--font-sans);
-  font-size: 0.92rem;
-  line-height: 1.5;
-}
-
-.book-landing-shop-link {
-  color: var(--color-accent);
-  transition: color 0.15s;
-}
-
-.book-landing-shop-link:hover {
-  color: var(--color-accent-hover);
-}
-
-.book-landing-shop-note {
-  margin-left: 0.5em;
-  font-size: 0.82rem;
-  font-style: italic;
-  color: var(--color-text-muted);
-}
-
-.book-landing-shop-disclosure {
-  margin-top: 0.9rem;
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  line-height: 1.5;
-  color: var(--color-text-muted);
-}
-
 .book-landing-secret {
   margin-top: 2rem;
   max-width: 52ch;

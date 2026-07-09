@@ -27,7 +27,7 @@ $Database    = 'books'                           # new database inside that acco
 $Container   = 'content'
 $Plan        = 'ai-mysteries-plan'
 $WebApp      = 'ai-mysteries-api'                # must be globally unique -> <name>.azurewebsites.net
-$SwaOrigin   = 'https://therealending.com'       # prod front-end origin (lock CORS to this)
+$SwaOrigin   = 'https://ai-mysteries.ryangano.com' # prod front-end origin (lock CORS to this)
 # Scope the API/seeder to only the books database (the account also hosts other projects' data).
 $DbScope     = "/dbs/$Database"
 # --------------------------------------------------------------------------------------------

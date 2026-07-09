@@ -1,0 +1,60 @@
+/* "From the story" shelf — curated Amazon links for props from the book (see ShopShelf.tsx).
+   Centered in block layouts, full-width in flex columns, always reading-column wide. */
+
+.shop-shelf {
+  margin: 2.5rem auto 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  max-width: var(--max-prose);
+  width: 100%;
+  text-align: left;
+}
+
+.shop-shelf-title {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.9rem;
+}
+
+.shop-shelf-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.shop-shelf-item {
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.shop-shelf-link {
+  color: var(--color-accent);
+  transition: color 0.15s;
+}
+
+.shop-shelf-link:hover {
+  color: var(--color-accent-hover);
+}
+
+.shop-shelf-note {
+  margin-left: 0.5em;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.shop-shelf-disclosure {
+  margin-top: 0.9rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
