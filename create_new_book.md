@@ -473,6 +473,18 @@ node scripts/check-xrefs.cjs <bookId>   # exact-match guard; run again after ANY
 (`check-xrefs.cjs` with no argument validates every book that has xref data.)
 Skipping this phase is fine — endings simply render without the binoculars glyphs.
 
+### Glossary + shop shelf (optional, both data-only)
+
+- **`glossary.json`** — sweep the manuscript + endings for period/trade/regional words a
+  general reader won't know and define them in 1–2 plain, spoiler-free sentences (see
+  `put_book_in_site.md` for the shape). The web underlines each term's first occurrence per
+  chapter/ending with a hover-definition popover. Verify each term (and alias) actually appears
+  in the prose, and avoid glossing a common word whose *other* meaning also appears — the
+  first-occurrence underline would land on the wrong sense. Kid-friendly books usually need
+  no file at all (the easy-reading rule already glosses in prose).
+- **`shopItems`** in meta.json — 2–4 generic props from the story for the landing page's
+  "From the story" Amazon shelf (label + in-world note + search phrase). Skip where forced.
+
 ## Phase 6 — Verify locally
 
 Run both halves (`CLAUDE.md` Commands): `dotnet run` in `ai-mysteries-api/` (startup is

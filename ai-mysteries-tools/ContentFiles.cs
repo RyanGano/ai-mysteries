@@ -41,6 +41,8 @@ public static class ContentFiles
             m.CoverImage, m.CoverAlt, m.SecretBlurb,
             m.Payoff.ToList(), m.CodePlaceholder, m.ShareTitle, m.ShareText, m.SpecialShareText,
             new SpecialRevealDoc(m.SpecialReveal.Headline, m.SpecialReveal.Sub),
+            m.NarrationGender,
+            m.ShopItems.Count > 0 ? m.ShopItems.ToList() : null,
             selection, book.Version, book.ContentHash));
 
         // book.json + book/<slug>.md (chapter order preserved from the manifest)
@@ -61,6 +63,10 @@ public static class ContentFiles
         WriteJson(Path.Combine(dir, "clues.json"), book.Clues);
         var xref = book.Xref.ToDictionary(kv => kv.Key, kv => new XrefMeta(kv.Value.Slug, kv.Value.Markers));
         WriteJson(Path.Combine(dir, "xref-markers.json"), xref);
+
+        // glossary.json — only when the book has one, so glossary-less books stay file-free.
+        if (book.Glossary.Count > 0)
+            WriteJson(Path.Combine(dir, "glossary.json"), book.Glossary);
     }
 
     private static void WriteJson<T>(string path, T value) =>
@@ -89,6 +95,8 @@ public static class ContentFiles
         string ShareText,
         string SpecialShareText,
         SpecialRevealDoc SpecialReveal,
+        string NarrationGender,
+        List<ShopItemDto>? ShopItems,
         SelectionDoc? Selection,
         string? Version,
         string? ContentHash);

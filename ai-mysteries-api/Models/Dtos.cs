@@ -35,6 +35,18 @@ public record EndingDto(
     IReadOnlyList<XrefMarkerDto> Markers,
     IReadOnlyDictionary<string, ClueDto> Clues);
 
+// One glossary entry: an unfamiliar word or phrase from the book's prose with a plain-language,
+// spoiler-free definition. Served whole per book by GET /api/books/{bookId}/glossary; the web
+// underlines the first occurrence per chapter/ending and shows the definition in a popover.
+// Doubles as the storage shape loaded from glossary.json. `Term` is the exact word to match
+// (case-insensitive, word boundaries); `Aliases` covers plurals and variant forms.
+public record GlossaryEntryDto(string Term, string Definition, IReadOnlyList<string> Aliases);
+
+// One "from the story" shop item shown on the book's landing page. The web builds the Amazon
+// link itself: a product page when `Asin` is set, otherwise a search for `Search`. `Note` is an
+// optional in-world aside ("like the one on Bea's counter"). All book data, never code.
+public record ShopItemDto(string Label, string Note, string Search, string Asin);
+
 // The result of a random reveal: a code to show, or Exhausted=true when the reader has already
 // seen every ordinary ending this session (Code is null then).
 public record RandomCodeDto(string? Code, bool Exhausted = false);
@@ -71,6 +83,8 @@ public record BookMetaDto(
     string FirstChapterSlug,
     // Protagonist gender ("male"/"female", or "" when unknown), so the web read-aloud feature can
     // pick a matching text-to-speech voice.
-    string NarrationGender);
+    string NarrationGender,
+    // Curated "from the story" Amazon items for the landing-page shelf. Empty for books without one.
+    IReadOnlyList<ShopItemDto> ShopItems);
 
 public record SpecialRevealDto(string Headline, string Sub);

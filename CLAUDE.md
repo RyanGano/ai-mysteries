@@ -134,8 +134,11 @@ investigator, so the tag carries no filtering signal — don't re-add it.
    book-agnostic UI chrome — button verbs ("Reveal another ending →", "Continue reading →",
    "Contents"), loading/error text (including the rotating cold-start captions in
    `components/Loading.tsx`, which describe the *site* and its ending mechanic, never a specific
-   book), the catalog tagline + footer disclaimers + privacy policy,
-   and the "AI Mysteries" site brand in `index.html`. The API is equally
+   book), the catalog tagline + footer disclaimers (AI authorship, fiction, and the Amazon
+   Associates disclosure) + privacy policy,
+   and the "AI Mysteries" site brand in `index.html`. The one shopping-related constant in code
+   is the site-wide Amazon associate tag in `src/lib/shop.ts` (site chrome, not book data); the
+   shop *items* themselves are per-book `shopItems` in meta.json. The API is equally
    book-blind: selection rules (category weights, sentinel culprit, special-ending cadence) are
    authored data (`selection` in meta.json), not constants in code. If a string or number
    describes a book, it belongs in the data.
@@ -178,7 +181,13 @@ Two projects:
     pipeline's `version`/`contentHash` bookkeeping; all fields optional, defaults fill in); `book.json`
     (`[{ slug, title }]`, reading order) + `book/<slug>.md`; `endings.json`
     (`[{ code, culprits, title, special?, slug }]`) + `endings/<slug>.md`; `clues.json` +
-    `xref-markers.json` (generated cross-reference data).
+    `xref-markers.json` (generated cross-reference data); `glossary.json` (optional — unfamiliar-word
+    definitions, keyed by a kebab id → `{ term, definition, aliases? }`; the web underlines the
+    first occurrence of each term per chapter/ending with a definition popover. Definitions must be
+    plain-voice and spoiler-free. Books that need none simply omit the file).
+    `meta.json` may also carry an optional `shopItems` array (`[{ label, note?, search, asin? }]`) —
+    the landing page's "From the story" Amazon shelf; the web builds the affiliate URL itself
+    (product link when `asin` is set, else a search link). Skip it where props would feel forced.
   - **`CosmosBookSource`** (`ContentSource=Cosmos`, prod) — reads the Cosmos `content` container
     (one doc per chapter/ending/clue/xref + a `manifest` that carries the book's `BookMeta` and its
     sync `version`, partition key `/bookId`). It also reads/writes a per-book `stats` doc — the
@@ -212,6 +221,7 @@ Per-book content (the `/api/books/{bookId}` group; routes below are relative to 
 | `endings/{code}`        | the single ending + its markers + only the clues it references (404 if unknown) |
 | `endings/{code}/exists` | `{ exists }` — lightweight check for the landing code input |
 | `clues/{id}`            | a single clue, for the reader's deep-link highlight (404 if unknown) |
+| `glossary`              | `[{ term, definition, aliases }]` — the book's whole unfamiliar-word glossary (empty list if none); spoiler-free, cached per book by the web client |
 
 CORS (`Program.cs`) allows any origin listed in `Cors:AllowedOrigins`, plus — **in the
 Development environment only** — any `localhost`/`127.0.0.1` origin (so local dev works

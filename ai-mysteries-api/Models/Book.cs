@@ -19,6 +19,10 @@ public sealed class Book
     private readonly Dictionary<string, IReadOnlyList<XrefMarkerDto>> _markersByCode; // normalized code
     private readonly Dictionary<string, ClueDto> _clues; // keyed by clue id
 
+    // Unfamiliar-word definitions, pre-sorted by term for the GET /glossary payload. Spoiler-free
+    // book-level data, so serving the whole list at once is fine (unlike endings/clues).
+    private readonly IReadOnlyList<GlossaryEntryDto> _glossary;
+
     public IReadOnlyList<Ending> Endings { get; }
 
     // The book's special (`special: true`) ending code, or null if it has none. Surfaced on the
@@ -32,7 +36,8 @@ public sealed class Book
         List<ChapterDto> chapters,
         List<Ending> endings,
         Dictionary<string, IReadOnlyList<XrefMarkerDto>> markersByNormalizedCode,
-        Dictionary<string, ClueDto> clues)
+        Dictionary<string, ClueDto> clues,
+        IReadOnlyCollection<GlossaryEntryDto> glossary)
     {
         Id = id;
         Meta = meta;
@@ -53,6 +58,7 @@ public sealed class Book
 
         _markersByCode = markersByNormalizedCode;
         _clues = clues;
+        _glossary = glossary.OrderBy(g => g.Term, StringComparer.OrdinalIgnoreCase).ToList();
 
         SpecialCode = endings.FirstOrDefault(e => e.Special)?.Code;
     }
@@ -75,7 +81,8 @@ public sealed class Book
         Meta.SpecialShareText,
         new SpecialRevealDto(Meta.SpecialReveal.Headline, Meta.SpecialReveal.Sub),
         _chapters.Count > 0 ? _chapters[0].Slug : string.Empty,
-        Meta.NarrationGender);
+        Meta.NarrationGender,
+        Meta.ShopItems);
 
     public IReadOnlyList<TocEntryDto> GetToc() =>
         _chapters.Select(c => new TocEntryDto(c.Slug, c.Title)).ToList();
@@ -118,4 +125,7 @@ public sealed class Book
     }
 
     public bool TryGetClue(string id, out ClueDto clue) => _clues.TryGetValue(id, out clue!);
+
+    // The whole glossary, sorted by term. Empty list for books that author none.
+    public IReadOnlyList<GlossaryEntryDto> GetGlossary() => _glossary;
 }

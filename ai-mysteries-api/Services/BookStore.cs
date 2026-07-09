@@ -212,6 +212,7 @@ public sealed class BookStore
             raw.Chapters.ToList(),
             raw.Endings.ToList(),
             markersByCode,
-            raw.Clues.ToDictionary(kv => kv.Key, kv => kv.Value));
+            raw.Clues.ToDictionary(kv => kv.Key, kv => kv.Value),
+            raw.Glossary.Values.ToList());
     }
 }

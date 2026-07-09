@@ -40,7 +40,23 @@ Content/<bookId>/
   endings/<slug>.md    # required — one body per ending listed in endings.json
   clues.json           # optional — generated cross-reference data
   xref-markers.json    # optional — generated cross-reference data
+  glossary.json        # optional — unfamiliar-word definitions (hover glossary)
 ```
+
+### glossary.json (optional)
+
+Definitions for period/trade/regional words a general reader may not know. The web
+underlines the **first occurrence per chapter/ending** of each term (case-insensitive,
+word boundaries) and shows the definition in a popover. Keyed by a kebab id:
+
+```json
+{
+  "some-term": { "term": "some term", "definition": "1–2 plain sentences.", "aliases": ["plural form"] }
+}
+```
+
+Definitions must be spoiler-free and in plain voice. Kid-friendly books usually need
+none (they gloss in prose); omitting the file is valid and renders nothing.
 
 ### meta.json (`BookMeta`)
 
@@ -64,6 +80,9 @@ of it in the React components.
   "shareText": "…",
   "specialShareText": "…",
   "specialReveal": { "headline": "…", "sub": "…" },
+  "shopItems": [
+    { "label": "A prop from the story", "note": "an in-world aside", "search": "amazon search phrase" }
+  ],
   "selection": {
     "sentinelCulprit": "<culprit value whose solo endings form their own category>",
     "categoryWeights": { "1": 45, "2": 30, "sentinel": 25 },
@@ -80,6 +99,13 @@ of it in the React components.
   once per 1000; the API tracks a per-book `readCount` for this and persists it to a `stats` doc).
   Use `0`/omit for code-only. Omit the whole block for uniform odds and no special. It is never
   returned by any API endpoint — keep it that way.
+
+- `shopItems` (optional) is the landing page's **"From the story" Amazon shelf** — 2–4 real,
+  generic props from the book (`label` shown to the reader, `note` an in-world aside, `search`
+  an Amazon search phrase, plus an optional `asin` for a curated product link). The web builds
+  the affiliate URL itself with the site-wide associate tag. Keep labels generic, not
+  brand-specific, and skip the field entirely where props would feel forced (an absent field
+  renders nothing).
 
 - `version` / `contentHash` are **managed by the seeder, not authored by hand** — leave them out.
   The `seed`/`sync` tool stamps `version` (a UTC timestamp) and `contentHash` (a content

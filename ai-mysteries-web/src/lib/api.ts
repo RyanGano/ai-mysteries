@@ -1,6 +1,14 @@
 // Typed client for the book API. All book data (chapters, endings, clues) and the
 // weighted-random selection live behind this service; the web app only renders what it returns.
-import type { TocEntry, ChapterNav, Ending, Clue, BookMeta, RandomEnding } from "./types";
+import type {
+  TocEntry,
+  ChapterNav,
+  Ending,
+  Clue,
+  BookMeta,
+  RandomEnding,
+  GlossaryEntry,
+} from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5180";
 
@@ -66,4 +74,21 @@ export async function checkCode(bookId: string, code: string): Promise<boolean> 
 
 export function fetchClue(bookId: string, id: string): Promise<Clue | null> {
   return getJson<Clue>(`${base(bookId)}/clues/${encodeURIComponent(id)}`);
+}
+
+// The book's whole glossary (unfamiliar-word definitions), cached per book for the session so
+// chapter-to-chapter navigation doesn't refetch it. A failed fetch resolves to [] (the reader
+// just renders no underlines) and isn't cached, so a transient error can retry later.
+const glossaryCache = new Map<string, GlossaryEntry[]>();
+
+export async function fetchGlossary(bookId: string): Promise<GlossaryEntry[]> {
+  const cached = glossaryCache.get(bookId);
+  if (cached) return cached;
+  try {
+    const entries = (await getJson<GlossaryEntry[]>(`${base(bookId)}/glossary`)) ?? [];
+    glossaryCache.set(bookId, entries);
+    return entries;
+  } catch {
+    return [];
+  }
 }

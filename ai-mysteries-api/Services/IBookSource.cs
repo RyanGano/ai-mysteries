@@ -19,6 +19,9 @@ public sealed record RawBook(
     IReadOnlyList<Ending> Endings,
     IReadOnlyDictionary<string, ClueDto> Clues,
     IReadOnlyDictionary<string, XrefEntry> Xref,
+    // Unfamiliar-word definitions (glossary.json), keyed by a stable id (kebab of the term).
+    // Optional: books without one carry an empty map and the reader renders no underlines.
+    IReadOnlyDictionary<string, GlossaryEntryDto> Glossary,
     SelectionRules Selection,
     string? Version = null,
     string? ContentHash = null);
@@ -92,7 +95,11 @@ public sealed record BookMeta(
     // matching text-to-speech voice. Empty when the book has no single lead (or it's unknown), in
     // which case the browser's default voice is used. Book-identifying data, so it lives here, not
     // in code.
-    string NarrationGender)
+    string NarrationGender,
+    // Curated "from the story" Amazon shelf items for the landing page. Book-identifying data
+    // (props from the story), so it lives here; the web only builds the affiliate URL. Empty for
+    // books that don't author one.
+    IReadOnlyList<ShopItemDto> ShopItems)
 {
     // Fallback used when a book has no meta.json / manifest fields yet: title = id, everything
     // else empty so the API and web still render without throwing.
@@ -111,7 +118,8 @@ public sealed record BookMeta(
         ShareText: "",
         SpecialShareText: "",
         SpecialReveal: new SpecialReveal("", ""),
-        NarrationGender: "");
+        NarrationGender: "",
+        ShopItems: Array.Empty<ShopItemDto>());
 }
 
 // The special-ending reveal overlay copy (e.g. "One in a thousand." / "You found it.").

@@ -53,7 +53,17 @@ public sealed class FileBookSource : IBookSource
         var xref = ReadJsonOrEmpty<Dictionary<string, XrefMeta>>(Path.Combine(dir, "xref-markers.json"))
             .ToDictionary(kv => kv.Key, kv => new XrefEntry(kv.Value.Slug, kv.Value.Markers));
 
-        return new RawBook(id, meta, chapters, endings, clues, xref, selection, version, contentHash);
+        // Unfamiliar-word definitions. Optional; the term falls back to the entry's key so a
+        // minimal `{ "bauta": { "definition": "…" } }` entry works.
+        var glossary = ReadJsonOrEmpty<Dictionary<string, GlossaryMeta>>(Path.Combine(dir, "glossary.json"))
+            .ToDictionary(
+                kv => kv.Key,
+                kv => new GlossaryEntryDto(
+                    kv.Value.Term ?? kv.Key,
+                    kv.Value.Definition ?? "",
+                    kv.Value.Aliases ?? new List<string>()));
+
+        return new RawBook(id, meta, chapters, endings, clues, xref, glossary, selection, version, contentHash);
     }
 
     // meta.json → BookMeta + SelectionRules + sync version/contentHash. Absent file or absent
@@ -87,7 +97,10 @@ public sealed class FileBookSource : IBookSource
             SpecialReveal: d.SpecialReveal is { } sr
                 ? new SpecialReveal(sr.Headline ?? "", sr.Sub ?? "")
                 : fallback.SpecialReveal,
-            NarrationGender: d.NarrationGender ?? fallback.NarrationGender), selection, d.Version, d.ContentHash);
+            NarrationGender: d.NarrationGender ?? fallback.NarrationGender,
+            ShopItems: d.ShopItems is { } items
+                ? items.Select(i => new ShopItemDto(i.Label ?? "", i.Note ?? "", i.Search ?? "", i.Asin ?? "")).ToList()
+                : fallback.ShopItems), selection, d.Version, d.ContentHash);
     }
 
     private static string ReadMd(string dir, string sub, string slug)
@@ -115,6 +128,12 @@ public sealed class FileBookSource : IBookSource
 
     private record XrefMeta(string Slug, List<XrefMarkerDto> Markers);
 
+    // Nullable mirror of one glossary.json entry — term falls back to the entry key.
+    private sealed record GlossaryMeta(string? Term = null, string? Definition = null, List<string>? Aliases = null);
+
+    // Nullable mirror of one meta.json shopItems entry.
+    private sealed record ShopItemDoc(string? Label = null, string? Note = null, string? Search = null, string? Asin = null);
+
     // Nullable mirror of meta.json — every field optional so partial/absent files fall back.
     private sealed record MetaDoc(
         string? Title = null,
@@ -132,6 +151,7 @@ public sealed class FileBookSource : IBookSource
         string? SpecialShareText = null,
         SpecialRevealDoc? SpecialReveal = null,
         string? NarrationGender = null,
+        List<ShopItemDoc>? ShopItems = null,
         SelectionDoc? Selection = null,
         string? Version = null,
         string? ContentHash = null);

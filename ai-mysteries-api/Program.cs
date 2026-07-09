@@ -99,5 +99,6 @@ var books = app.MapGroup("/api/books/{bookId}");
 books.MapChapterEndpoints();
 books.MapEndingEndpoints(EndingCodesPolicy);
 books.MapClueEndpoints();
+books.MapGlossaryEndpoints();
 
 app.Run();

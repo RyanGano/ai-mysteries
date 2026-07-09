@@ -39,6 +39,7 @@ public sealed class ContentDoc
     public string? SpecialRevealHeadline { get; set; }
     public string? SpecialRevealSub { get; set; }
     public string? NarrationGender { get; set; }
+    public List<ShopItemDto>? ShopItems { get; set; }
 
     // manifest only — server-side selection rules (see SelectionRules). Read by the API for
     // the random picker; never mapped into any response DTO.
@@ -71,6 +72,13 @@ public sealed class ContentDoc
 
     // xref
     public List<XrefMarkerDto>? Markers { get; set; }
+
+    // glossary — one unfamiliar-word definition (see GlossaryEntryDto). `GlossaryKey` is the
+    // stable entry key from glossary.json.
+    public string? GlossaryKey { get; set; }
+    public string? Term { get; set; }
+    public string? Definition { get; set; }
+    public List<string>? Aliases { get; set; }
 }
 
 // The single global content-version doc. Lives in its own partition (not any book's), so the API
@@ -94,6 +102,7 @@ public static class CosmosContent
     public const string Ending = "ending";
     public const string Clue = "clue";
     public const string Xref = "xref";
+    public const string Glossary = "glossary";
 
     // The per-book runtime stats doc (random-reveal counter). One per book partition, owned by the
     // API — the seeder never emits it (so ToDocuments below omits it) and Push must not delete it.
@@ -111,6 +120,7 @@ public static class CosmosContent
     public static string EndingId(string slug) => $"ending:{slug}";
     public static string ClueId(string clueId) => $"clue:{clueId}";
     public static string XrefId(string code) => $"xref:{code}";
+    public static string GlossaryId(string key) => $"glossary:{key}";
 
     // Decompose a RawBook into its Cosmos documents.
     public static IEnumerable<ContentDoc> ToDocuments(RawBook raw)
@@ -139,6 +149,7 @@ public static class CosmosContent
             SpecialRevealHeadline = m.SpecialReveal.Headline,
             SpecialRevealSub = m.SpecialReveal.Sub,
             NarrationGender = m.NarrationGender,
+            ShopItems = m.ShopItems.Count > 0 ? m.ShopItems.ToList() : null,
             SentinelCulprit = raw.Selection.SentinelCulprit,
             CategoryWeights = raw.Selection.CategoryWeights.Count > 0
                 ? new Dictionary<string, int>(raw.Selection.CategoryWeights)
@@ -176,6 +187,13 @@ public static class CosmosContent
                 Id = XrefId(code), BookId = raw.Id, Type = Xref,
                 Code = code, Slug = x.Slug, Markers = x.Markers.ToList(),
             };
+
+        foreach (var (key, g) in raw.Glossary)
+            yield return new ContentDoc
+            {
+                Id = GlossaryId(key), BookId = raw.Id, Type = Glossary,
+                GlossaryKey = key, Term = g.Term, Definition = g.Definition, Aliases = g.Aliases.ToList(),
+            };
     }
 
     // Reassemble a RawBook from one book's documents. Chapter order comes from the manifest;
@@ -205,7 +223,8 @@ public static class CosmosContent
             SpecialReveal: new SpecialReveal(
                 manifest.SpecialRevealHeadline ?? "",
                 manifest.SpecialRevealSub ?? ""),
-            NarrationGender: manifest.NarrationGender ?? fallback.NarrationGender);
+            NarrationGender: manifest.NarrationGender ?? fallback.NarrationGender,
+            ShopItems: manifest.ShopItems ?? fallback.ShopItems.ToList());
 
         var selection = new SelectionRules(
             manifest.SentinelCulprit,
@@ -231,8 +250,14 @@ public static class CosmosContent
             .OrderBy(d => d.Code, StringComparer.Ordinal)
             .ToDictionary(d => d.Code!, d => new XrefEntry(d.Slug!, d.Markers ?? new List<XrefMarkerDto>()));
 
+        var glossary = list.Where(d => d.Type == Glossary)
+            .OrderBy(d => d.GlossaryKey, StringComparer.Ordinal)
+            .ToDictionary(
+                d => d.GlossaryKey!,
+                d => new GlossaryEntryDto(d.Term ?? d.GlossaryKey!, d.Definition ?? "", d.Aliases ?? new List<string>()));
+
         // ContentHash isn't stored in Cosmos (the sync only needs the timestamp for direction);
         // it's recomputed locally when a book is pulled to disk.
-        return new RawBook(bookId, meta, chapters, endings, clues, xref, selection, manifest.Version);
+        return new RawBook(bookId, meta, chapters, endings, clues, xref, glossary, selection, manifest.Version);
     }
 }

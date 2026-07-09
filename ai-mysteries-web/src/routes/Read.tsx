@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { fetchToc, fetchChapterNav, fetchClue, fetchBookMeta } from "../lib/api";
+import { fetchToc, fetchChapterNav, fetchClue, fetchBookMeta, fetchGlossary } from "../lib/api";
 import { shareOrCopy } from "../lib/share";
-import type { TocEntry, ChapterNav, BookMeta } from "../lib/types";
+import type { TocEntry, ChapterNav, BookMeta, GlossaryEntry } from "../lib/types";
 import Prose from "../components/Prose";
 import TableOfContents from "../components/TableOfContents";
 import Loading from "../components/Loading";
@@ -27,6 +27,7 @@ export default function Read() {
   const [tocOpen, setTocOpen] = useState(false);
   const [toc, setToc] = useState<TocEntry[] | null>(null);
   const [meta, setMeta] = useState<BookMeta | null>(null);
+  const [glossary, setGlossary] = useState<GlossaryEntry[]>([]);
   const [navState, setNavState] = useState<NavState>({ status: "loading" });
   const [error, setError] = useState(false);
   const [shareNote, setShareNote] = useState("");
@@ -43,6 +44,9 @@ export default function Read() {
     fetchBookMeta(bookId)
       .then((m) => active && setMeta(m))
       .catch(() => active && setError(true));
+    // Unfamiliar-word definitions (cached per book). Non-critical: a failure just renders no
+    // underlines, so it never sets the error state.
+    fetchGlossary(bookId).then((g) => active && setGlossary(g));
     return () => {
       active = false;
     };
@@ -184,7 +188,7 @@ export default function Read() {
       </header>
 
       <article className="read-body" ref={articleRef}>
-        <Prose>{chapter.body}</Prose>
+        <Prose glossary={glossary}>{chapter.body}</Prose>
       </article>
 
       {isLast && meta && meta.payoff.length > 0 && (

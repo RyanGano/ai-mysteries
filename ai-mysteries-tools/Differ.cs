@@ -96,6 +96,8 @@ public static class Differ
             map[$"clue:{cid}"] = JsonSerializer.Serialize(clue, Canon);
         foreach (var (code, x) in b.Xref)
             map[$"xref:{code}"] = JsonSerializer.Serialize(new { x.Slug, x.Markers }, Canon);
+        foreach (var (key, g) in b.Glossary)
+            map[$"glossary:{key}"] = JsonSerializer.Serialize(g, Canon);
         return map;
     }
 }

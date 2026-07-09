@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchBookMeta } from "../lib/api";
 import { shareOrCopy } from "../lib/share";
+import { shopUrl } from "../lib/shop";
 import type { BookMeta } from "../lib/types";
 import Loading from "../components/Loading";
 import "../styles/landing.css";
@@ -138,6 +139,32 @@ export default function BookLanding() {
       >
         Already finished the book? Reveal your ending &rarr;
       </button>
+
+      {meta.shopItems.length > 0 && (
+        <section className="book-landing-shop" aria-label="From the story">
+          <h2 className="book-landing-shop-title">From the story</h2>
+          <ul className="book-landing-shop-list">
+            {meta.shopItems
+              .filter((item) => shopUrl(item))
+              .map((item) => (
+                <li key={item.label} className="book-landing-shop-item">
+                  <a
+                    href={shopUrl(item)}
+                    target="_blank"
+                    rel="noopener noreferrer sponsored nofollow"
+                    className="book-landing-shop-link"
+                  >
+                    {item.label} &rarr;
+                  </a>
+                  {item.note && <span className="book-landing-shop-note">{item.note}</span>}
+                </li>
+              ))}
+          </ul>
+          <p className="book-landing-shop-disclosure">
+            Links go to Amazon; as an Amazon Associate we earn from qualifying purchases.
+          </p>
+        </section>
+      )}
 
       {meta.secretBlurb && <p className="book-landing-secret">{meta.secretBlurb}</p>}
     </main>

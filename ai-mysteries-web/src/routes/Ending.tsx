@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { fetchEnding, fetchRandomEnding, fetchBookMeta } from "../lib/api";
+import { fetchEnding, fetchRandomEnding, fetchBookMeta, fetchGlossary } from "../lib/api";
 import { shareOrCopy } from "../lib/share";
 import { getSeen, addSeen } from "../lib/seen-endings";
-import type { Ending as EndingData, BookMeta } from "../lib/types";
+import type { Ending as EndingData, BookMeta, GlossaryEntry } from "../lib/types";
 import Prose from "../components/Prose";
 import Loading from "../components/Loading";
 import EndingsExhausted from "../components/EndingsExhausted";
@@ -19,6 +19,7 @@ export default function Ending() {
   const navigate = useNavigate();
   const [ending, setEnding] = useState<EndingData | null>(null);
   const [meta, setMeta] = useState<BookMeta | null>(null);
+  const [glossary, setGlossary] = useState<GlossaryEntry[]>([]);
   const [status, setStatus] = useState<Status>("loading");
   const [shareNote, setShareNote] = useState("");
   const [revealDone, setRevealDone] = useState(false);
@@ -31,6 +32,9 @@ export default function Ending() {
   useEffect(() => {
     let active = true;
     fetchBookMeta(bookId).then((m) => active && setMeta(m));
+    // Unfamiliar-word definitions (cached per book). Non-critical — a failure just renders no
+    // underlines.
+    fetchGlossary(bookId).then((g) => active && setGlossary(g));
     return () => {
       active = false;
     };
@@ -220,7 +224,7 @@ export default function Ending() {
         <h1 className="ending-title">{ending.title}</h1>
       </header>
       <article className="ending-body" ref={bodyRef}>
-        <Prose markers={ending.markers} clues={ending.clues}>
+        <Prose markers={ending.markers} clues={ending.clues} glossary={glossary}>
           {ending.body}
         </Prose>
       </article>

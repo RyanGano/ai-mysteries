@@ -10,6 +10,7 @@ export default function Footer() {
         Every story on this site is written by AI. All characters and events are fictitious &mdash;
         any resemblance to real persons, living or dead, or to actual events is purely coincidental.
       </p>
+      <p className="site-footer-line">As an Amazon Associate we earn from qualifying purchases.</p>
       <p className="site-footer-links">
         <Link to="/privacy">Privacy</Link>
       </p>

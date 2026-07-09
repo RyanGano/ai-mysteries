@@ -6,11 +6,12 @@ import {
   fetchBookMeta,
   fetchRandomEnding,
   fetchEnding,
+  fetchGlossary,
 } from "../lib/api";
 import { getSeen, addSeen } from "../lib/seen-endings";
 import { shareOrCopy } from "../lib/share";
 import { markdownToSpeech } from "../lib/tts";
-import type { Chapter, Ending, BookMeta } from "../lib/types";
+import type { Chapter, Ending, BookMeta, GlossaryEntry } from "../lib/types";
 import Prose from "../components/Prose";
 import Loading from "../components/Loading";
 import ReadAloudControls from "../components/ReadAloudControls";
@@ -37,6 +38,7 @@ export default function ReadAll() {
   const articleRef = useRef<HTMLElement>(null);
   const [state, setState] = useState<State>({ status: "loading" });
   const [ending, setEnding] = useState<Ending | null>(null);
+  const [glossary, setGlossary] = useState<GlossaryEntry[]>([]);
   const [shareNote, setShareNote] = useState("");
   const { playList } = useReadAloud();
   useReadAlong(articleRef);
@@ -63,6 +65,9 @@ export default function ReadAll() {
         if (active) setState({ status: "error" });
       }
     })();
+    // Unfamiliar-word definitions (cached per book). Non-critical — a failure just renders no
+    // underlines.
+    fetchGlossary(bookId).then((g) => active && setGlossary(g));
     return () => {
       active = false;
     };
@@ -167,14 +172,14 @@ export default function ReadAll() {
         {chapters.map((ch) => (
           <section key={ch.slug} className="read-all-chapter">
             <h2 className="read-all-chapter-title">{ch.title}</h2>
-            <Prose>{ch.body}</Prose>
+            <Prose glossary={glossary}>{ch.body}</Prose>
           </section>
         ))}
 
         {ending ? (
           <section className="read-all-chapter read-all-ending">
             <h2 className="read-all-chapter-title">{ending.title}</h2>
-            <Prose markers={ending.markers} clues={ending.clues}>
+            <Prose markers={ending.markers} clues={ending.clues} glossary={glossary}>
               {ending.body}
             </Prose>
           </section>

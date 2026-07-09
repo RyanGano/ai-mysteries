@@ -34,6 +34,25 @@ export interface BookMeta {
   // Protagonist gender ("male"/"female", or "" when unknown) — the read-aloud feature uses it to
   // pick a matching text-to-speech voice. Empty falls back to the browser's default voice.
   narrationGender: string;
+  // Curated "from the story" Amazon items for the landing-page shelf. Empty for books without one.
+  shopItems: ShopItem[];
+}
+
+// One "from the story" shop item. The client builds the Amazon URL itself (see lib/shop.ts):
+// a product page when `asin` is set, otherwise a search for `search`.
+export interface ShopItem {
+  label: string;
+  note: string;
+  search: string;
+  asin: string;
+}
+
+// One unfamiliar-word definition. The reader underlines the first occurrence of `term` (or any
+// alias) per chapter/ending and shows `definition` in a popover.
+export interface GlossaryEntry {
+  term: string;
+  definition: string;
+  aliases: string[];
 }
 
 export interface TocEntry {
