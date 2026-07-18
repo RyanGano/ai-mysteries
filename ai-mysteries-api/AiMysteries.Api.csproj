@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>AiMysteries.Api</RootNamespace>
+    <!-- Local-only config (e.g. the Audio section's endpoint/resource-id values) lives in user
+         secrets so nothing subscription-specific is committed; prod uses App Service settings. -->
+    <UserSecretsId>ai-mysteries-api</UserSecretsId>
   </PropertyGroup>
 
   <!-- In prod the book content is gitignored and served from Cosmos, so it must NOT end up in
@@ -24,6 +27,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.46.0" />
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
     <!-- Cosmos serializes our documents with System.Text.Json (see CosmosSetup), but the SDK's
          internals still require Newtonsoft.Json at runtime, so it must be referenced explicitly. -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

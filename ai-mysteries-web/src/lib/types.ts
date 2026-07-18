@@ -109,3 +109,12 @@ export interface Ending {
 // Result of a weighted-random reveal: the next code to show, or exhausted once the reader has
 // seen every ordinary ending this session.
 export type RandomEnding = { code: string } | { exhausted: true };
+
+// Read-aloud audio manifest for one chapter or ending: the spoken chunk texts (shown by the
+// follow-along highlight) and the content hash that addresses their synthesized audio at
+// GET .../audio/chunks/{hash}/{index}. Absent (404) when server audio isn't configured — the
+// player then falls back to the browser's built-in voice.
+export interface AudioTrack {
+  hash: string;
+  chunks: string[];
+}

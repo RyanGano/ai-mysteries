@@ -8,6 +8,7 @@ import type {
   BookMeta,
   RandomEnding,
   GlossaryEntry,
+  AudioTrack,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5180";
@@ -74,6 +75,22 @@ export async function checkCode(bookId: string, code: string): Promise<boolean> 
 
 export function fetchClue(bookId: string, id: string): Promise<Clue | null> {
   return getJson<Clue>(`${base(bookId)}/clues/${encodeURIComponent(id)}`);
+}
+
+// Read-aloud audio manifests. 404 (→ null) when server-side audio isn't available for the
+// book — the read-aloud player then uses the browser voice instead.
+export function fetchChapterAudio(bookId: string, slug: string): Promise<AudioTrack | null> {
+  return getJson<AudioTrack>(`${base(bookId)}/audio/chapter/${encodeURIComponent(slug)}`);
+}
+
+export function fetchEndingAudio(bookId: string, code: string): Promise<AudioTrack | null> {
+  return getJson<AudioTrack>(`${base(bookId)}/audio/ending/${encodeURIComponent(code)}`);
+}
+
+// URL of one synthesized chunk. Fetched by an <audio> element, not fetch(), so no CORS is
+// involved; the API redirects to the cached public blob (or streams fresh bytes the first time).
+export function audioChunkUrl(bookId: string, hash: string, index: number): string {
+  return `${base(bookId)}/audio/chunks/${encodeURIComponent(hash)}/${index}`;
 }
 
 // The book's whole glossary (unfamiliar-word definitions), cached per book for the session so

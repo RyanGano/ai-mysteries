@@ -10,12 +10,11 @@ import {
 } from "../lib/api";
 import { getSeen, addSeen } from "../lib/seen-endings";
 import { shareOrCopy } from "../lib/share";
-import { markdownToSpeech } from "../lib/tts";
 import type { Chapter, Ending, BookMeta, GlossaryEntry } from "../lib/types";
 import Prose from "../components/Prose";
 import Loading from "../components/Loading";
 import ReadAloudControls from "../components/ReadAloudControls";
-import { useReadAloud, SPECIAL_ANNOUNCE } from "../lib/read-aloud-context";
+import { useReadAloud, type PlayItem } from "../lib/read-aloud-context";
 import { useReadAlong } from "../lib/use-read-along";
 import "../styles/read.css";
 
@@ -95,13 +94,20 @@ export default function ReadAll() {
       }
       if (theEnding) setEnding(theEnding);
     }
-    const chunks = state.chapters.flatMap((ch) => markdownToSpeech(`${ch.title}. ${ch.body}`));
+    const items: PlayItem[] = state.chapters.map((ch) => ({
+      kind: "chapter",
+      key: ch.slug,
+      text: `${ch.title}. ${ch.body}`,
+    }));
     if (theEnding) {
-      const endingChunks = markdownToSpeech(`${theEnding.title}. ${theEnding.body}`);
-      if (theEnding.special) endingChunks.unshift(SPECIAL_ANNOUNCE);
-      chunks.push(...endingChunks);
+      items.push({
+        kind: "ending",
+        key: theEnding.code,
+        text: `${theEnding.title}. ${theEnding.body}`,
+        special: theEnding.special,
+      });
     }
-    playList(bookId, chunks);
+    playList(bookId, items);
   }
 
   async function handleShare() {

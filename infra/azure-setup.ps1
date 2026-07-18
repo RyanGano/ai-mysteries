@@ -112,6 +112,34 @@ az webapp config appsettings set -g $Rg -n $WebApp --settings `
   Cosmos__Container=$Container `
   Cors__AllowedOrigins__0=$SwaOrigin | Out-Null
 
+# ---- Read-aloud audio (Azure Speech + blob cache) ------------------------------------------
+# Free-tier Speech resource with a custom subdomain (required for Entra ID auth), plus a
+# public-read `audio` container on the assets storage account where synthesized MP3 chunks are
+# cached. The web app's managed identity synthesizes (Cognitive Services Speech User) and writes
+# the cache (Storage Blob Data Contributor on just that container). After running this, set the
+# app settings printed at the end (Audio__SpeechEndpoint / Audio__SpeechResourceId /
+# Audio__BlobContainerUrl) — empty values leave the feature off and the web falls back to the
+# browser voice.
+$SpeechName  = 'ai-mysteries-speech'
+$AssetsAcct  = 'aimysteriesassets'   # existing public-assets storage account (covers live here too)
+
+Write-Host "==> Speech resource (F0) + audio blob container + RBAC" -ForegroundColor Cyan
+az cognitiveservices account create -n $SpeechName -g $Rg --kind SpeechServices --sku F0 -l $Location `
+  --custom-domain $SpeechName --yes | Out-Null
+$speechId = az cognitiveservices account show -n $SpeechName -g $Rg --query id -o tsv
+az role assignment create --assignee-object-id $principalId --assignee-principal-type ServicePrincipal `
+  --role 'Cognitive Services Speech User' --scope $speechId | Out-Null
+
+az storage container create --account-name $AssetsAcct -n audio --public-access blob --auth-mode key | Out-Null
+$storageId = az storage account show -n $AssetsAcct --query id -o tsv
+az role assignment create --assignee-object-id $principalId --assignee-principal-type ServicePrincipal `
+  --role 'Storage Blob Data Contributor' --scope "$storageId/blobServices/default/containers/audio" | Out-Null
+
+az webapp config appsettings set -g $Rg -n $WebApp --settings `
+  Audio__SpeechEndpoint="https://$SpeechName.cognitiveservices.azure.com/" `
+  Audio__SpeechResourceId=$speechId `
+  Audio__BlobContainerUrl="https://$AssetsAcct.blob.core.windows.net/audio" | Out-Null
+
 Write-Host ""
 Write-Host "Done." -ForegroundColor Green
 Write-Host "Cosmos endpoint : $endpoint"

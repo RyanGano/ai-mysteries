@@ -222,6 +222,9 @@ Per-book content (the `/api/books/{bookId}` group; routes below are relative to 
 | `endings/{code}/exists` | `{ exists }` — lightweight check for the landing code input |
 | `clues/{id}`            | a single clue, for the reader's deep-link highlight (404 if unknown) |
 | `glossary`              | `[{ term, definition, aliases }]` — the book's whole unfamiliar-word glossary (empty list if none); spoiler-free, cached per book by the web client |
+| `audio/chapter/{slug}`  | read-aloud manifest: `{ hash, chunks }` — the spoken chunk texts + the content hash addressing their audio (404 when server audio isn't configured) |
+| `audio/ending/{code}`   | same manifest for one ending (sits under the tight code-lookup rate limit) |
+| `audio/chunks/{hash}/{index}` | one synthesized MP3 chunk: 302 to the public blob cache when it exists, else synthesize + cache + stream the bytes. Addressed by content hash, never by ending code |
 
 CORS (`Program.cs`) allows any origin listed in `Cors:AllowedOrigins`, plus — **in the
 Development environment only** — any `localhost`/`127.0.0.1` origin (so local dev works
@@ -233,6 +236,33 @@ Rate limits (`Program.cs`): per-IP, 300 req/min across the API and 30 req/min on
 `endings/*` routes (random/exists/by-code) to deter ending-code enumeration. Real client IPs
 come from `X-Forwarded-For` (rightmost entry) via the forwarded-headers middleware, since the
 API sits behind the App Service front end. Over-limit requests get `429`.
+
+## Read-aloud audio (server-side neural TTS)
+
+The reader/ending/whole-book pages' **Listen** control plays real synthesized audio, not the
+browser's built-in robot voice. How it fits the architecture:
+
+- The API synthesizes each chapter/ending as a list of sentence-sized **chunks** (split
+  server-side in `Services/SpeechText.cs`, the twin of the web's `lib/tts.ts`) using **Azure AI
+  Speech** neural voices (free F0 tier, Entra ID auth via the shared `DefaultAzureCredential` —
+  no keys). Each chunk is cached forever as an MP3 blob in the public `audio` container of the
+  assets storage account, under a **content hash** of voice + text — editing a book or changing
+  its voice automatically points at fresh blobs, and ending audio URLs never contain a code.
+- `Services/AudioService.cs` owns config (`Audio` section: `SpeechEndpoint`, `SpeechResourceId`,
+  `BlobContainerUrl` — empty disables the feature and the endpoints 404), the per-book chunk
+  index, synthesis (with 429 backoff), and the blob cache (a failed upload still serves the
+  bytes). The voice is picked from the book's `narrationGender` (male/female/default voice names
+  are site chrome, config-overridable). Local dev values live in .NET **user secrets**
+  (`dotnet user-secrets list` in `ai-mysteries-api/`), prod in App Service settings.
+- The web (`lib/read-aloud-context.tsx`) plays chunks through a reused pair of `<audio>`
+  elements (one playing, one prefetching the next — the prefetch is also what triggers ahead-of-
+  time synthesis on a cache miss), unlocked inside the user's click so playback survives a locked
+  screen. Media elements need no CORS, so cached chunks stream straight from blob storage via the
+  API's 302. Follow-along highlight, skip-back, speed (via `playbackRate`), pause/resume all
+  work in both engines; if a book has no server audio or a chunk fails twice, it falls back to
+  the old browser `speechSynthesis` voice from that sentence onward.
+- Infra (Speech resource, `audio` container, RBAC for the API's managed identity) is scripted in
+  `infra/azure-setup.ps1`.
 
 ## How the ending mechanic works
 

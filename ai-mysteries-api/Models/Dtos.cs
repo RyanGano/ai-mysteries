@@ -47,6 +47,11 @@ public record GlossaryEntryDto(string Term, string Definition, IReadOnlyList<str
 // optional in-world aside ("like the one on Bea's counter"). All book data, never code.
 public record ShopItemDto(string Label, string Note, string Search, string Asin);
 
+// Read-aloud audio manifest for one chapter or ending: the spoken chunk texts (the client shows
+// them for the follow-along highlight) and the content hash addressing their audio chunks at
+// GET .../audio/chunks/{hash}/{index}. Carries no codes or culprits.
+public record AudioTrackDto(string Hash, IReadOnlyList<string> Chunks);
+
 // The result of a random reveal: a code to show, or Exhausted=true when the reader has already
 // seen every ordinary ending this session (Code is null then).
 public record RandomCodeDto(string? Code, bool Exhausted = false);

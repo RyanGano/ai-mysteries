@@ -37,6 +37,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 // enumeration (the code space is ~1.2M combos) and to keep a scripted client from soaking the
 // free-tier instance — not to throttle real readers, who stay far below both caps.
 const string EndingCodesPolicy = "ending-codes";
+const string AudioChunksPolicy = "audio-chunks";
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -50,6 +51,11 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy(EndingCodesPolicy, ctx =>
         RateLimitPartition.GetFixedWindowLimiter(ClientKey(ctx), _ =>
             new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));
+    // Read-aloud chunk fetches: a real listener needs a handful per minute (one per sentence or
+    // two, plus prefetch); the cap mostly stops a script from burning the free Speech quota.
+    o.AddPolicy(AudioChunksPolicy, ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(ClientKey(ctx), _ =>
+            new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1) }));
 });
 
 // Pick where book content comes from. Dev/authoring defaults to the on-disk Content/ files;
@@ -77,6 +83,11 @@ else
 
 builder.Services.AddSingleton<BookStore>();
 
+// Server-side read-aloud synthesis (Azure Speech + blob cache). Configured via the "Audio"
+// section; when unset the audio endpoints 404 and the web uses the browser voice instead.
+builder.Services.AddSingleton(builder.Configuration.GetSection("Audio").Get<AudioConfig>() ?? new AudioConfig());
+builder.Services.AddSingleton<AudioService>();
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -100,5 +111,6 @@ books.MapChapterEndpoints();
 books.MapEndingEndpoints(EndingCodesPolicy);
 books.MapClueEndpoints();
 books.MapGlossaryEndpoints();
+books.MapAudioEndpoints(EndingCodesPolicy, AudioChunksPolicy);
 
 app.Run();
