@@ -101,25 +101,36 @@ Tags appear on catalog cards and drive filtering. **Don't limit tagging to plot 
 story (a boat, a specific decade, a sport, a profession). A thin tag list under-serves filtering
 as much as a bloated one; the goal is that a book's tags actually describe what it's about.
 
+**The live catalog is the source of truth for which tags exist — not this file.** Tags are
+book data (`BookMeta.tags`), stored in Cosmos like everything else in the "no book-specific data
+in code" principle above; there is no separate tags table or endpoint. This file's tag table
+(below) is a **semantic glossary** — what each tag means and when to use it — kept for judgment
+calls, not an exhaustive or authoritative list. Never gate a "does this tag already exist" check
+on whether it appears in this file; a tag can be live on prod without ever being added here.
+
 When tagging a book, work through these steps in order:
 
 1. **List what the story is genuinely about** — mystery type, audience, setting/world, era,
    and any load-bearing subject (a profession, an object, a mode of transport, a sport). Don't
    stop at the crime-type tags; a book set on a 1953 sleeper train or in a 1926 dig is missing
    real information if it's only tagged `Death`.
-2. **Check the existing tag list for a close match first.** Reuse whenever the meaning is close
-   enough that two tags would just fragment the same filter (a tag for `Sea` and a tag for
-   `Ocean` are the same tag — pick one and always use it). Prefer the existing wording even if
-   your first instinct used different words.
-3. **Only add a genuinely new tag** when nothing existing covers the concept. A new tag is fine
-   even if only one or two books will carry it at first (see `Wedding`, `Haunted`, `Medical`,
+2. **Check the existing tag list for a close match first — against the live catalog, not this
+   file.** Fetch `GET /api/books` from the prod API and union every returned book's `tags` array;
+   that live set is the real list of tags in use. Reuse whenever the meaning is close enough that
+   two tags would just fragment the same filter (a tag for `Sea` and a tag for `Ocean` are the
+   same tag — pick one and always use it). Prefer the existing wording even if your first instinct
+   used different words. Use the glossary below for what each tag *means*, since the live catalog
+   only gives you the bare tag strings.
+3. **Only add a genuinely new tag** when nothing existing (live) covers the concept. A new tag is
+   fine even if only one or two books will carry it at first (see `Wedding`, `Haunted`, `Medical`,
    `Western` below) — narrow-but-real is better than forcing a book under a tag that doesn't fit.
-4. **Add the new tag(s) to the book** and, if new, to the canonical table below (with a "when to
-   use" line) so the next book can reuse it instead of reinventing it.
+4. **Add the new tag(s) to the book.** If it's a genuinely new tag, also add it to the glossary
+   table below with a "when to use" line — this is a documentation courtesy for future judgment
+   calls, not a gate; the book is fully shipped (and the tag fully live) via Cosmos alone, with or
+   without this table being updated. Since this is a doc-only edit to a markdown file (not app
+   code), committing it does not violate the zero-code/zero-redeploy rule for adding a book.
 
-Current canonical tags (as of 2026-07-18):
-
-| Tag | When to use |
+Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authoritative live list):
 |---|---|
 | `AI` | AI system is a character or central to the plot |
 | `Archaeology` | an excavation/dig setting is central |

@@ -37,8 +37,11 @@ Two gitignored, local-only files:
    - **Ship to live by default** — don't stop at local files or localhost (per `CLAUDE.md`
      "Adding a book" and the user's standing preference). Only stop short if the user said
      "just draft it" or a ship step needs a credential you lack — then report the one blocker.
-   - **Tags:** reuse a canonical tag from the `CLAUDE.md` table whenever it fits; only add a new
-     one if nothing matches (then update that table + this skill's awareness of it). The row's
+   - **Tags:** the live catalog (`GET /api/books` on the prod API), not `CLAUDE.md`, is the
+     source of truth for which tags already exist — fetch it and union every book's `tags` array
+     before deciding. Reuse a match whenever one fits; only add a new tag if nothing matches (then
+     optionally add a "when to use" line to the glossary table in `CLAUDE.md` — a documentation
+     courtesy, not a requirement, since the tag itself ships live via Cosmos regardless). The row's
      "candidate tags" are a hint, not a mandate — finalize them from the actual story.
    - **Length / audience:** hit the row's target reading time and audience. Kid-friendly rows get
      the easy-reading treatment (simple names, plain words) per `CLAUDE.md` and `create_new_book.md`
