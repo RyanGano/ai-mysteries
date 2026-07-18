@@ -53,6 +53,13 @@ public sealed class ContentDoc
     // resets the count and the count never participates in the content fingerprint/sync.
     public long? ReadCount { get; set; }
 
+    // ratings only — the per-book aggregate thumbs-up/down totals. Lives in its own `ratings` doc
+    // (one per book partition), API-owned exactly like `stats`: never emitted or deleted by the
+    // seeder and never part of the content fingerprint/sync. Kept in a separate doc from `stats` so
+    // the two independent write-through upserts never clobber each other's fields.
+    public long? RatingUp { get; set; }
+    public long? RatingDown { get; set; }
+
     // chapter / ending / xref
     public string? Slug { get; set; }
     public string? Body { get; set; }
@@ -110,6 +117,11 @@ public static class CosmosContent
     public const string Stats = "stats";
     public const string StatsId = "stats";
 
+    // The per-book runtime ratings doc (aggregate thumbs up/down). Same ownership rules as `stats`:
+    // API-owned, never emitted or deleted by the seeder, out of the content fingerprint/sync.
+    public const string Ratings = "ratings";
+    public const string RatingsId = "ratings";
+
     // The content-version doc (see VersionDoc) and the dedicated partition it lives in. The
     // partition holds no book content, so it stays out of every per-book query.
     public const string SystemPartition = "_system";
@@ -162,7 +174,8 @@ public static class CosmosContent
                 : null,
             SpecialEnding = raw.Selection.SpecialEnding,
         };
-        // Note: no `stats` doc here — the runtime ReadCount is API-owned and must survive re-seeds.
+        // Note: no `stats`/`ratings` docs here — those runtime totals are API-owned and must
+        // survive re-seeds, so the seeder neither emits nor deletes them.
 
         foreach (var c in raw.Chapters)
             yield return new ContentDoc

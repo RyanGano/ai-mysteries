@@ -63,6 +63,16 @@ public record RandomRequest(string? ExcludeCode, string[]? Seen);
 
 public record ExistsDto(bool Exists);
 
+// Aggregate story rating: total thumbs up / down. Runtime, API-owned totals attached to BookMetaDto
+// at serialize time (never stored in the content BookMeta). The web shows them only when Up+Down>0.
+public record RatingsDto(long Up, long Down);
+
+// Body of POST /api/books/{bookId}/rating. Describes a single-step transition of the reader's own
+// rating: `From` is their previous choice and `To` the new one, each "up", "down", or null (no
+// rating). The server applies the net delta to the aggregate totals. The reader's identity is never
+// sent — their current choice is remembered only in their browser (localStorage).
+public record RatingRequest(string? From, string? To);
+
 // All book-identifying content the front end renders, served by GET /api/books (list) and
 // GET /api/books/{bookId} (single). Carries no codes/culprits/ending list — no spoilers.
 public record BookMetaDto(
@@ -90,6 +100,10 @@ public record BookMetaDto(
     // pick a matching text-to-speech voice.
     string NarrationGender,
     // Curated "from the story" Amazon items for the landing-page shelf. Empty for books without one.
-    IReadOnlyList<ShopItemDto> ShopItems);
+    IReadOnlyList<ShopItemDto> ShopItems,
+    // Aggregate reader rating (thumbs up/down totals). Runtime, API-owned — attached by BookStore
+    // from its live counters, not part of the content BookMeta. (0, 0) for a book nobody has rated;
+    // the web renders the badge only when there is at least one rating.
+    RatingsDto Ratings);
 
 public record SpecialRevealDto(string Headline, string Sub);

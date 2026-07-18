@@ -72,6 +72,24 @@ public interface IReadCountStore
     Task SaveReadCountAsync(string bookId, long count);
 }
 
+// Persists per-book aggregate story ratings (thumbs up/down totals). A sibling of IReadCountStore,
+// kept separate so the read-counter code is untouched: ratings are their own API-owned runtime
+// state, held live in memory and written through to a dedicated per-book `ratings` doc on each
+// change. Like the read counter it stays out of the content fingerprint/sync (the seeder never
+// emits or deletes it) so a reader tapping a thumb never looks like an authored content change.
+// The Cosmos source implements it; the File source (dev) does not, so dev ratings live only in
+// memory for the process.
+public interface IRatingStore
+{
+    // Current persisted totals, bookId -> (up, down). Books with no ratings doc yet are absent
+    // (treated as (0, 0)). Read once at startup to resume from where the last process left off.
+    IReadOnlyDictionary<string, (long Up, long Down)> LoadRatings();
+
+    // Upsert one book's totals. Awaited on the rating request so the change is durable before the
+    // response returns (write-through, like the read counter).
+    Task SaveRatingAsync(string bookId, long up, long down);
+}
+
 // All book-identifying content the front end renders — title, marketing copy, cover URL, the
 // end-of-book payoff, share strings, and the special-ending reveal. Lives in the Cosmos manifest
 // doc (authored locally as meta.json). The web app holds none of this; it fetches it per book so

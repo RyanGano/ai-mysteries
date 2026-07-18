@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { fetchBooks } from "../lib/api";
 import type { BookMeta } from "../lib/types";
 import Loading from "../components/Loading";
+import RatingBadge from "../components/RatingBadge";
 import "../styles/landing.css";
 
 type State = { status: "loading" } | { status: "ready"; books: BookMeta[] } | { status: "error" };
@@ -424,6 +425,7 @@ function CatalogCard({ book }: { book: BookMeta }) {
           </ul>
         )}
         {facts && <p className="catalog-book-facts">{facts}</p>}
+        <RatingBadge ratings={book.ratings} />
         {book.summary[0] && <Teaser text={book.summary[0]} />}
       </div>
     </article>

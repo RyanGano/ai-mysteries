@@ -36,7 +36,19 @@ export interface BookMeta {
   narrationGender: string;
   // Curated "from the story" Amazon items for the landing-page shelf. Empty for books without one.
   shopItems: ShopItem[];
+  // Aggregate reader rating (thumbs up/down totals). Runtime, API-owned. { up: 0, down: 0 } for a
+  // book nobody has rated yet; the UI shows a badge only when up + down > 0.
+  ratings: Ratings;
 }
+
+// Aggregate story rating totals. Also the shape returned by POST .../rating.
+export interface Ratings {
+  up: number;
+  down: number;
+}
+
+// A reader's own rating of a story: thumbs up, thumbs down, or none. Held only in their browser.
+export type MyRating = "up" | "down" | null;
 
 // One "from the story" shop item. The client builds the Amazon URL itself (see lib/shop.ts):
 // a product page when `asin` is set, otherwise a search for `search`.

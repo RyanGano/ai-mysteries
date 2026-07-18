@@ -20,7 +20,9 @@ builder.Services.AddCors(o => o.AddPolicy(CorsPolicy, p =>
                 && u.Host is "localhost" or "127.0.0.1")
             || allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
         .AllowAnyHeader()
-        .WithMethods("GET")));
+        // GET for reads; POST for the two mutating/among-the-body routes (random reveal, story
+        // rating) so their browser preflight succeeds when the front end calls cross-origin.
+        .WithMethods("GET", "POST")));
 
 // Behind App Service the socket peer is the platform front end; read the real client IP from
 // X-Forwarded-For so the per-IP rate limiter partitions on actual callers. The default
@@ -38,6 +40,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 // free-tier instance — not to throttle real readers, who stay far below both caps.
 const string EndingCodesPolicy = "ending-codes";
 const string AudioChunksPolicy = "audio-chunks";
+const string RatingPolicy = "rating";
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -56,6 +59,11 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy(AudioChunksPolicy, ctx =>
         RateLimitPartition.GetFixedWindowLimiter(ClientKey(ctx), _ =>
             new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1) }));
+    // Story-rating writes: a real reader rates a handful of times at most (one per story, with the
+    // odd change/retract). A tight cap blunts a script trying to stuff the aggregate totals.
+    o.AddPolicy(RatingPolicy, ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(ClientKey(ctx), _ =>
+            new FixedWindowRateLimiterOptions { PermitLimit = 15, Window = TimeSpan.FromMinutes(1) }));
 });
 
 // Pick where book content comes from. Dev/authoring defaults to the on-disk Content/ files;
@@ -103,7 +111,7 @@ app.Services.GetRequiredService<BookStore>();
 app.MapMethods("/warmup", ["GET", "HEAD"], () => Results.NoContent());
 
 // Book-level metadata: the catalog (/api/books) and single-book lookup (/api/books/{bookId}).
-app.MapBookEndpoints();
+app.MapBookEndpoints(RatingPolicy);
 
 // Per-book content shares the "/api/books/{bookId}" prefix; each area registers its own routes.
 var books = app.MapGroup("/api/books/{bookId}");

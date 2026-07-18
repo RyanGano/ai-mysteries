@@ -82,7 +82,10 @@ public sealed class Book
         new SpecialRevealDto(Meta.SpecialReveal.Headline, Meta.SpecialReveal.Sub),
         _chapters.Count > 0 ? _chapters[0].Slug : string.Empty,
         Meta.NarrationGender,
-        Meta.ShopItems);
+        Meta.ShopItems,
+        // Placeholder — BookStore overrides this with the live rating totals (which are runtime
+        // state it owns, not part of the immutable Book).
+        new RatingsDto(0, 0));
 
     public IReadOnlyList<TocEntryDto> GetToc() =>
         _chapters.Select(c => new TocEntryDto(c.Slug, c.Title)).ToList();

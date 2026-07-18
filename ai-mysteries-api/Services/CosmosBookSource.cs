@@ -5,7 +5,7 @@ namespace AiMysteries.Api.Services;
 
 // Reads book content from the Cosmos `content` container. Each book is one logical partition
 // (/bookId), so a book loads in a single-partition query. Used in prod (ContentSource=Cosmos).
-public sealed class CosmosBookSource : IBookSource, IReadCountStore
+public sealed class CosmosBookSource : IBookSource, IReadCountStore, IRatingStore
 {
     private readonly Container _container;
 
@@ -32,6 +32,29 @@ public sealed class CosmosBookSource : IBookSource, IReadCountStore
     public Task SaveReadCountAsync(string bookId, long count) =>
         _container.UpsertItemAsync(
             new ContentDoc { Id = CosmosContent.StatsId, BookId = bookId, Type = CosmosContent.Stats, ReadCount = count },
+            new PartitionKey(bookId));
+
+    // --- IRatingStore: the per-book aggregate thumbs up/down totals (its own `ratings` doc).
+
+    // All stored ratings in one cross-partition query over the `ratings` docs (one tiny doc/book).
+    public IReadOnlyDictionary<string, (long Up, long Down)> LoadRatings()
+    {
+        var ratings = new Dictionary<string, (long Up, long Down)>(StringComparer.OrdinalIgnoreCase);
+        var q = new QueryDefinition("SELECT c.bookId, c.ratingUp, c.ratingDown FROM c WHERE c.type = @t")
+            .WithParameter("@t", CosmosContent.Ratings);
+        using var it = _container.GetItemQueryIterator<RatingRef>(q);
+        while (it.HasMoreResults)
+            foreach (var r in it.ReadNextAsync().GetAwaiter().GetResult())
+                ratings[r.BookId] = (r.RatingUp ?? 0, r.RatingDown ?? 0);
+        return ratings;
+    }
+
+    // Upsert one book's totals into its own partition's `ratings` doc. Deterministic id, so it
+    // upserts in place. Never bumps the global content version, so the API's own writes don't
+    // trigger a reload.
+    public Task SaveRatingAsync(string bookId, long up, long down) =>
+        _container.UpsertItemAsync(
+            new ContentDoc { Id = CosmosContent.RatingsId, BookId = bookId, Type = CosmosContent.Ratings, RatingUp = up, RatingDown = down },
             new PartitionKey(bookId));
 
     // BookStore builds once at startup, so blocking here is acceptable and keeps IBookSource sync.
@@ -92,4 +115,6 @@ public sealed class CosmosBookSource : IBookSource, IReadCountStore
     private sealed record ManifestRef(string BookId);
 
     private sealed record StatsRef(string BookId, long? ReadCount);
+
+    private sealed record RatingRef(string BookId, long? RatingUp, long? RatingDown);
 }

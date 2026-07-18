@@ -284,10 +284,11 @@ static async Task Push(CosmosStore store, RawBook book)
     foreach (var doc in docs)
         await store.UpsertAsync(doc);
 
-    // Delete stale docs that no longer exist locally — but never the API-owned `stats` doc (the
-    // runtime read counter), which ToDocuments deliberately doesn't emit. Removing it would reset
-    // the count on every seed.
-    foreach (var id in existingIds.Where(id => !newIds.Contains(id) && id != CosmosContent.StatsId))
+    // Delete stale docs that no longer exist locally — but never the API-owned runtime docs (the
+    // `stats` read counter and the `ratings` totals), which ToDocuments deliberately doesn't emit.
+    // Removing them would reset the count / ratings on every seed.
+    foreach (var id in existingIds.Where(id =>
+        !newIds.Contains(id) && id != CosmosContent.StatsId && id != CosmosContent.RatingsId))
         await store.DeleteAsync(book.Id, id);
 }
 

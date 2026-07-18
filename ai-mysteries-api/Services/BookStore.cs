@@ -18,6 +18,12 @@ public sealed class BookStore
     // resumes across restarts; each increment is written through to the store on the same request.
     private readonly ConcurrentDictionary<string, long> _readCounts;
 
+    // Live per-book aggregate rating totals (thumbs up/down). Like _readCounts this is API-owned
+    // runtime state kept apart from the immutable _books, seeded at startup from the IRatingStore
+    // (when the source persists ratings) and written through on every change so a reload never
+    // resets it.
+    private readonly ConcurrentDictionary<string, (long Up, long Down)> _ratings;
+
     // Swapped atomically by Refresh(): readers grab the reference once, so an in-flight reload
     // never exposes a half-built dictionary. Marked volatile so a swap on the poller thread is
     // visible to request threads.
@@ -35,6 +41,9 @@ public sealed class BookStore
 
         var initial = SafeLoadReadCounts();
         _readCounts = new ConcurrentDictionary<string, long>(initial, StringComparer.OrdinalIgnoreCase);
+
+        var initialRatings = SafeLoadRatings();
+        _ratings = new ConcurrentDictionary<string, (long Up, long Down)>(initialRatings, StringComparer.OrdinalIgnoreCase);
     }
 
     // The special ending fires exactly once per this many random reveals (a guaranteed 1-in-1000),
@@ -92,12 +101,73 @@ public sealed class BookStore
 
     public bool TryGetBook(string bookId, out Book book) => _books.TryGetValue(bookId, out book!);
 
-    // Every book's metadata, ordered by id, for the GET /api/books catalog endpoint.
+    // Every book's metadata, ordered by id, for the GET /api/books catalog endpoint. The live
+    // rating totals are attached here (they're runtime state BookStore owns, not part of Book).
     public IReadOnlyList<BookMetaDto> AllMeta() =>
         _books.Values
             .OrderBy(b => b.Id, StringComparer.Ordinal)
-            .Select(b => b.GetMeta())
+            .Select(WithRatings)
             .ToList();
+
+    // One book's metadata with its live rating totals attached, for GET /api/books/{bookId}.
+    public bool TryGetMeta(string bookId, out BookMetaDto meta)
+    {
+        if (_books.TryGetValue(bookId, out var book))
+        {
+            meta = WithRatings(book);
+            return true;
+        }
+        meta = default!;
+        return false;
+    }
+
+    // Copy the book's content metadata with the live aggregate rating attached.
+    private BookMetaDto WithRatings(Book book)
+    {
+        var (up, down) = GetRating(book.Id);
+        return book.GetMeta() with { Ratings = new RatingsDto(up, down) };
+    }
+
+    // The current aggregate rating for a book: (0, 0) when nobody has rated it yet.
+    public (long Up, long Down) GetRating(string bookId) =>
+        _ratings.TryGetValue(bookId, out var r) ? r : (0, 0);
+
+    // Apply a single reader's rating transition (from -> to, each "up"/"down"/null) to the book's
+    // aggregate totals and return the new totals. The delta is applied atomically and clamped at
+    // zero (a stale/duplicated client transition can never drive a total negative), then written
+    // through to the store so it's durable before the response returns — the same write-through the
+    // read counter uses, so a throttled free-tier app never loses ratings to a missed timer. A
+    // persistence failure is logged and swallowed; the in-memory total still advances and the next
+    // write re-persists, so the store self-heals.
+    public async Task<(long Up, long Down)> ApplyRatingAsync(string bookId, string? from, string? to)
+    {
+        var upDelta = Delta(from, to, "up");
+        var downDelta = Delta(from, to, "down");
+
+        var updated = _ratings.AddOrUpdate(
+            bookId,
+            (Math.Max(0, upDelta), Math.Max(0, downDelta)),
+            (_, cur) => (Math.Max(0, cur.Up + upDelta), Math.Max(0, cur.Down + downDelta)));
+
+        if (_source is IRatingStore sink)
+        {
+            try
+            {
+                await sink.SaveRatingAsync(bookId, updated.Up, updated.Down);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to persist rating for book {BookId}", bookId);
+            }
+        }
+
+        return updated;
+    }
+
+    // +1 if `bucket` is being added by this transition, -1 if removed, 0 otherwise.
+    private static long Delta(string? from, string? to, string bucket) =>
+        (string.Equals(to, bucket, StringComparison.Ordinal) ? 1 : 0)
+        - (string.Equals(from, bucket, StringComparison.Ordinal) ? 1 : 0);
 
     // Cheap version check first; only a changed version triggers a full reload + atomic swap. On
     // any failure the cached content is kept serving, so a transient source hiccup can't take the
@@ -178,6 +248,20 @@ public sealed class BookStore
         {
             _logger.LogWarning(ex, "Initial read-count load failed; counters start at 0");
             return new Dictionary<string, long>();
+        }
+    }
+
+    // Seed the live rating totals from the persisted store, when the source has one. A read failure
+    // just starts every book at (0, 0) — rating still works, only the resume point is lost.
+    private IReadOnlyDictionary<string, (long Up, long Down)> SafeLoadRatings()
+    {
+        if (_source is not IRatingStore store)
+            return new Dictionary<string, (long Up, long Down)>();
+        try { return store.LoadRatings(); }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Initial rating load failed; totals start at (0, 0)");
+            return new Dictionary<string, (long Up, long Down)>();
         }
     }
 

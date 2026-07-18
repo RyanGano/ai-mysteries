@@ -1,0 +1,90 @@
+/* Story rating: the interactive control on the ending page and the read-only badge on the
+   catalog card / book landing page. Quiet, in keeping with the shop shelf's afterword tone. */
+
+.rating-control {
+  margin: 2.5rem auto 0;
+  max-width: var(--max-prose);
+  text-align: center;
+}
+
+.rating-control-prompt {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.rating-control-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.rating-control-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  font-size: 1.05rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+
+.rating-control-button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.rating-control-button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.rating-control-button--active {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+}
+
+.rating-control-button:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.rating-control-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  min-width: 1ch;
+}
+
+.rating-control-button--active .rating-control-count {
+  color: var(--color-text);
+}
+
+/* Read-only badge (catalog card + book landing). */
+.rating-badge {
+  display: inline-flex;
+  gap: 0.85rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-badge-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-control-button {
+    transition: none;
+  }
+  .rating-control-button:active:not(:disabled) {
+    transform: none;
+  }
+}

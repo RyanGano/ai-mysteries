@@ -9,6 +9,8 @@ import type {
   RandomEnding,
   GlossaryEntry,
   AudioTrack,
+  Ratings,
+  MyRating,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5180";
@@ -64,6 +66,19 @@ export async function fetchRandomEnding(
   const data = (await res.json()) as { code: string | null; exhausted: boolean };
   if (data.exhausted || !data.code) return { exhausted: true };
   return { code: data.code };
+}
+
+// Record a story-rating transition (the reader's previous choice -> new choice) and get back the
+// new aggregate totals. The reader is never identified — only their own before/after choice travels,
+// and the server applies the net delta. POSTed so it isn't cached.
+export async function submitRating(bookId: string, from: MyRating, to: MyRating): Promise<Ratings> {
+  const res = await fetch(`${base(bookId)}/rating`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to }),
+  });
+  if (!res.ok) throw new Error(`API ${res.status} for rating`);
+  return (await res.json()) as Ratings;
 }
 
 export async function checkCode(bookId: string, code: string): Promise<boolean> {

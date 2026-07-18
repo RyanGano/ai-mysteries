@@ -225,9 +225,12 @@ Two projects:
     (product link when `asin` is set, else a search link). Skip it where props would feel forced.
   - **`CosmosBookSource`** (`ContentSource=Cosmos`, prod) — reads the Cosmos `content` container
     (one doc per chapter/ending/clue/xref + a `manifest` that carries the book's `BookMeta` and its
-    sync `version`, partition key `/bookId`). It also reads/writes a per-book `stats` doc — the
-    runtime `readCount` (see the read-counter note under *Weighted random selection*) — the only
-    document the API mutates. See `Services/CosmosDocuments.cs` for the document contract.
+    sync `version`, partition key `/bookId`). It also reads/writes two per-book runtime docs — the
+    only documents the API mutates: a `stats` doc (the runtime `readCount`, see the read-counter
+    note under *Weighted random selection*) and a `ratings` doc (aggregate thumbs-up/down totals,
+    see *Story ratings* below). Both are API-owned: the seeder never emits or deletes them and they
+    stay out of the content fingerprint/sync, so re-seeding a book never resets them. See
+    `Services/CosmosDocuments.cs` for the document contract.
 
   The book data files under `Content/` are **gitignored** (not in the repo) — they are the local
   authoring source of truth, seeded into Cosmos by `ai-mysteries-tools`. The structure is
@@ -410,6 +413,28 @@ ticking on every reveal (see `BookStore.PickRandomCodeAsync`, which checks the s
 *before* the exhaustion check), so a reader can legitimately land on the special even mid-exhaustion,
 but never just for running out. All of this applies automatically to every ending, including newly
 added ones — no extra steps when authoring.
+
+## Story ratings
+
+Readers can rate a **story** (not an ending) with a single thumbs-up/down, only from the ending
+page (next to the "From the story" shelf) — the one post-reveal surface. The aggregate up/down
+totals show as a read-only badge on the catalog card and book landing page, but only once a story
+has at least one rating.
+
+Like `readCount`, ratings are **API-owned runtime state**, kept apart from the immutable, synced
+content: a per-book Cosmos `ratings` doc (`type: "ratings"`), held live in `BookStore` (`_ratings`),
+written through on each change, and seeded at startup from `IRatingStore.LoadRatings()`. They are
+**attached to `BookMetaDto.Ratings` at serialize time** (via `BookStore.AllMeta`/`TryGetMeta`) —
+never stored in the content `BookMeta`, so a thumb-tap never looks like an authored change and never
+enters the fingerprint/sync (the seeder neither emits nor deletes the doc).
+
+There are **no accounts**, so "one rating per reader" is enforced **in the reader's browser**: their
+current choice lives in `localStorage` (`rated:<bookId>`, see `lib/ratings.ts`), which drives the
+change/retract UX; the server only ever stores anonymous aggregate counts. `POST
+/api/books/{bookId}/rating` takes a `{ from, to }` transition (each `"up"`/`"down"`/null) and applies
+the net delta (clamped at 0), returning the new totals. It carries no reader identity and no
+spoilers. The privacy policy documents that the totals are anonymous and the per-reader choice is
+browser-local.
 
 ## How to add an ending
 

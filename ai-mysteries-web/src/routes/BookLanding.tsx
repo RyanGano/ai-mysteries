@@ -5,6 +5,7 @@ import { shareOrCopy } from "../lib/share";
 import type { BookMeta } from "../lib/types";
 import Loading from "../components/Loading";
 import ShopShelf from "../components/ShopShelf";
+import RatingBadge from "../components/RatingBadge";
 import "../styles/landing.css";
 
 type State =
@@ -106,6 +107,8 @@ export default function BookLanding() {
           {[meta.readingTime, formatPublished(meta.published)].filter(Boolean).join(" · ")}
         </p>
       )}
+
+      <RatingBadge ratings={meta.ratings} />
 
       {meta.summary.length > 0 && (
         <div className="book-landing-summary">

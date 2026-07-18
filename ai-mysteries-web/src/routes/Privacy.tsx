@@ -34,6 +34,7 @@ export default function Privacy() {
             No selling, sharing, or monetizing of data &mdash; because we don&rsquo;t collect any.
           </li>
           <li>We don&rsquo;t record or report which ending you landed on.</li>
+          <li>We don&rsquo;t know who rated a story &mdash; only how many liked or disliked it.</li>
         </ul>
 
         <h2>What happens when you use the site</h2>
@@ -43,6 +44,15 @@ export default function Privacy() {
           connect your requests to you. Like any website, our hosting provider may process basic
           technical request data (such as IP address) to deliver pages and keep the service running;
           we don&rsquo;t use it to identify or track you.
+        </p>
+
+        <h2>Rating a story</h2>
+        <p>
+          When you give a story a thumbs up or down, we add it to that story&rsquo;s running totals
+          on our server &mdash; just the counts, never anything that identifies you. So the buttons
+          can show your choice and let you change or undo it, your own rating is remembered in your
+          browser (in local storage), not on our server. Clearing your browser&rsquo;s storage
+          forgets it.
         </p>
 
         <h2>Changes</h2>
