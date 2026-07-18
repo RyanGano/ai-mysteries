@@ -351,7 +351,9 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     async (bookId: string, slug: string, title: string, body: string): Promise<PlayTrack> => {
       const manifest = await fetchChapterAudio(bookId, slug).catch(() => null);
       if (manifest) return { chunks: manifest.chunks, audio: { bookId, hash: manifest.hash } };
-      return { chunks: markdownToSpeech(`${title}. ${body}`) };
+      // Paragraph break after the title so it chunks on its own — merged with the first sentence
+      // it would contain heading text no <p> matches, killing the opening follow-along highlight.
+      return { chunks: markdownToSpeech(`${title}.\n\n${body}`) };
     },
     []
   );
@@ -369,7 +371,7 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
       if (manifest) {
         track = { chunks: manifest.chunks, audio: { bookId, hash: manifest.hash } };
       } else {
-        const chunks = markdownToSpeech(`${ending.title}. ${ending.body}`);
+        const chunks = markdownToSpeech(`${ending.title}.\n\n${ending.body}`);
         if (ending.special) chunks.unshift(SPECIAL_ANNOUNCE);
         track = { chunks };
       }

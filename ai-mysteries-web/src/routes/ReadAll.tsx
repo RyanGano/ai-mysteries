@@ -97,13 +97,15 @@ export default function ReadAll() {
     const items: PlayItem[] = state.chapters.map((ch) => ({
       kind: "chapter",
       key: ch.slug,
-      text: `${ch.title}. ${ch.body}`,
+      // Paragraph break after the title so the fallback chunker keeps it out of the first
+      // sentence's chunk (a merged chunk never matches a <p>, so it wouldn't highlight).
+      text: `${ch.title}.\n\n${ch.body}`,
     }));
     if (theEnding) {
       items.push({
         kind: "ending",
         key: theEnding.code,
-        text: `${theEnding.title}. ${theEnding.body}`,
+        text: `${theEnding.title}.\n\n${theEnding.body}`,
         special: theEnding.special,
       });
     }

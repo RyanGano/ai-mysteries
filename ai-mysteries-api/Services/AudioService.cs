@@ -155,14 +155,16 @@ public sealed class AudioService
         foreach (var entry in book.GetToc())
         {
             if (!book.TryGetChapterNav(entry.Slug, out var nav)) continue;
-            var track = MakeTrack(voice, SpeechText.MarkdownToChunks($"{nav.Chapter.Title}. {nav.Chapter.Body}"));
+            // Paragraph break after the title so it chunks on its own — merged with the first
+            // sentence it would contain <h1> text no <p> matches, killing the opening highlight.
+            var track = MakeTrack(voice, SpeechText.MarkdownToChunks($"{nav.Chapter.Title}.\n\n{nav.Chapter.Body}"));
             index.ByChapterSlug[entry.Slug] = track;
             index.ByHash.TryAdd(track.Hash, track);
         }
 
         foreach (var ending in book.Endings)
         {
-            var chunks = SpeechText.MarkdownToChunks($"{ending.Title}. {ending.Body}").ToList();
+            var chunks = SpeechText.MarkdownToChunks($"{ending.Title}.\n\n{ending.Body}").ToList();
             // Announce the special ending first, same as the on-screen reveal.
             if (ending.Special) chunks.Insert(0, SpecialAnnounce);
             var track = MakeTrack(voice, chunks);
