@@ -83,7 +83,7 @@
   left: 0;
   z-index: 10;
   min-width: 16rem;
-  max-width: min(20rem, 90vw);
+  max-width: min(26rem, 92vw);
   max-height: 70vh;
   overflow-y: auto;
   display: flex;
@@ -102,22 +102,43 @@
   background: var(--color-border);
 }
 
+/* Tag grid: 3 columns wide, 2 on narrow viewports (see media query below). Tags are already
+   sorted by descending count, and normal grid flow fills left-to-right/top-to-bottom, so the
+   grid reproduces "descending count across, then down" with no extra ordering logic. */
+.catalog-filter-tags {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.1rem 0.3rem;
+}
+
+@media (max-width: 30rem) {
+  .catalog-filter-tags {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .catalog-filter-option {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.4rem;
   width: 100%;
   background: none;
   border: none;
   border-radius: 4px;
-  padding: 0.45rem 0.6rem;
+  padding: 0.4rem 0.5rem;
   font-family: var(--font-sans);
-  font-size: 0.8rem;
-  letter-spacing: 0.04em;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--color-text);
   text-align: left;
+}
+
+.catalog-filter-option-tag {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .catalog-filter-option:hover {

@@ -96,29 +96,52 @@ near-duplicates is the failure mode.
 
 ### Tags
 
-Tags appear on catalog cards and drive filtering. **Reuse an existing tag whenever the meaning
-is close enough** — duplicate intent with different wording fragments the filter. Only add a new
-tag if nothing in the list fits. Current canonical tags (as of 2026-07-01):
+Tags appear on catalog cards and drive filtering. **Don't limit tagging to plot mechanics**
+(crime type, audience) — tag setting, era, and subject too, whenever one is load-bearing to the
+story (a boat, a specific decade, a sport, a profession). A thin tag list under-serves filtering
+as much as a bloated one; the goal is that a book's tags actually describe what it's about.
+
+When tagging a book, work through these steps in order:
+
+1. **List what the story is genuinely about** — mystery type, audience, setting/world, era,
+   and any load-bearing subject (a profession, an object, a mode of transport, a sport). Don't
+   stop at the crime-type tags; a book set on a 1953 sleeper train or in a 1926 dig is missing
+   real information if it's only tagged `Death`.
+2. **Check the existing tag list for a close match first.** Reuse whenever the meaning is close
+   enough that two tags would just fragment the same filter (a tag for `Sea` and a tag for
+   `Ocean` are the same tag — pick one and always use it). Prefer the existing wording even if
+   your first instinct used different words.
+3. **Only add a genuinely new tag** when nothing existing covers the concept. A new tag is fine
+   even if only one or two books will carry it at first (see `Wedding`, `Haunted`, `Medical`,
+   `Western` below) — narrow-but-real is better than forcing a book under a tag that doesn't fit.
+4. **Add the new tag(s) to the book** and, if new, to the canonical table below (with a "when to
+   use" line) so the next book can reuse it instead of reinventing it.
+
+Current canonical tags (as of 2026-07-18):
 
 | Tag | When to use |
 |---|---|
 | `AI` | AI system is a character or central to the plot |
+| `Archaeology` | an excavation/dig setting is central |
+| `Aviation` | an airplane/flight setting is central |
 | `Cozy` | low-stakes, warm-toned, no violence |
 | `Death` | a death occurs but murder is ambiguous or contested |
 | `Haunted` | a haunting/ghost premise is central (real or staged) |
+| `Historical` | set in a distinct past era (not present-day) |
 | `Kid Friendly` | suitable for young readers (simple vocabulary, no violence) |
 | `Medical` | hospital/clinical setting or medical negligence is central |
 | `Murder` | at least one suspect is a deliberate killer |
+| `Nautical` | a boat, ship, submarine, canal, or open-water setting is central |
 | `No Crime` | no crime has been committed — the mystery is a misunderstanding or loss |
+| `Railway` | a train or rail setting is central |
+| `Romance` | a romance thread is central to the story |
+| `Space` | a space station/off-world setting is central |
+| `Sport` | a sporting competition or event is central |
 | `Technology` | tech system or industrial setting is load-bearing to the plot |
+| `Theater` | a stage/theatrical production setting is central |
 | `Theft` | a genuine theft of a valuable object is the crime (a real culprit, not a misunderstanding) |
 | `Wedding` | wedding or ceremony setting |
 | `Western` | frontier/Western US historical setting |
-
-When tagging a new book: check this list first. If a tag covers the intent (e.g. "Sci-Fi" →
-`Technology`; "Children's" → `Kid Friendly`; "Thriller" → `Murder`), use the existing tag.
-Add a new row only if the concept is genuinely distinct from every entry above, then update
-this table and the description accordingly.
 
 Deliberately **not** a tag: `Mystery`. Every book on the site is a whodunit with an
 investigator, so the tag carries no filtering signal — don't re-add it.

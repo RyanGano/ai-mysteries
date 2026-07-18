@@ -253,20 +253,24 @@ function FilterBar({
             {readingTime && availableTags.length > 0 && (
               <div className="catalog-filter-divider" role="separator" />
             )}
-            {availableTags.map(({ tag, count }) => (
-              <button
-                key={tag}
-                type="button"
-                className="catalog-filter-option"
-                onClick={() => {
-                  onAddTag(tag);
-                  setOpen(false);
-                }}
-              >
-                <span className="catalog-filter-option-tag">{tag}</span>
-                <span className="catalog-filter-option-count">{count}</span>
-              </button>
-            ))}
+            {availableTags.length > 0 && (
+              <div className="catalog-filter-tags">
+                {availableTags.map(({ tag, count }) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className="catalog-filter-option"
+                    onClick={() => {
+                      onAddTag(tag);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="catalog-filter-option-tag">{tag}</span>
+                    <span className="catalog-filter-option-count">{count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
