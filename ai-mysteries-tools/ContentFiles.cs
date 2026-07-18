@@ -42,6 +42,9 @@ public static class ContentFiles
             m.Payoff.ToList(), m.CodePlaceholder, m.ShareTitle, m.ShareText, m.SpecialShareText,
             new SpecialRevealDoc(m.SpecialReveal.Headline, m.SpecialReveal.Sub),
             m.NarrationGender,
+            m.Pronunciations.Count > 0
+                ? m.Pronunciations.OrderBy(kv => kv.Key, StringComparer.Ordinal).ToDictionary(kv => kv.Key, kv => kv.Value)
+                : null,
             m.ShopItems.Count > 0 ? m.ShopItems.ToList() : null,
             selection, book.Version, book.ContentHash));
 
@@ -96,6 +99,7 @@ public static class ContentFiles
         string SpecialShareText,
         SpecialRevealDoc SpecialReveal,
         string NarrationGender,
+        Dictionary<string, string>? Pronunciations,
         List<ShopItemDto>? ShopItems,
         SelectionDoc? Selection,
         string? Version,

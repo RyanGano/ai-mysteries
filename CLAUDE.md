@@ -178,7 +178,8 @@ Two projects:
   - **`FileBookSource`** (`ContentSource=File`, dev/authoring default) — reads `Content/<bookId>/`
     on disk: `meta.json` (book-level `BookMeta` — title, summary, cover URL, secret blurb, payoff,
     share strings, special-reveal copy — plus the server-only `selection` rules and the sync
-    pipeline's `version`/`contentHash` bookkeeping; all fields optional, defaults fill in); `book.json`
+    pipeline's `version`/`contentHash` bookkeeping and the optional `pronunciations` read-aloud map (see the read-aloud section); all
+    fields optional, defaults fill in); `book.json`
     (`[{ slug, title }]`, reading order) + `book/<slug>.md`; `endings.json`
     (`[{ code, culprits, title, special?, slug }]`) + `endings/<slug>.md`; `clues.json` +
     `xref-markers.json` (generated cross-reference data); `glossary.json` (optional — unfamiliar-word
@@ -254,6 +255,15 @@ browser's built-in robot voice. How it fits the architecture:
   bytes). The voice is picked from the book's `narrationGender` (male/female/default voice names
   are site chrome, config-overridable). Local dev values live in .NET **user secrets**
   (`dotnet user-secrets list` in `ai-mysteries-api/`), prod in App Service settings.
+- **Pronunciation hints are book data**: an optional `pronunciations` map in `meta.json`
+  (`{ "<word>": "<respelling the voice says correctly>" }`, case-insensitive whole-word) fixes
+  rare/period words the neural voice has never seen (it guesses letter-by-letter and can land
+  somewhere silly). Applied as SSML `<sub>` at synthesis, so the on-screen spelling never
+  changes. Only hints whose word occurs in a chapter/ending join that track's content hash, so
+  adding one re-synthesizes just the audio it touches. When authoring a book with unusual
+  diction, sanity-check suspect words by synthesizing a sentence and running it back through the
+  same Speech resource's speech-to-text (`/stt/speech/recognition/conversation/cognitiveservices/v1`)
+  — if the transcript comes back as a different word, add a hint.
 - The web (`lib/read-aloud-context.tsx`) plays chunks through a reused pair of `<audio>`
   elements (one playing, one prefetching the next — the prefetch is also what triggers ahead-of-
   time synthesis on a cache miss), unlocked inside the user's click so playback survives a locked

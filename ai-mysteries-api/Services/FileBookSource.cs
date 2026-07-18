@@ -98,6 +98,10 @@ public sealed class FileBookSource : IBookSource
                 ? new SpecialReveal(sr.Headline ?? "", sr.Sub ?? "")
                 : fallback.SpecialReveal,
             NarrationGender: d.NarrationGender ?? fallback.NarrationGender,
+            // Key-sorted so File and Cosmos loads serialize identically (no false fingerprint drift).
+            Pronunciations: d.Pronunciations is { } prons
+                ? prons.OrderBy(kv => kv.Key, StringComparer.Ordinal).ToDictionary(kv => kv.Key, kv => kv.Value)
+                : fallback.Pronunciations,
             ShopItems: d.ShopItems is { } items
                 ? items.Select(i => new ShopItemDto(i.Label ?? "", i.Note ?? "", i.Search ?? "", i.Asin ?? "")).ToList()
                 : fallback.ShopItems), selection, d.Version, d.ContentHash);
@@ -151,6 +155,7 @@ public sealed class FileBookSource : IBookSource
         string? SpecialShareText = null,
         SpecialRevealDoc? SpecialReveal = null,
         string? NarrationGender = null,
+        Dictionary<string, string>? Pronunciations = null,
         List<ShopItemDoc>? ShopItems = null,
         SelectionDoc? Selection = null,
         string? Version = null,

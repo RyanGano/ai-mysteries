@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using AiMysteries.Api.Models;
 using Azure.Core;
 using Azure.Identity;
@@ -41,8 +42,14 @@ public sealed record AudioConfig
 
 // One synthesizable text (a chapter or an ending) broken into its spoken chunks. The hash names
 // the blob folder, so an edit to the text (or a voice change) automatically points at fresh
-// blobs — stale audio can never be served for updated prose.
-public sealed record AudioTrack(string Hash, string Voice, IReadOnlyList<string> Chunks);
+// blobs — stale audio can never be served for updated prose. `Pronunciations` holds only the
+// book's hints whose word actually occurs in this track (and participates in the hash the same
+// way, so adding a hint re-synthesizes just the tracks it touches).
+public sealed record AudioTrack(
+    string Hash,
+    string Voice,
+    IReadOnlyList<string> Chunks,
+    IReadOnlyDictionary<string, string> Pronunciations);
 
 // Result of a chunk request: a public blob URL to redirect to (cache hit), or the freshly
 // synthesized bytes (cache miss — they were also uploaded for next time, best-effort).
@@ -157,7 +164,7 @@ public sealed class AudioService
             if (!book.TryGetChapterNav(entry.Slug, out var nav)) continue;
             // Paragraph break after the title so it chunks on its own — merged with the first
             // sentence it would contain <h1> text no <p> matches, killing the opening highlight.
-            var track = MakeTrack(voice, SpeechText.MarkdownToChunks($"{nav.Chapter.Title}.\n\n{nav.Chapter.Body}"));
+            var track = MakeTrack(voice, SpeechText.MarkdownToChunks($"{nav.Chapter.Title}.\n\n{nav.Chapter.Body}"), book.Meta.Pronunciations);
             index.ByChapterSlug[entry.Slug] = track;
             index.ByHash.TryAdd(track.Hash, track);
         }
@@ -167,7 +174,7 @@ public sealed class AudioService
             var chunks = SpeechText.MarkdownToChunks($"{ending.Title}.\n\n{ending.Body}").ToList();
             // Announce the special ending first, same as the on-screen reveal.
             if (ending.Special) chunks.Insert(0, SpecialAnnounce);
-            var track = MakeTrack(voice, chunks);
+            var track = MakeTrack(voice, chunks, book.Meta.Pronunciations);
             index.ByEndingCode[CodeNormalizer.Normalize(ending.Code)] = track;
             index.ByHash.TryAdd(track.Hash, track);
         }
@@ -178,16 +185,28 @@ public sealed class AudioService
     // Content-addressed track id: voice + chunk texts in, hex out. Endings are looked up by hash
     // (not code) on the chunk route, so audio URLs never carry an ending code — nothing to
     // enumerate, nothing spoilable in a shared address bar.
-    private static AudioTrack MakeTrack(string voice, IReadOnlyList<string> chunks)
+    // Only the hints whose word occurs in this track join the hash material, so a track without
+    // the word keeps its hash (and its cached audio) when a book gains a pronunciation hint.
+    private static AudioTrack MakeTrack(
+        string voice, IReadOnlyList<string> chunks, IReadOnlyDictionary<string, string> pronunciations)
     {
-        var material = voice + " " + string.Join(" ", chunks);
+        var applicable = pronunciations
+            .Where(kv => chunks.Any(c => WordRegex(kv.Key).IsMatch(c)))
+            .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+            .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+        var pronMaterial = string.Join("\0", applicable.Select(kv => $"{kv.Key}>{kv.Value}"));
+        var material = voice + "\0" + pronMaterial + "\0" + string.Join("\0", chunks);
         var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(material)))[..24];
-        return new AudioTrack(hash, voice, chunks);
+        return new AudioTrack(hash, voice, chunks, applicable);
     }
+
+    // Whole-word, case-insensitive match for one pronunciation-hint term.
+    private static Regex WordRegex(string term) =>
+        new($@"\b{Regex.Escape(term)}\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     private async Task<byte[]> SynthesizeAndCacheAsync(AudioTrack track, int index, string blobName)
     {
-        var bytes = await SynthesizeAsync(track.Voice, track.Chunks[index]);
+        var bytes = await SynthesizeAsync(track.Voice, track.Chunks[index], track.Pronunciations);
 
         if (_container is not null)
         {
@@ -215,11 +234,11 @@ public sealed class AudioService
         return bytes;
     }
 
-    private async Task<byte[]> SynthesizeAsync(string voice, string text)
+    private async Task<byte[]> SynthesizeAsync(string voice, string text, IReadOnlyDictionary<string, string> pronunciations)
     {
         var ssml =
             $"<speak version='1.0' xml:lang='en-US'><voice name='{voice}'>" +
-            SecurityElement.Escape(text) +
+            ToSsmlText(text, pronunciations) +
             "</voice></speak>";
         var url = $"{_config.SpeechEndpoint.TrimEnd('/')}/tts/cognitiveservices/v1";
 
@@ -245,6 +264,31 @@ public sealed class AudioService
             var delay = res.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(2 * (attempt + 1));
             await Task.Delay(delay);
         }
+    }
+
+    // Escape the chunk text for SSML, wrapping each pronunciation-hint word in a <sub> so the
+    // voice says the alias while the on-screen text keeps the authored spelling. Whole-word,
+    // case-insensitive; everything (matched or not) is XML-escaped.
+    private static string ToSsmlText(string text, IReadOnlyDictionary<string, string> pronunciations)
+    {
+        if (pronunciations.Count == 0) return SecurityElement.Escape(text);
+
+        var pattern = string.Join("|", pronunciations.Keys
+            .OrderByDescending(k => k.Length) // longest first so overlapping terms match greedily
+            .Select(Regex.Escape));
+        var sb = new StringBuilder();
+        var pos = 0;
+        foreach (Match m in Regex.Matches(text, $@"\b(?:{pattern})\b",
+                     RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            sb.Append(SecurityElement.Escape(text[pos..m.Index]));
+            var alias = pronunciations[m.Value];
+            sb.Append("<sub alias='").Append(SecurityElement.Escape(alias)).Append("'>")
+                .Append(SecurityElement.Escape(m.Value)).Append("</sub>");
+            pos = m.Index + m.Length;
+        }
+        sb.Append(SecurityElement.Escape(text[pos..]));
+        return sb.ToString();
     }
 
     // Entra access tokens last about an hour; refresh a few minutes early and share across calls.

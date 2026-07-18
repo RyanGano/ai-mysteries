@@ -96,6 +96,11 @@ public sealed record BookMeta(
     // which case the browser's default voice is used. Book-identifying data, so it lives here, not
     // in code.
     string NarrationGender,
+    // Read-aloud pronunciation hints: word (case-insensitive, whole-word) -> what the neural voice
+    // should say instead (e.g. a rare canal term the model has never seen -> its plain homophone).
+    // Applied as SSML <sub> during synthesis, so the on-screen text is untouched. Book data, not
+    // code — every book with period jargon or invented names gets the same lever. Empty when none.
+    IReadOnlyDictionary<string, string> Pronunciations,
     // Curated "from the story" Amazon shelf items for the landing page. Book-identifying data
     // (props from the story), so it lives here; the web only builds the affiliate URL. Empty for
     // books that don't author one.
@@ -119,6 +124,7 @@ public sealed record BookMeta(
         SpecialShareText: "",
         SpecialReveal: new SpecialReveal("", ""),
         NarrationGender: "",
+        Pronunciations: new Dictionary<string, string>(),
         ShopItems: Array.Empty<ShopItemDto>());
 }
 

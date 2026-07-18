@@ -39,6 +39,7 @@ public sealed class ContentDoc
     public string? SpecialRevealHeadline { get; set; }
     public string? SpecialRevealSub { get; set; }
     public string? NarrationGender { get; set; }
+    public Dictionary<string, string>? Pronunciations { get; set; }
     public List<ShopItemDto>? ShopItems { get; set; }
 
     // manifest only — server-side selection rules (see SelectionRules). Read by the API for
@@ -149,6 +150,11 @@ public static class CosmosContent
             SpecialRevealHeadline = m.SpecialReveal.Headline,
             SpecialRevealSub = m.SpecialReveal.Sub,
             NarrationGender = m.NarrationGender,
+            Pronunciations = m.Pronunciations.Count > 0
+                ? m.Pronunciations
+                    .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value)
+                : null,
             ShopItems = m.ShopItems.Count > 0 ? m.ShopItems.ToList() : null,
             SentinelCulprit = raw.Selection.SentinelCulprit,
             CategoryWeights = raw.Selection.CategoryWeights.Count > 0
@@ -224,6 +230,9 @@ public static class CosmosContent
                 manifest.SpecialRevealHeadline ?? "",
                 manifest.SpecialRevealSub ?? ""),
             NarrationGender: manifest.NarrationGender ?? fallback.NarrationGender,
+            Pronunciations: manifest.Pronunciations is { } prons
+                ? prons.OrderBy(kv => kv.Key, StringComparer.Ordinal).ToDictionary(kv => kv.Key, kv => kv.Value)
+                : fallback.Pronunciations,
             ShopItems: manifest.ShopItems ?? fallback.ShopItems.ToList());
 
         var selection = new SelectionRules(
