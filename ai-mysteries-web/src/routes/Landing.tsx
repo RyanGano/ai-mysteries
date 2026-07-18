@@ -48,6 +48,7 @@ export default function Landing() {
 function Catalog({ books }: { books: BookMeta[] }) {
   const sorted = useMemo(() => [...books].sort(byPublishedDesc), [books]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
 
   // Reading-time range filter. Bounds are derived from the catalog itself (no hard-coded times),
   // snapped out to clean 5-minute stops. `range` stays null ("full range") until the user moves a
@@ -64,8 +65,10 @@ function Catalog({ books }: { books: BookMeta[] }) {
   const lo = range ? range[0] : (bounds?.min ?? null);
   const hi = range ? range[1] : (bounds?.max ?? null);
 
-  // A book shows only if it carries every selected tag (AND) and its reading time is within the
-  // selected range. Both filters compose here so the tag counts below reflect the active range too.
+  // A book shows only if it carries every selected tag (AND), its reading time is within the
+  // selected range, and it matches the search text (case-insensitive, against title + summary).
+  // All three compose here so the tag counts below reflect the active search/range too.
+  const needle = query.trim().toLowerCase();
   const visible = useMemo(
     () =>
       sorted.filter((book) => {
@@ -74,10 +77,24 @@ function Catalog({ books }: { books: BookMeta[] }) {
           const m = displayMinutes(book.wordCount);
           if (m > 0 && (m < lo || m > hi)) return false;
         }
+        if (needle) {
+          const haystack = `${book.title}\n${book.summary.join("\n")}`.toLowerCase();
+          if (!haystack.includes(needle)) return false;
+        }
         return true;
       }),
-    [sorted, selectedTags, lo, hi]
+    [sorted, selectedTags, lo, hi, needle]
   );
+
+  // The list is windowed: only the first `limit` matches render, and crossing the sentinel at the
+  // bottom of the list grows the window by a page. Any change to the filtered set snaps back to the
+  // first page so a narrowed search doesn't inherit a huge window.
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  useEffect(() => {
+    setLimit(PAGE_SIZE);
+  }, [needle, selectedTags, lo, hi]);
+  const shown = visible.slice(0, limit);
+  const hasMore = visible.length > shown.length;
 
   // Tags still worth offering: those on the currently-visible books that aren't already selected,
   // each with how many visible books carry it. Narrowing further can only ever shrink the list, so
@@ -111,6 +128,8 @@ function Catalog({ books }: { books: BookMeta[] }) {
         availableTags={availableTags}
         onAddTag={addTag}
         onRemoveTag={removeTag}
+        query={query}
+        onQueryChange={setQuery}
         readingTime={
           bounds && lo !== null && hi !== null
             ? {
@@ -123,34 +142,64 @@ function Catalog({ books }: { books: BookMeta[] }) {
         }
       />
       {visible.length === 0 ? (
-        <p className="catalog-empty">No stories match these filters.</p>
+        <p className="catalog-empty">No stories match your search and filters.</p>
       ) : (
-        <ul className="catalog-list">
-          {visible.map((book) => (
-            <li key={book.id}>
-              <CatalogCard book={book} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="catalog-list">
+            {shown.map((book) => (
+              <li key={book.id}>
+                <CatalogCard book={book} />
+              </li>
+            ))}
+          </ul>
+          {hasMore && <LoadMoreSentinel onVisible={() => setLimit((n) => n + PAGE_SIZE)} />}
+        </>
       )}
     </main>
   );
 }
 
+// An invisible marker below the list; when it scrolls into view (or nearly — the rootMargin starts
+// the load a screen early so the reader rarely sees the gap), the catalog grows its window by a
+// page. Re-mounts with a fresh observer after each growth because `hasMore` re-renders it.
+function LoadMoreSentinel({ onVisible }: { onVisible: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) onVisible();
+      },
+      { rootMargin: "600px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onVisible]);
+
+  return <div ref={ref} className="catalog-load-sentinel" aria-hidden="true" />;
+}
+
 // The filter control: a "Filter" button that opens a popup of the still-applicable tags (with the
-// count of matching books), plus a breadcrumb row of the chosen tags, each removable. Selecting a
-// tag narrows the catalog and the popup; removing one widens both back out.
+// count of matching books), a search box beside it (matches title + summary as you type), plus a
+// breadcrumb row of the chosen tags, each removable. Selecting a tag narrows the catalog and the
+// popup; removing one widens both back out.
 function FilterBar({
   selectedTags,
   availableTags,
   onAddTag,
   onRemoveTag,
+  query,
+  onQueryChange,
   readingTime,
 }: {
   selectedTags: string[];
   availableTags: { tag: string; count: number }[];
   onAddTag: (tag: string) => void;
   onRemoveTag: (tag: string) => void;
+  query: string;
+  onQueryChange: (next: string) => void;
   readingTime: {
     bounds: { min: number; max: number };
     value: [number, number];
@@ -219,6 +268,26 @@ function FilterBar({
               </button>
             ))}
           </div>
+        )}
+      </div>
+      <div className="catalog-search">
+        <input
+          type="search"
+          className="catalog-search-input"
+          placeholder="Search stories&hellip;"
+          aria-label="Search stories by title or description"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+        />
+        {query && (
+          <button
+            type="button"
+            className="catalog-search-clear"
+            aria-label="Clear search"
+            onClick={() => onQueryChange("")}
+          >
+            &times;
+          </button>
         )}
       </div>
       {selectedTags.length > 0 && (
@@ -359,6 +428,9 @@ function CatalogCard({ book }: { book: BookMeta }) {
 
 // Reading-time range filter granularity (minutes per slider step).
 const STEP = 5;
+
+// How many catalog cards render at once; scrolling to the bottom loads this many more.
+const PAGE_SIZE = 12;
 
 // Average adult prose reading speed — must match the API's ReadingTime constant.
 const WORDS_PER_MINUTE = 250;
