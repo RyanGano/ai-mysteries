@@ -32,6 +32,24 @@ const RATE_KEY = "readAloudRate";
 // anyway so `supported` stays honest.
 const AUDIO_SUPPORTED = typeof window !== "undefined" && "Audio" in window;
 
+// Media Session API — the difference between "reads a sentence then stops when the screen locks"
+// and "plays the whole book with the phone in your pocket". Declaring an active media session with
+// metadata tells the OS/browser this tab is a real background-audio player: it keeps the audio
+// pipeline alive (so the chunk-to-chunk `ended` handlers keep firing while locked) and surfaces
+// lock-screen / notification transport controls. Site chrome only — the artist string is the site
+// brand, the title is the book's own title (book data, fetched per book), never anything else.
+const MEDIA_SESSION = typeof navigator !== "undefined" && "mediaSession" in navigator;
+const MEDIA_ARTIST = "AI Mysteries";
+
+function setMediaPlayback(state: MediaSessionPlaybackState) {
+  if (MEDIA_SESSION) navigator.mediaSession.playbackState = state;
+}
+
+function setMediaTitle(title: string) {
+  if (!MEDIA_SESSION || typeof MediaMetadata === "undefined") return;
+  navigator.mediaSession.metadata = new MediaMetadata({ title, artist: MEDIA_ARTIST });
+}
+
 // A tiny silent WAV, played once inside the user's click so mobile browsers "unlock" the reused
 // audio elements — later programmatic src swaps + play() calls then work with the screen locked.
 const SILENT_WAV =
@@ -160,6 +178,7 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
       if (gen === genRef.current) {
         notify(null);
         setStatus("idle");
+        setMediaPlayback("none");
       }
     },
     [notify]
@@ -419,8 +438,12 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
   // default). Only the speech fallback uses it — server audio picks its voice server-side from
   // the same narrationGender.
   const prepareVoice = useCallback(async (bookId: string) => {
+    // Always resolve the book meta (even without speech support) so the media-session title names
+    // the actual book on the lock screen; the voice pick only matters for the speech fallback.
+    const meta = await fetchBookMeta(bookId).catch(() => null);
+    if (meta?.title) setMediaTitle(meta.title);
     if (!SPEECH_SUPPORTED) return null;
-    const [voices, meta] = await Promise.all([getVoicesAsync(), fetchBookMeta(bookId)]);
+    const voices = await getVoicesAsync();
     return pickVoice(voices, meta?.narrationGender ?? "");
   }, []);
 
@@ -443,6 +466,7 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     }
     setCanSkipBack(false);
     setStatus("playing");
+    setMediaPlayback("playing");
     return gen;
   }, [supported, hardCancel, stopAudioElements]);
 
@@ -511,6 +535,7 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     if (modeRef.current === "audio") currentElRef.current?.pause();
     else if (SPEECH_SUPPORTED) window.speechSynthesis.pause();
     setStatus("paused");
+    setMediaPlayback("paused");
   }, []);
 
   const resume = useCallback(() => {
@@ -520,6 +545,7 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
       });
     else if (SPEECH_SUPPORTED) window.speechSynthesis.resume();
     setStatus("playing");
+    setMediaPlayback("playing");
   }, []);
 
   // Rewind one sentence within the current run and re-play from there. Bounded to the active chunk
@@ -547,6 +573,7 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     setCanSkipBack(false);
     notify(null);
     setStatus("idle");
+    setMediaPlayback("none");
   }, [notify, hardCancel, stopAudioElements]);
 
   const setRate = useCallback((r: number) => {
@@ -559,6 +586,36 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
       el.playbackRate = r;
     }
   }, []);
+
+  // Wire the OS lock-screen / notification transport controls to our engine-agnostic transport, so
+  // the play/pause/previous/stop buttons the media session shows actually drive playback. Registered
+  // once; the handlers close over the stable useCallbacks.
+  useEffect(() => {
+    if (!MEDIA_SESSION) return;
+    const ms = navigator.mediaSession;
+    const handlers: [MediaSessionAction, MediaSessionActionHandler][] = [
+      ["play", () => resume()],
+      ["pause", () => pause()],
+      ["previoustrack", () => skipBack()],
+      ["stop", () => stop()],
+    ];
+    for (const [action, handler] of handlers) {
+      try {
+        ms.setActionHandler(action, handler);
+      } catch {
+        /* browser doesn't support this action — skip it */
+      }
+    }
+    return () => {
+      for (const [action] of handlers) {
+        try {
+          ms.setActionHandler(action, null);
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+  }, [resume, pause, skipBack, stop]);
 
   // Belt-and-braces: halt any in-flight playback if the whole app unmounts (e.g. HMR in dev).
   useEffect(
