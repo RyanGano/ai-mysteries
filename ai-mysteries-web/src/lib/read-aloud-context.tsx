@@ -466,7 +466,26 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     // Create + unlock the audio element pair inside the user's gesture, so later programmatic
     // plays (next chunks, next chapters) are allowed even once the screen locks.
     if (AUDIO_SUPPORTED) {
-      audioElsRef.current ??= [new Audio(), new Audio()];
+      if (!audioElsRef.current) {
+        const make = () => {
+          const a = new Audio();
+          a.preload = "auto";
+          // iOS: play inline, don't hijack to a fullscreen player.
+          a.setAttribute("playsinline", "");
+          // Attach to the document. A detached `new Audio()` is treated as throwaway media and gets
+          // suspended when the tab backgrounds / the screen locks (audio cut off mid-word); an
+          // in-document media element gets real background-audio treatment and binds to the OS media
+          // session. It has no controls, so it renders nothing — pin it to zero size just in case.
+          a.style.position = "fixed";
+          a.style.width = "0";
+          a.style.height = "0";
+          a.style.opacity = "0";
+          a.style.pointerEvents = "none";
+          document.body.appendChild(a);
+          return a;
+        };
+        audioElsRef.current = [make(), make()];
+      }
       for (const el of audioElsRef.current) {
         el.src = SILENT_WAV;
         delete el.dataset.src;
@@ -475,6 +494,9 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }
+    // Activate the OS media session inside the gesture with a placeholder title; prepareVoice
+    // refines it to the actual book title once the meta loads.
+    setMediaTitle(MEDIA_ARTIST);
     setCanSkipBack(false);
     setStatus("playing");
     setMediaPlayback("playing");
