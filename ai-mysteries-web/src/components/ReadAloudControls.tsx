@@ -9,8 +9,7 @@ export default function ReadAloudControls({ onPlay }: { onPlay: () => void }) {
     useReadAloud();
   if (!supported) return null;
 
-  const preparing = status === "preparing";
-  const active = status === "playing" || status === "paused" || preparing;
+  const active = status === "playing" || status === "paused";
   const paused = status === "paused";
   return (
     <div className="ra-controls">
@@ -24,9 +23,9 @@ export default function ReadAloudControls({ onPlay }: { onPlay: () => void }) {
         <span className="ra-icon" aria-hidden="true">
           {active ? "■" : "▶"}
         </span>
-        {preparing ? "Preparing…" : active ? "Stop" : "Listen"}
+        {active ? "Stop" : "Listen"}
       </button>
-      {active && !preparing && (
+      {active && (
         <>
           <button
             type="button"
