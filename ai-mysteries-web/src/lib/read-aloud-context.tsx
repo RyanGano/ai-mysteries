@@ -55,7 +55,13 @@ function setMediaTitle(title: string) {
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQQAAAAAAA==";
 
-type Status = "idle" | "playing" | "paused";
+type Status = "idle" | "preparing" | "playing" | "paused";
+
+// The whole-book reader downloads every chunk up front and stitches them into ONE continuous MP3
+// played through a single element (see playBook). Azure synthesizes CBR at this bitrate, so a
+// chunk's play-time is just its byte length over the bitrate — enough to drive the follow-along
+// highlight off the single file's timeline without decoding anything.
+const AUDIO_BITRATE_BPS = 96_000;
 
 // What one continuous read is made of: the chunk texts (always present — they drive the
 // follow-along highlight and the speech fallback), plus the server audio address when available.
@@ -128,8 +134,14 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const speakRef = useRef<(() => void) | null>(null);
 
-  // Which engine the transport controls should talk to for the current track.
-  const modeRef = useRef<"speech" | "audio">("speech");
+  // Which engine the transport controls should talk to for the current track. "audio" = the
+  // per-chunk element player (single chapter/ending); "file" = the whole-book single continuous MP3;
+  // "speech" = the browser voice fallback.
+  const modeRef = useRef<"speech" | "audio" | "file">("speech");
+  // Whole-book single-file playback: the object URL of the stitched MP3 (revoked on stop) and the
+  // start time (seconds) of each chunk within it, used to drive the follow-along highlight.
+  const fileUrlRef = useRef<string | null>(null);
+  const fileOffsetsRef = useRef<number[]>([]);
   // The reused audio element pair (created + unlocked inside the user's gesture) and the one
   // currently playing. `playTokenRef` marks the live chunk, so a superseded chunk's ended/error
   // handlers become no-ops (the audio twin of the utteranceRef identity check).
@@ -150,7 +162,12 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     for (const el of audioElsRef.current ?? []) {
       el.onended = null;
       el.onerror = null;
+      el.ontimeupdate = null;
       el.pause();
+    }
+    if (fileUrlRef.current) {
+      URL.revokeObjectURL(fileUrlRef.current);
+      fileUrlRef.current = null;
     }
   }, []);
 
@@ -356,6 +373,126 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     [playAudioSequence]
   );
 
+  // Whole-book screen-off playback. Chunked playback (swapping an element's src per sentence) is
+  // inherently fragile once the phone locks — every src swap is a moment the browser can decide the
+  // audio "stopped" and suspend the tab. So here we download every chunk of every chapter (+ the
+  // ending) up front, stitch them into ONE continuous MP3, and play it through a single element with
+  // a single play() and zero JS hops for the entire book — the one shape a locked browser keeps
+  // alive. `chunkUrls` is the flat, in-order list of chunk URLs; `texts` the matching spoken text
+  // (for the follow-along highlight). Resolves when the book finishes; rejects (before playback
+  // starts) to fall back to per-item speech. `onProgress` reports fetch progress 0..1.
+  const playBook = useCallback(
+    async (
+      gen: number,
+      chunkUrls: string[],
+      texts: string[],
+      onProgress?: (done: number, total: number) => void
+    ) => {
+      const els = audioElsRef.current;
+      if (!els || chunkUrls.length === 0) throw new Error("no audio");
+      const el = els[0];
+
+      // Fetch every chunk's bytes, in order, with a small amount of concurrency. A cold chunk is
+      // synthesized on first fetch, so this can be slow the very first time a book is listened to;
+      // after that they're cached blobs and it's quick.
+      const buffers = new Array<ArrayBuffer>(chunkUrls.length);
+      let done = 0;
+      let cursor = 0;
+      const worker = async () => {
+        for (;;) {
+          const i = cursor++;
+          if (i >= chunkUrls.length) return;
+          if (!isCurrent(gen)) throw new Error("cancelled");
+          const resp = await fetch(chunkUrls[i]);
+          if (!resp.ok) throw new Error(`chunk ${i} failed`);
+          buffers[i] = await resp.arrayBuffer();
+          onProgress?.(++done, chunkUrls.length);
+        }
+      };
+      await Promise.all(Array.from({ length: 6 }, worker));
+      if (!isCurrent(gen)) throw new Error("cancelled");
+
+      // Per-chunk start times from byte length at the known CBR bitrate, and one stitched blob.
+      const offsets = new Array<number>(chunkUrls.length);
+      let t = 0;
+      for (let i = 0; i < buffers.length; i++) {
+        offsets[i] = t;
+        t += (buffers[i].byteLength * 8) / AUDIO_BITRATE_BPS;
+      }
+      const blobUrl = URL.createObjectURL(new Blob(buffers, { type: "audio/mpeg" }));
+      fileUrlRef.current = blobUrl;
+      modeRef.current = "file";
+      chunksRef.current = texts;
+      fileOffsetsRef.current = offsets;
+      chunkIndexRef.current = 0;
+      currentElRef.current = el;
+
+      await new Promise<void>((resolve, reject) => {
+        const token = {};
+        playTokenRef.current = token;
+        const live = () => playTokenRef.current === token && isCurrent(gen);
+        let shown = -1;
+
+        // Drive the follow-along highlight off the single file's playback position.
+        el.ontimeupdate = () => {
+          if (!live()) return;
+          const ct = el.currentTime;
+          let i = chunkIndexRef.current;
+          while (i + 1 < offsets.length && ct >= offsets[i + 1]) i++;
+          while (i > 0 && ct < offsets[i]) i--;
+          chunkIndexRef.current = i;
+          if (i !== shown) {
+            shown = i;
+            setCanSkipBack(i > 0);
+            notify(texts[i]);
+          }
+        };
+        el.onended = () => {
+          if (!live()) return;
+          resolve();
+        };
+        el.onerror = () => {
+          if (!live()) return;
+          reject(new Error("book playback failed"));
+        };
+        // Skip-back seeks to the previous chunk's start on the same continuous file.
+        speakRef.current = () => {
+          const to = fileOffsetsRef.current[chunkIndexRef.current] ?? 0;
+          try {
+            el.currentTime = to;
+          } catch {
+            /* not seekable yet */
+          }
+          notify(texts[chunkIndexRef.current] ?? null);
+          el.play().catch(() => {
+            /* resume handled elsewhere */
+          });
+        };
+
+        el.src = blobUrl;
+        el.defaultPlaybackRate = rateRef.current;
+        el.playbackRate = rateRef.current;
+        try {
+          el.currentTime = 0;
+        } catch {
+          /* ignore */
+        }
+        el.play()
+          .then(() => {
+            // Sound is actually rolling now — leave the "preparing" state.
+            if (live()) {
+              setStatus("playing");
+              setMediaPlayback("playing");
+            }
+          })
+          .catch(() => {
+            if (live()) reject(new Error("book play() rejected"));
+          });
+      });
+    },
+    [notify]
+  );
+
   // Play one track: neural audio when the manifest gave us an address, the browser voice
   // otherwise — and if audio dies mid-track, continue from that sentence with the browser voice.
   const playTrack = useCallback(
@@ -546,26 +683,39 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
         );
         if (!isCurrent(gen)) return;
 
-        // Best case for screen-off listening: every item has server audio, so play the ENTIRE book
-        // (all chapters + the ending) as one flat chunk sequence through a single element. Every
-        // advance — including each chapter boundary — then happens inside an `ended` handler, which
-        // the OS permits while locked; there are no fresh play() calls off promise resolutions for
-        // the browser to block. (The special ending's manifest already carries the spoken announce
-        // as its own first chunk, so no client-side unshift is needed on the audio path.)
+        // Best case for screen-off listening: every item has server audio, so download the ENTIRE
+        // book (all chapters + the ending) and stitch it into ONE continuous MP3 played through a
+        // single element — a single play(), zero JS hops, which is the one playback shape a locked
+        // phone reliably keeps alive. Chunked/streamed playback stalled the moment the screen
+        // locked. (The special ending's manifest already carries the spoken announce as its own
+        // first chunk, so no client-side unshift is needed on the audio path.)
         if (audioElsRef.current && manifests.every((m) => m)) {
           const seq = manifests.flatMap((m) =>
             m!.chunks.map((text, i) => ({ text, url: audioChunkUrl(bookId, m!.hash, i) }))
           );
+          // Downloading + stitching happens before any sound — surface it as a "preparing" state.
+          setStatus("preparing");
           try {
-            await playAudioSequence(gen, seq);
+            await playBook(
+              gen,
+              seq.map((c) => c.url),
+              seq.map((c) => c.text)
+            );
+            finish(gen);
+            return;
           } catch {
             if (!isCurrent(gen)) return;
-            // Audio died mid-book — finish the rest with the browser voice from where it stopped.
-            const remaining = seq.slice(chunkIndexRef.current).map((c) => c.text);
-            await speakChunks(gen, remaining, voice);
+            // Couldn't build/play the single file — fall back to the browser voice for the whole run.
+            setStatus("playing");
+            setMediaPlayback("playing");
+            await speakChunks(
+              gen,
+              seq.map((c) => c.text),
+              voice
+            );
+            finish(gen);
+            return;
           }
-          finish(gen);
-          return;
         }
 
         // Mixed (a book without full server audio): play item by item, speaking where a manifest is
@@ -586,22 +736,27 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
         finish(gen);
       });
     },
-    [begin, prepareVoice, playAudioSequence, speakChunks, playTrack, finish]
+    [begin, prepareVoice, playBook, speakChunks, playTrack, finish]
   );
 
   const pause = useCallback(() => {
-    if (modeRef.current === "audio") currentElRef.current?.pause();
-    else if (SPEECH_SUPPORTED) window.speechSynthesis.pause();
+    if (modeRef.current === "speech") {
+      if (SPEECH_SUPPORTED) window.speechSynthesis.pause();
+    } else {
+      currentElRef.current?.pause();
+    }
     setStatus("paused");
     setMediaPlayback("paused");
   }, []);
 
   const resume = useCallback(() => {
-    if (modeRef.current === "audio")
+    if (modeRef.current === "speech") {
+      if (SPEECH_SUPPORTED) window.speechSynthesis.resume();
+    } else {
       currentElRef.current?.play().catch(() => {
         /* the chunk's onerror handles a dead resume */
       });
-    else if (SPEECH_SUPPORTED) window.speechSynthesis.resume();
+    }
     setStatus("playing");
     setMediaPlayback("playing");
   }, []);
@@ -611,6 +766,13 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
   const skipBack = useCallback(() => {
     if (chunkIndexRef.current <= 0 || !speakRef.current) return;
     chunkIndexRef.current -= 1;
+    if (modeRef.current === "file") {
+      // Single continuous file: just seek back to the previous chunk's start; the element keeps
+      // playing (no token/handler juggling), so background playback is never interrupted.
+      speakRef.current();
+      setStatus("playing");
+      return;
+    }
     if (modeRef.current === "audio") {
       playTokenRef.current = null; // make the in-flight chunk's handlers no-ops
       currentElRef.current?.pause();
