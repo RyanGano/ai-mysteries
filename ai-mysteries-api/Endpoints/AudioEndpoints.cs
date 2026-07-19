@@ -40,7 +40,7 @@ public static class AudioEndpoints
         // whole-book reader can fetch() and stitch chunks without tripping cross-origin CORS on the
         // public blob — an <audio> element (the default) is happy with the cheaper redirect.
         books.MapGet("/audio/chunks/{hash}/{index:int}",
-                async (string bookId, string hash, int index, bool inline, BookStore store, AudioService audio, CancellationToken ct) =>
+                async (string bookId, string hash, int index, bool? inline, BookStore store, AudioService audio, CancellationToken ct) =>
             {
                 if (!audio.Enabled || !store.TryGetBook(bookId, out var book)) return Results.NotFound();
                 if (!audio.TryGetTrack(book, hash, out var track)
@@ -49,7 +49,7 @@ public static class AudioEndpoints
 
                 try
                 {
-                    var chunk = await audio.GetChunkAsync(book, track, index, ct, inline);
+                    var chunk = await audio.GetChunkAsync(book, track, index, ct, inline ?? false);
                     return chunk.BlobUrl is not null
                         ? Results.Redirect(chunk.BlobUrl)
                         : Results.File(chunk.Bytes!, "audio/mpeg", enableRangeProcessing: true);
