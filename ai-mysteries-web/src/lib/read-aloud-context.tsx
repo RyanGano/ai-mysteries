@@ -236,26 +236,42 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
     [notify]
   );
 
-  // Play a track's server-synthesized chunks through the reused element pair: the current chunk
-  // plays on one element while the next preloads on the other (which also lets the API synthesize
-  // it ahead of time on a cache miss). Resolves when the track drains; rejects to request the
-  // speech fallback (chunkIndexRef then holds where to pick up).
-  const playAudioChunks = useCallback(
-    (gen: number, track: PlayTrack) =>
+  // Core audio engine: play a flat, already-resolved sequence of chunks ({ spoken text, chunk URL })
+  // through a SINGLE reused <audio> element, advancing to the next chunk from inside the previous
+  // chunk's `ended` handler. This is the key to screen-off playback: a locked phone keeps only the
+  // one element that's actively sounding alive, and permits a fresh play() only as a continuation on
+  // that same element from inside a media event. The old design broke this two ways — it alternated
+  // between two elements (every other sentence tried to start on the *idle* one) and it drove
+  // chapter boundaries with fresh play() calls off promise resolutions; the OS silently blocks both
+  // in the background, so the reader heard a sentence or two after locking and then stalled.
+  // A flat sequence lets the whole book (all chapters + the ending) play as one unbroken run with
+  // every hop — sentence-to-sentence and chapter-to-chapter — happening inside `ended`. The second
+  // element only ever preloads/warms the next chunk's blob (and triggers its synthesis on a cache
+  // miss); it is never played, so it holds no audio focus and can't steal the OS media session.
+  // Resolves when the sequence drains; rejects (with chunkIndexRef at the failed position) to
+  // request the speech fallback.
+  const playAudioSequence = useCallback(
+    (gen: number, seq: { text: string; url: string }[]) =>
       new Promise<void>((resolve, reject) => {
         const els = audioElsRef.current;
-        const audio = track.audio;
-        if (!els || !audio) {
+        if (!els || seq.length === 0) {
           reject(new Error("no audio"));
           return;
         }
         modeRef.current = "audio";
-        chunksRef.current = track.chunks;
+        chunksRef.current = seq.map((c) => c.text);
         chunkIndexRef.current = 0;
-        const urlOf = (i: number) => audioChunkUrl(audio.bookId, audio.hash, i);
+        const el = els[0]; // the one sounding element, for the whole run
+        const warm = els[1]; // preload-only; never played
+
+        const applyRate = (element: HTMLAudioElement) => {
+          // Loading a new src resets playbackRate to defaultPlaybackRate, so pin both.
+          element.defaultPlaybackRate = rateRef.current;
+          element.playbackRate = rateRef.current;
+        };
 
         const step = () => {
-          if (!isCurrent(gen) || chunkIndexRef.current >= track.chunks.length) {
+          if (!isCurrent(gen) || chunkIndexRef.current >= seq.length) {
             stopAudioElements();
             speakRef.current = null;
             setCanSkipBack(false);
@@ -264,24 +280,21 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
           }
           const idx = chunkIndexRef.current;
           setCanSkipBack(idx > 0);
-          notify(track.chunks[idx]);
+          notify(seq[idx].text);
 
-          const el = els[idx % 2];
-          const other = els[(idx + 1) % 2];
-          const url = urlOf(idx);
+          const url = seq[idx].url;
           const token = {};
           playTokenRef.current = token;
-          currentElRef.current?.pause();
           currentElRef.current = el;
           const live = () => playTokenRef.current === token && isCurrent(gen);
 
           el.onended = () => {
             if (!live()) return;
             chunkIndexRef.current += 1;
-            step();
+            step(); // start the next chunk synchronously inside `ended` → allowed while locked
           };
           // One delayed retry per chunk (a cold chunk can hit a transient synthesis 503); after
-          // that, hand the rest of the track to the browser voice rather than stalling.
+          // that, hand the rest of the run to the browser voice rather than stalling.
           let retried = false;
           const onError = () => {
             if (!live()) return;
@@ -290,7 +303,6 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
               window.setTimeout(() => {
                 if (!live()) return;
                 el.src = url;
-                el.dataset.src = url;
                 applyRate(el);
                 el.play().catch(() => {
                   if (live()) onError();
@@ -303,46 +315,45 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
           };
           el.onerror = onError;
 
-          if (el.dataset.src !== url) {
-            el.dataset.src = url;
-            el.src = url;
-          }
+          // Fresh src on the same element each chunk (every chunk URL differs), then play.
+          el.src = url;
           applyRate(el);
-          if (el.dataset.src === url && el.currentTime > 0) {
-            try {
-              el.currentTime = 0;
-            } catch {
-              /* not seekable yet — it plays from the start anyway */
-            }
-          }
           el.play().catch(() => {
             if (live()) onError();
           });
 
-          // Preload the next chunk on the idle element (this is also what triggers its synthesis
-          // ahead of playback on a cache miss).
-          if (idx + 1 < track.chunks.length) {
-            const nextUrl = urlOf(idx + 1);
-            if (other.dataset.src !== nextUrl) {
-              other.onended = null;
-              other.onerror = null;
-              other.dataset.src = nextUrl;
-              other.preload = "auto";
-              other.src = nextUrl;
+          // Warm the next chunk's blob/synthesis on the idle element — a download only. It is never
+          // played, so it holds no audio focus and can't disrupt background playback of `el`.
+          if (idx + 1 < seq.length) {
+            const nextUrl = seq[idx + 1].url;
+            if (warm.dataset.src !== nextUrl) {
+              warm.onended = null;
+              warm.onerror = null;
+              warm.dataset.src = nextUrl;
+              warm.preload = "auto";
+              warm.src = nextUrl;
             }
           }
-        };
-
-        const applyRate = (el: HTMLAudioElement) => {
-          // Loading a new src resets playbackRate to defaultPlaybackRate, so pin both.
-          el.defaultPlaybackRate = rateRef.current;
-          el.playbackRate = rateRef.current;
         };
 
         speakRef.current = step;
         step();
       }),
     [notify, stopAudioElements]
+  );
+
+  // One track (a single chapter or ending) as an audio sequence.
+  const playAudioChunks = useCallback(
+    (gen: number, track: PlayTrack) => {
+      const audio = track.audio;
+      if (!audio) return Promise.reject(new Error("no audio"));
+      const seq = track.chunks.map((text, i) => ({
+        text,
+        url: audioChunkUrl(audio.bookId, audio.hash, i),
+      }));
+      return playAudioSequence(gen, seq);
+    },
+    [playAudioSequence]
   );
 
   // Play one track: neural audio when the manifest gave us an address, the browser voice
@@ -512,6 +523,31 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
           )
         );
         if (!isCurrent(gen)) return;
+
+        // Best case for screen-off listening: every item has server audio, so play the ENTIRE book
+        // (all chapters + the ending) as one flat chunk sequence through a single element. Every
+        // advance — including each chapter boundary — then happens inside an `ended` handler, which
+        // the OS permits while locked; there are no fresh play() calls off promise resolutions for
+        // the browser to block. (The special ending's manifest already carries the spoken announce
+        // as its own first chunk, so no client-side unshift is needed on the audio path.)
+        if (audioElsRef.current && manifests.every((m) => m)) {
+          const seq = manifests.flatMap((m) =>
+            m!.chunks.map((text, i) => ({ text, url: audioChunkUrl(bookId, m!.hash, i) }))
+          );
+          try {
+            await playAudioSequence(gen, seq);
+          } catch {
+            if (!isCurrent(gen)) return;
+            // Audio died mid-book — finish the rest with the browser voice from where it stopped.
+            const remaining = seq.slice(chunkIndexRef.current).map((c) => c.text);
+            await speakChunks(gen, remaining, voice);
+          }
+          finish(gen);
+          return;
+        }
+
+        // Mixed (a book without full server audio): play item by item, speaking where a manifest is
+        // missing. This path degrades to the continuous browser-speech read the page was built for.
         for (let i = 0; i < items.length; i++) {
           if (!isCurrent(gen)) break;
           const manifest = manifests[i];
@@ -528,7 +564,7 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
         finish(gen);
       });
     },
-    [begin, prepareVoice, playTrack, finish]
+    [begin, prepareVoice, playAudioSequence, speakChunks, playTrack, finish]
   );
 
   const pause = useCallback(() => {
