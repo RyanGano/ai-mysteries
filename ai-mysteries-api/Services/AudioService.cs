@@ -108,14 +108,32 @@ public sealed class AudioService
     // Serve one chunk: redirect to the cached blob when it exists, otherwise synthesize now,
     // upload for next time (best-effort — a failed upload still returns the audio), and hand the
     // bytes back directly so the first listener doesn't pay a second round trip.
-    public async Task<AudioChunk> GetChunkAsync(Book book, AudioTrack track, int index, CancellationToken ct)
+    //
+    // `inline` forces the bytes to be returned even on a cache hit (downloading the blob
+    // server-side) instead of a redirect. The redirect is cheaper and right for an <audio> element
+    // (media elements ignore CORS), but the whole-book reader pulls chunks with fetch() to stitch
+    // one continuous file, and fetch() would fail the cross-origin redirect to the CORS-less public
+    // blob. Serving the bytes through the API keeps that request same-policy (the API's CORS covers
+    // it), so the stitch works.
+    public async Task<AudioChunk> GetChunkAsync(Book book, AudioTrack track, int index, CancellationToken ct, bool inline = false)
     {
         var blobName = $"{book.Id}/{track.Hash}/{index}.mp3";
 
         try
         {
-            if (_container is not null && await _container.GetBlobClient(blobName).ExistsAsync(ct))
-                return new AudioChunk($"{_config.BlobContainerUrl.TrimEnd('/')}/{blobName}", null);
+            if (_container is not null)
+            {
+                var blob = _container.GetBlobClient(blobName);
+                if (await blob.ExistsAsync(ct))
+                {
+                    if (inline)
+                    {
+                        var content = await blob.DownloadContentAsync(ct);
+                        return new AudioChunk(null, content.Value.Content.ToArray());
+                    }
+                    return new AudioChunk($"{_config.BlobContainerUrl.TrimEnd('/')}/{blobName}", null);
+                }
+            }
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)

@@ -102,10 +102,14 @@ export function fetchEndingAudio(bookId: string, code: string): Promise<AudioTra
   return getJson<AudioTrack>(`${base(bookId)}/audio/ending/${encodeURIComponent(code)}`);
 }
 
-// URL of one synthesized chunk. Fetched by an <audio> element, not fetch(), so no CORS is
-// involved; the API redirects to the cached public blob (or streams fresh bytes the first time).
-export function audioChunkUrl(bookId: string, hash: string, index: number): string {
-  return `${base(bookId)}/audio/chunks/${encodeURIComponent(hash)}/${index}`;
+// URL of one synthesized chunk. By default it's for an <audio> element (not fetch()), so no CORS
+// is involved; the API redirects to the cached public blob (or streams fresh bytes the first time).
+// Pass `inline` when the whole-book reader pulls chunks with fetch() to stitch one continuous file:
+// it makes the API serve the bytes directly (CORS-covered) instead of redirecting to the CORS-less
+// blob, which a fetch() would fail.
+export function audioChunkUrl(bookId: string, hash: string, index: number, inline = false): string {
+  const url = `${base(bookId)}/audio/chunks/${encodeURIComponent(hash)}/${index}`;
+  return inline ? `${url}?inline=1` : url;
 }
 
 // The book's whole glossary (unfamiliar-word definitions), cached per book for the session so

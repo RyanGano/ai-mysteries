@@ -36,8 +36,11 @@ public static class AudioEndpoints
         // One chunk of one track, addressed by content hash — never by ending code, so these URLs
         // are safe in address bars and can't be enumerated. Cached: redirect to the public blob.
         // Uncached: synthesize, cache, and stream the bytes straight back.
+        // `?inline=1` streams the bytes even on a cache hit (instead of the blob redirect) so the
+        // whole-book reader can fetch() and stitch chunks without tripping cross-origin CORS on the
+        // public blob — an <audio> element (the default) is happy with the cheaper redirect.
         books.MapGet("/audio/chunks/{hash}/{index:int}",
-                async (string bookId, string hash, int index, BookStore store, AudioService audio, CancellationToken ct) =>
+                async (string bookId, string hash, int index, bool inline, BookStore store, AudioService audio, CancellationToken ct) =>
             {
                 if (!audio.Enabled || !store.TryGetBook(bookId, out var book)) return Results.NotFound();
                 if (!audio.TryGetTrack(book, hash, out var track)
@@ -46,7 +49,7 @@ public static class AudioEndpoints
 
                 try
                 {
-                    var chunk = await audio.GetChunkAsync(book, track, index, ct);
+                    var chunk = await audio.GetChunkAsync(book, track, index, ct, inline);
                     return chunk.BlobUrl is not null
                         ? Results.Redirect(chunk.BlobUrl)
                         : Results.File(chunk.Bytes!, "audio/mpeg", enableRangeProcessing: true);

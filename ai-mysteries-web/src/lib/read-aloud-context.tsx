@@ -718,8 +718,10 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
         // locked. (The special ending's manifest already carries the spoken announce as its own
         // first chunk, so no client-side unshift is needed on the audio path.)
         if (audioElsRef.current && manifests.every((m) => m)) {
+          // inline=true → the API streams the bytes (CORS-covered) instead of redirecting to the
+          // CORS-less blob, so the fetch()-and-stitch below actually succeeds on cached chunks.
           const seq = manifests.flatMap((m) =>
-            m!.chunks.map((text, i) => ({ text, url: audioChunkUrl(bookId, m!.hash, i) }))
+            m!.chunks.map((text, i) => ({ text, url: audioChunkUrl(bookId, m!.hash, i, true) }))
           );
           // Downloading + stitching happens before any sound — surface it as a "preparing" state.
           setStatus("preparing");
