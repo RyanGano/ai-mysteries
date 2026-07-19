@@ -392,9 +392,39 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
       if (!els || chunkUrls.length === 0) throw new Error("no audio");
       const el = els[0];
 
-      // Fetch every chunk's bytes, in order, with a small amount of concurrency. A cold chunk is
-      // synthesized on first fetch, so this can be slow the very first time a book is listened to;
-      // after that they're cached blobs and it's quick.
+      // Fetch every chunk's bytes, in order, with a little concurrency. A cold chunk is synthesized
+      // on first fetch, so a whole-book build can be slow the very first time it's listened to (after
+      // that they're cached blobs and it's quick) — and during a cold build the free-tier API can
+      // rate-limit (429) or briefly fail a slow synthesis (5xx). Those are transient, so we RETRY
+      // with backoff rather than aborting the whole book (which would drop the reader to the robot
+      // voice). Only a genuine 4xx (other than 429) or exhausting the retries gives up.
+      const sleep = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
+      const fetchChunkBytes = async (url: string): Promise<ArrayBuffer> => {
+        const MAX_ATTEMPTS = 8;
+        let backoff = 700;
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+          if (!isCurrent(gen)) throw new Error("cancelled");
+          let resp: Response;
+          try {
+            resp = await fetch(url);
+          } catch (err) {
+            // Network error — transient; retry unless we've run out of attempts.
+            if (attempt === MAX_ATTEMPTS) throw err;
+            await sleep(backoff);
+            backoff = Math.min(backoff * 2, 8000);
+            continue;
+          }
+          if (resp.ok) return await resp.arrayBuffer();
+          // A 4xx that isn't 429 won't fix itself — fail fast (don't burn the retry budget).
+          if (resp.status !== 429 && resp.status < 500) throw new Error(`chunk ${resp.status}`);
+          // 429 / 5xx: rate-limited or a slow cold synthesis — wait and retry.
+          if (attempt === MAX_ATTEMPTS) throw new Error(`chunk ${resp.status}`);
+          await sleep(backoff);
+          backoff = Math.min(backoff * 2, 8000);
+        }
+        throw new Error("chunk fetch exhausted");
+      };
+
       const buffers = new Array<ArrayBuffer>(chunkUrls.length);
       let done = 0;
       let cursor = 0;
@@ -403,13 +433,11 @@ export function ReadAloudProvider({ children }: { children: React.ReactNode }) {
           const i = cursor++;
           if (i >= chunkUrls.length) return;
           if (!isCurrent(gen)) throw new Error("cancelled");
-          const resp = await fetch(chunkUrls[i]);
-          if (!resp.ok) throw new Error(`chunk ${i} failed`);
-          buffers[i] = await resp.arrayBuffer();
+          buffers[i] = await fetchChunkBytes(chunkUrls[i]);
           onProgress?.(++done, chunkUrls.length);
         }
       };
-      await Promise.all(Array.from({ length: 6 }, worker));
+      await Promise.all(Array.from({ length: 4 }, worker));
       if (!isCurrent(gen)) throw new Error("cancelled");
 
       // Per-chunk start times from byte length at the known CBR bitrate, and one stitched blob.
