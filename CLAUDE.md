@@ -146,6 +146,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `No Crime` | no crime has been committed — the mystery is a misunderstanding or loss |
 | `Railway` | a train or rail setting is central |
 | `Romance` | a romance thread is central to the story |
+| `School` | a school setting (classroom, gym, playground, the crossing outside) is central |
 | `Space` | a space station/off-world setting is central |
 | `Sport` | a sporting competition or event is central |
 | `Technology` | tech system or industrial setting is load-bearing to the plot |
@@ -153,6 +154,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Theft` | a genuine theft of a valuable object is the crime (a real culprit, not a misunderstanding) |
 | `Wedding` | wedding or ceremony setting |
 | `Western` | frontier/Western US historical setting |
+| `Wine` | a vineyard/winery/winemaking setting is central |
 
 Deliberately **not** a tag: `Mystery`. Every book on the site is a whodunit with an
 investigator, so the tag carries no filtering signal — don't re-add it.
