@@ -102,9 +102,30 @@ Extract or default these parameters before writing anything:
 | Endings | "multiple endings" is the baseline | see ending matrix below |
 | Weighting | "simple endings roll more often" is the **site default** | see Phase 2 |
 
-Convert reading time to a word budget: ~230 words/min for adults, ~160 words/min for
-middle-grade readers. The budget covers the **manuscript only** (chapters); each ending
-adds ~600–1,000 words on top but readers only see one at a time.
+Convert reading time to a word budget at **250 words/min, for every audience** — that is the flat
+rate the API uses to derive the reading time the catalog displays (`Services/ReadingTime.cs`), so
+it's the only rate that makes a brief's "~20 min" and the site's "~20 min read" mean the same thing.
+A middle-grade reader genuinely reads slower than that, and the label is still honest — it's a
+general-reader estimate, not a promise about one reader. **Do not budget kid-friendly books at 160
+wpm:** that yields a "10 min" book the catalog labels ~6 min, and chasing the gap afterward is what
+turns length into an editing loop.
+
+The budget covers the **manuscript only** (chapters); each ending adds ~600–1,000 words on top but
+readers only see one at a time.
+
+**Write to length once, then stop.** Put a per-chapter word budget in `Outline.md` (total ÷ chapters,
+adjusted for the beat) and write to it. When the manuscript is done, measure **once**:
+
+```
+node scripts/book-stats.cjs <bookId> --target <brief minutes>
+```
+
+Anything within **±15%** of the brief is *done* — record the actual length and move on. If it's
+outside, take **one** adjustment pass; if that doesn't land it, keep the prose and record the actual
+length in the archive row. Never enter a write → count → trim → count loop: it's the single most
+expensive habit in the build, and the finished length is a fact to report, not a target to hit.
+`book-stats.cjs` also verifies `meta.json`'s `wordCount` against the files — that field is what the
+catalog reads, so a stale value mislabels the book on the live site.
 
 | Target | Manuscript words | Chapters | Suspects | Endings (typical) |
 |---|---|---|---|---|
@@ -502,7 +523,9 @@ categories) and `npm run dev` in `ai-mysteries-web/`.
 Checklist — all of `put_book_in_site.md` §3, plus the authoring-quality checks:
 
 - [ ] Landing page lists the new book; cover URL actually loads.
-- [ ] Full read-through at the target pace — does the length match the brief?
+- [ ] `node scripts/book-stats.cjs <bookId> --target <brief minutes>` — `wordCount` matches the
+      files and the length is within ±15% (or the actual is recorded). This replaces eyeballing the
+      pace; don't re-measure by hand.
 - [ ] Last chapter shows the payoff copy; its CTA reveals an ending.
 - [ ] **Special ending is rare.** Confirm in the `selection` rules that `specialEnding`
       is set to a random integer 1–1000 (or `0` for code-only), then hit

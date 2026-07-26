@@ -51,6 +51,18 @@ node scripts/gen-xrefs.cjs [bookId]     # regenerate clues.json + xref-markers.j
 node scripts/check-xrefs.cjs [bookId]   # validate the generated JSON against the manuscript (all books if omitted)
 ```
 
+Authoring checks (also from the **repo root**):
+
+```
+node scripts/book-stats.cjs <bookId> --target <min>  # word counts + displayed reading time vs the brief
+node scripts/book-stats.cjs                          # one line per book; flags stale meta.json wordCounts
+```
+
+Reading time is derived from `meta.json`'s `wordCount` at a flat **250 wpm**
+(`Services/ReadingTime.cs`), so word budgets are set at 250 wpm for every audience — see
+*Phase 0* in `create_new_book.md`. A book within **±15%** of its brief is done; measure once
+rather than trimming toward a target.
+
 The web dev server points at the API via `VITE_API_BASE_URL` (defaults to `http://localhost:5180`
 — see `ai-mysteries-web/.env.example`). Run the API and the web dev server together.
 
