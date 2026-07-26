@@ -56,7 +56,15 @@ Authoring checks (also from the **repo root**):
 ```
 node scripts/book-stats.cjs <bookId> --target <min>  # word counts + displayed reading time vs the brief
 node scripts/book-stats.cjs                          # one line per book; flags stale meta.json wordCounts
+node scripts/verify-book.cjs <bookId>                # end-to-end playability check against a running API
+node scripts/verify-book.cjs <bookId> --api <url> --wait 90   # same, against prod; polls until it appears
+node scripts/catalog-tags.cjs --api <url>            # the live tag union (--local reads Content/ instead)
 ```
+
+`verify-book.cjs` covers the mechanical half of authoring verification — catalog entry, every
+chapter body, varied random draws with no repeated culprit combo, code round-trip, bogus-code
+rejection, markers resolving to clues, glossary, cover. It's the same run locally and against prod,
+so add new checks there rather than doing them by hand.
 
 Reading time is derived from `meta.json`'s `wordCount` at a flat **250 wpm**
 (`Services/ReadingTime.cs`), so word budgets are set at 250 wpm for every audience — see

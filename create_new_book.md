@@ -520,26 +520,34 @@ Run both halves (`CLAUDE.md` Commands): `dotnet run` in `ai-mysteries-api/` (sta
 the schema validator — it throws on missing files, duplicate codes, unweighted
 categories) and `npm run dev` in `ai-mysteries-web/`.
 
-Checklist — all of `put_book_in_site.md` §3, plus the authoring-quality checks:
+**Most of this is one command.** With the API up, run:
 
-- [ ] Landing page lists the new book; cover URL actually loads.
-- [ ] `node scripts/book-stats.cjs <bookId> --target <brief minutes>` — `wordCount` matches the
-      files and the length is within ±15% (or the actual is recorded). This replaces eyeballing the
-      pace; don't re-measure by hand.
-- [ ] Last chapter shows the payoff copy; its CTA reveals an ending.
-- [ ] **Special ending is rare.** Confirm in the `selection` rules that `specialEnding`
-      is set to a random integer 1–1000 (or `0` for code-only), then hit
-      `GET /api/books/<bookId>/endings/random` a handful of times — the special ending should not
-      turn up (you'd have to draw `specialEnding` times to see it). No exhaustive tally; a
-      spot-check is enough.
-- [ ] **Random draws vary.** Reveal an ending, then "Reveal another ending" a few times —
-      each draw should be a different ending and never repeat the current culprit combination.
-- [ ] **Code round-trips.** Take one ending you got at random, enter its code on the landing
-      input, and confirm you land on that same ending; a made-up code is rejected.
-- [ ] Xref glyphs appear in endings, hover shows the chapter passage, and the deep link
-      highlights it in the reader.
-- [ ] Fair-play audit: for each ending, confirm its ≥2 clues exist in the chapters and
-      that no committed file mentions any code, slug+culprit pairing, or character name.
+```
+node scripts/verify-book.cjs <bookId>                        # add --api <baseUrl> for a non-default port
+node scripts/book-stats.cjs  <bookId> --target <brief minutes>
+```
+
+`verify-book.cjs` asserts the whole mechanical checklist against the running API — book in the
+catalog with a reading time, tags and a cover that loads; every chapter body resolving and the last
+one ending the book; N random draws all distinct with no repeated culprit combination; a real code
+round-tripping and a bogus one rejected; markers resolving to clues; the glossary endpoint. Don't
+re-do these by hand or with ad-hoc `curl`/`node -e` — if a check is missing, add it to the script so
+the next book gets it too.
+
+Then the three things a script can't judge:
+
+- [ ] **Eyes on it once in the browser** (`npm run dev`): the catalog card and landing page look
+      right, the reader is pleasant to read, and a revealed ending renders with its binoculars glyphs
+      and deep-links back into the manuscript.
+- [ ] **Fair-play audit:** every ending's ≥2 clues really are in the chapters and really do
+      foreshadow *that* mechanism. `check-xrefs.cjs` proves the quotes still match the prose; it
+      cannot tell you a clue is a fair plant, so this one stays human.
+- [ ] **Spoiler sweep:** no committed file mentions any code, slug+culprit pairing, or character
+      name — and `git status` shows nothing book-specific staged.
+
+`selection.specialEnding` rarity needs no test: it's a fixed 1-in-1000 offset, so a handful of draws
+proving it *doesn't* appear tells you nothing. Just confirm the value is a fresh random 1–1000 (or
+`0` for code-only). `verify-book.cjs` flags it as a note if a draw ever does hit the special.
 
 ## Phase 7 — Ship (turn-key, and not optional)
 
@@ -554,8 +562,16 @@ there; this is just the checklist.** From the repo root, after `az login`:
    sync (`full-diff` for a deep check).
 3. **No site push** — a new book is data-only (`Content/` + `public/covers/` are gitignored). Push
    only if the brief required a genuine generic UI/API change — the rare exception.
-4. **Confirm live** — within one refresh poll (~60s) prod serves it with no restart/redeploy: prod
-   `/api/books` lists the title, one ending code resolves against prod, the cover URL returns `200`.
+4. **Confirm live** — within one refresh poll (~60s) prod serves it with no restart/redeploy. One
+   command does the whole confirmation, polling until the book appears rather than guessing a sleep:
+
+   ```
+   node scripts/verify-book.cjs <bookId> --api <prod base URL> --wait 90
+   ```
+
+   (The prod host is in the local runbook, not this repo.) This runs the same assertions as Phase 6
+   against production, so "confirmed live" means catalog entry, chapters, random draws, a code
+   round-trip and the public cover URL — not just that the title showed up.
 
 ---
 

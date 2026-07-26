@@ -80,21 +80,29 @@ Two gitignored, local-only files:
    - that Phases 0–4 are complete: `meta.json`, `book.json` + chapters, `endings.json` + endings,
      the cover at `ai-mysteries-web/public/covers/<bookId>.webp`, and `docs/<bookId>/EndingClueMap.md`
      with the Clue Library + Marker-placement sections already filled in;
-   - its job: **Phase 5** (`node scripts/gen-xrefs.cjs <bookId>` then `check-xrefs.cjs` until it
-     reports OK — on a mismatch fix the *clue quote* to match the manuscript, **never** edit the
-     manuscript prose to match a quote), **Phase 6** (the mechanical checks — `dotnet run` boots
-     clean, cover URL loads, random draws vary and don't repeat a combination, one real code
-     round-trips, a bogus code is rejected, xref glyphs render and deep-link), and **Phase 7**
-     (cover upload, `seed`, `diff` in sync, then confirm prod lists the book and one ending code
-     resolves against prod) — exact commands in `put_book_in_site.md` §4;
+   - its job, which is now mostly four commands:
+     - **Phase 5** — `node scripts/gen-xrefs.cjs <bookId>`, then `check-xrefs.cjs <bookId>` until it
+       reports OK. On a failure **read its DIAGNOSIS and follow the remedy it names** — a drifted
+       passage means the *clue quote* is stale, so fix the quote in `EndingClueMap.md`; never edit
+       the manuscript prose to match a quote, and don't go reading `gen-xrefs.cjs`.
+     - **Phase 6** — `node scripts/verify-book.cjs <bookId>` against the local API, plus
+       `node scripts/book-stats.cjs <bookId> --target <brief minutes>`. These replace the old
+       hand-run checklist; **don't hand-roll `curl` or inline `node -e` checks**, and don't re-measure
+       word counts. If `book-stats` reports a `wordCount` mismatch, fix `meta.json` — the catalog
+       reads that field.
+     - **Phase 7** — cover upload, `seed`, `diff` in sync (commands in `put_book_in_site.md` §4),
+       then `node scripts/verify-book.cjs <bookId> --api <prod base URL> --wait 90` to confirm live.
+     - Length is **not** its call: if `book-stats` says the book is off-target, report the number.
+       Do not trim or pad the prose to chase it.
    - the **bookkeeping text you have already composed** (see step 5) — the archive row, the registry
      fingerprint row, and the memory file body — so it only has to write files, not invent content
      it can't know;
    - the standing rules it could otherwise violate: **nothing book-specific gets committed**
      (`Content/`, `docs/`, `public/covers/` are gitignored — `git status` must come back clean of
      book data), and no code/culprit/clue detail lands in any committed file;
-   - a request to report back: `check-xrefs` result, the seeded content version, `diff` status, the
-     prod book count, the ending code it resolved against prod, and any check that failed.
+   - a request to report back: `check-xrefs` result, `verify-book` pass/fail counts for **both** the
+     local and prod runs, the `book-stats` length verdict, the seeded content version, `diff` status,
+     and any check that failed or was skipped.
 
    **You still own the outcome.** Read its report before writing your summary. If it reports a
    failed or skipped check, or can't get to live, fix it (or escalate the one blocker) — do not
