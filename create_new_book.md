@@ -66,7 +66,8 @@ you're on that step** — don't pre-read the whole doc. The *Reference* sections
 parameter sheets, definition-of-done) are consult-when-needed, not part of the linear read.
 
 1. **Interpret the brief** → word budget, suspect count, ending count (Phase 0).
-2. **Pass the Distinctness Contract** → read `docs/book-registry.md`, confirm ≥3-of-6-axis novelty
+2. **Pass the Distinctness Contract** → `node scripts/pick-axes.cjs --audience <…>` to roll three
+   candidate axis combinations, pick the one that fits the premise, confirm ≥3-of-6-axis novelty
    (Phase 0.5). Do this *before* writing prose.
 3. **Design the dossier** in `docs/<bookId>/` → outline, character bible, ending matrix (with a
    resolution-kind spread), style guide, cover prompt (Phase 1).
@@ -170,6 +171,38 @@ equally roomy: **setting, mystery type, and voice are high-cardinality** (lots o
 them), while **method, structure, and resolution-kind are low-cardinality** (few real options and
 already crowding — see the over-used flags below). Earn your three differences on the roomy axes
 first.
+
+### Roll the crowded axes — don't choose them
+
+**Start here, before designing anything.** From the repo root:
+
+```
+node scripts/pick-axes.cjs --audience <adult|all|kid> [--type <mystery type>]
+```
+
+It reads the registry, counts how crowded every option on the crowded axes already is, scores the
+whole combination space, and proposes **three** candidates with a confidence score, the rarity of
+each axis value, and which shipped books sit closest.
+
+**Why a dice-roll instead of your judgement:** you will reach for the same few shapes. That is not a
+hypothetical — it is how four cozies ended up as one template find-replaced and had to be de-cloned,
+and it's why *"reads a written record"* and *"one spotlight per suspect"* got over-used in the first
+place. Sampling has no favourite. It also turns the ≥3-axis gate from an honour check into
+arithmetic.
+
+How to use the output:
+
+- **Pick the candidate that best fits the premise** — a high score is not permission to force a bad
+  fit. A confident-but-wrong combination makes a worse book than a workable-but-right one.
+- **Re-rolling is free.** The search is local and instant, so re-run rather than settle. If you
+  re-roll more than two or three times, the problem is probably the premise, not the dice.
+- **If every candidate is weak**, the script names the dominant reason. A structural one (asking for
+  a death in a kid-friendly book) won't re-roll away — change the constraint or re-cut the premise.
+- It covers **type, method, spine, and the ending spread only**. The setting is the premise's, and
+  the voice/opening beat is yours to invent fresh (axis 6) — the register hint is a nudge, not an
+  instruction.
+- `node scripts/pick-axes.cjs --list` shows the menus with current crowding, if you want to see
+  what's genuinely unused before deciding.
 
 1. **Mystery type** — what actually happened. Don't default to "an object is lost." Menu: a thing
    is **lost** / **damaged or changed** / **swapped** / an **impossible event** / **a person is

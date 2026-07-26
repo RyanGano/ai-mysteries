@@ -33,9 +33,12 @@ Two gitignored, local-only files:
    endings. Also run the Phase 0.5 **anti-echo grep** yourself; it needs your knowledge of the
    prose. Then hand off to the ship agent (step 4) — you do **not** run Phases 5–7 inline.
    Honor every standing rule:
-   - **Distinctness:** read **only** [`docs/book-registry.md`](../../../docs/book-registry.md) for
-     the 3-of-6-axis check (`create_new_book.md` Phase 0.5) — don't re-read other books' memories or
-     `Content/` to "learn the pattern." The registry is the current, compact source.
+   - **Distinctness:** run `node scripts/pick-axes.cjs --audience <adult|all|kid>` **first** and
+     build from one of its three candidates (`create_new_book.md` Phase 0.5). Don't hand-pick the
+     detective method or chapter spine — that's where sameness creeps in. Re-rolling is free, so
+     re-roll rather than force a bad fit; if the script says all candidates are weak, read the
+     dominant reason it prints. The script reads `docs/book-registry.md` for you, so don't re-read
+     other books' memories or `Content/` to "learn the pattern."
    - **Ship to live by default** — don't stop at local files or localhost (per `CLAUDE.md`
      "Adding a book" and the user's standing preference). Only stop short if the user said
      "just draft it" or a ship step needs a credential you lack — then report the one blocker.

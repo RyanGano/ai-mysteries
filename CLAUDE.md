@@ -54,6 +54,8 @@ node scripts/check-xrefs.cjs [bookId]   # validate the generated JSON against th
 Authoring checks (also from the **repo root**):
 
 ```
+node scripts/pick-axes.cjs --audience adult          # roll 3 candidate axis combos for a new book
+node scripts/pick-axes.cjs --list                    # the axis menus + how crowded each option is
 node scripts/book-stats.cjs <bookId> --target <min>  # word counts + displayed reading time vs the brief
 node scripts/book-stats.cjs                          # one line per book; flags stale meta.json wordCounts
 node scripts/verify-book.cjs <bookId>                # end-to-end playability check against a running API
