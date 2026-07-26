@@ -81,6 +81,12 @@ parameter sheets, definition-of-done) are consult-when-needed, not part of the l
     (Phase 7).
 11. **Final report** → the one-row summary table.
 
+> **Running under the `add-todays-book` skill?** Steps 8–10 (Phases 5–7) are delegated to a Sonnet
+> subagent rather than run inline — by then your context holds the whole book, and those turns are
+> the most expensive and least judgment-heavy in the build. The skill owns that handoff; follow its
+> step 4 for the brief. Everything about *what* each phase must accomplish is unchanged, including
+> Phase 7 being mandatory.
+
 ---
 
 ## Phase 0 — Interpret the brief

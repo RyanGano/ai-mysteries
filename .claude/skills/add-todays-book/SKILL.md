@@ -26,11 +26,13 @@ Two gitignored, local-only files:
 2. **Mark it in progress.** Edit that row's status to `🛠 in progress` before you start, so a
    resumed session knows where it was.
 
-3. **Build it live.** Treat the row's premise + length + audience + candidate tags as the brief,
-   then follow [`create_new_book.md`](../../../create_new_book.md) **all the way through** —
-   design the mystery, write the manuscript + weighted endings, plant clues, wire
-   cross-references, verify, generate + upload the cover, seed Cosmos, and confirm it's serving
-   from the prod API. Honor every standing rule:
+3. **Write it (Phases 0–4).** Treat the row's premise + length + audience + candidate tags as the
+   brief, then follow [`create_new_book.md`](../../../create_new_book.md) through **Phase 4** —
+   interpret the brief, pass the Distinctness Contract, design the dossier, author `meta.json`,
+   generate the cover image, write the manuscript logging clue quotes as you go, and write the
+   endings. Also run the Phase 0.5 **anti-echo grep** yourself; it needs your knowledge of the
+   prose. Then hand off to the ship agent (step 4) — you do **not** run Phases 5–7 inline.
+   Honor every standing rule:
    - **Distinctness:** read **only** [`docs/book-registry.md`](../../../docs/book-registry.md) for
      the 3-of-6-axis check (`create_new_book.md` Phase 0.5) — don't re-read other books' memories or
      `Content/` to "learn the pattern." The registry is the current, compact source.
@@ -61,7 +63,48 @@ Two gitignored, local-only files:
      |---|---|---|---|
      | <book title> | <displayed reading time> | <final tags> | <`selection.specialEnding`, or `0`/none> |
 
-4. **Record it.** When the book is verified live, do all three (cheap, keeps every tracker current):
+4. **Ship it via the ship agent (Phases 5–7).** Do **not** run these phases inline. Spawn **one**
+   `general-purpose` subagent with `model: "sonnet"` and `run_in_background: false`, and let it do
+   the mechanical tail: cross-references, local verification, cover upload, Cosmos seed, and the
+   live-on-prod confirmation.
+
+   **Why:** by Phase 5 your context holds the whole dossier, manuscript, and every ending — roughly
+   200K+ tokens that get re-sent on every turn. The tail phases are the *least* judgment-heavy and
+   the *most* expensive turns in the run (xref exact-match debugging and the seed/verify loop are
+   both iterative). A fresh subagent resets that context to near-zero **and** runs at a cheaper
+   rate. This is a cost decision only — it must not lower the bar on any check.
+
+   The subagent starts cold, so the brief must be self-contained. Give it, explicitly:
+
+   - the `bookId`, the book title, and the repo root;
+   - that Phases 0–4 are complete: `meta.json`, `book.json` + chapters, `endings.json` + endings,
+     the cover at `ai-mysteries-web/public/covers/<bookId>.webp`, and `docs/<bookId>/EndingClueMap.md`
+     with the Clue Library + Marker-placement sections already filled in;
+   - its job: **Phase 5** (`node scripts/gen-xrefs.cjs <bookId>` then `check-xrefs.cjs` until it
+     reports OK — on a mismatch fix the *clue quote* to match the manuscript, **never** edit the
+     manuscript prose to match a quote), **Phase 6** (the mechanical checks — `dotnet run` boots
+     clean, cover URL loads, random draws vary and don't repeat a combination, one real code
+     round-trips, a bogus code is rejected, xref glyphs render and deep-link), and **Phase 7**
+     (cover upload, `seed`, `diff` in sync, then confirm prod lists the book and one ending code
+     resolves against prod) — exact commands in `put_book_in_site.md` §4;
+   - the **bookkeeping text you have already composed** (see step 5) — the archive row, the registry
+     fingerprint row, and the memory file body — so it only has to write files, not invent content
+     it can't know;
+   - the standing rules it could otherwise violate: **nothing book-specific gets committed**
+     (`Content/`, `docs/`, `public/covers/` are gitignored — `git status` must come back clean of
+     book data), and no code/culprit/clue detail lands in any committed file;
+   - a request to report back: `check-xrefs` result, the seeded content version, `diff` status, the
+     prod book count, the ending code it resolved against prod, and any check that failed.
+
+   **You still own the outcome.** Read its report before writing your summary. If it reports a
+   failed or skipped check, or can't get to live, fix it (or escalate the one blocker) — do not
+   pass its optimism through. If it hits a missing credential, report that single blocker per the
+   ship-to-live rule above. Keep the fair-play audit (every ending's ≥2 clues actually present)
+   with **yourself** — that needs the endings in context.
+
+5. **Record it.** Compose these **before** spawning the ship agent in step 4 and pass them in its
+   brief; verify they landed when it reports back. All three are cheap and keep every tracker
+   current:
    - **Move the queue row:** delete it from `docs/book-ideas.md` and **append** it to the "Built"
      table in `docs/book-ideas-archive.md` with status `✅ built`, the build date, and final `bookId`.
    - **Append a fingerprint row** to [`docs/book-registry.md`](../../../docs/book-registry.md) — the
@@ -69,12 +112,12 @@ Two gitignored, local-only files:
      structure spine · length · audience · tags. **Structural and spoiler-light only** (no codes,
      culprits, or sentinel/special identities). This is what stops the registry going stale.
 
-5. **Save a slim memory.** Add a **short pointer** memory file (a few lines: title, bookId, one-line
+6. **Save a slim memory.** Add a **short pointer** memory file (a few lines: title, bookId, one-line
    premise, "see `docs/book-registry.md` row N for the fingerprint") plus a one-line entry in
    `MEMORY.md`. Don't write the old ~40-line full record — the registry row + the gitignored design
    docs hold the detail now; the memory just makes the book discoverable across sessions.
 
-6. **Refill the queue when it runs out — big batch, infrequently.** After building, count the
+7. **Refill the queue when it runs out — big batch, infrequently.** After building, count the
    remaining `⬜ queued` rows in `docs/book-ideas.md`. Only when the queue is **empty** (the row
    you just built was the last `⬜ queued` one) add a **fresh batch of 25–50 new ideas** under a
    new `## Batch N — drafted <date>` heading, following the constraints below. Prefer one large,
@@ -117,6 +160,14 @@ once built rows move to the archive — don't reuse a number).
 ## Notes
 
 - One book per invocation unless the user explicitly asks for more.
+- **Turn discipline is the main cost lever.** A build session runs at 200K–270K tokens of context,
+  re-sent on every turn, so roughly 60% of a run's cost is context re-reads — not the prose. Two
+  habits matter more than anything else: batch your edits instead of making many small ones, and
+  **don't re-read files you've already read** (especially other books' `Content/`, which
+  `create_new_book.md` already forbids). Writing is cheap; looping is not.
+- **Model split:** the writing phases run on Opus (the session model); Phases 5–7 run on Sonnet in
+  the step-4 subagent. Don't spawn extra subagents beyond that one — each cold start re-reads the
+  playbooks and gives back most of the saving.
 - The queue file and all book content are gitignored — editing them is **not** a site-code
   change and needs no redeploy. Don't commit the queue or book data.
 - If no row is `⬜ queued` and you can't find the file, tell the user the backlog is missing
