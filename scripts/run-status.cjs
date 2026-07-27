@@ -138,8 +138,20 @@ function report() {
     process.exit(2);
   }
 
-  const { p, f } = files[0];
-  const { events, perModel, tools, turns, bookId } = readSession(p);
+  // Prefer the newest session that is actually building a book. Plain "newest" picks whichever
+  // Claude session touched the repo last, which is usually an interactive one you're already
+  // watching — not the headless build this tool exists to show you.
+  let chosen = null;
+  for (const cand of files.slice(0, 6)) {
+    const parsed = readSession(cand.p);
+    if (!chosen) chosen = { ...cand, ...parsed };
+    if (parsed.bookId) {
+      chosen = { ...cand, ...parsed };
+      break;
+    }
+  }
+  const { p, f } = chosen;
+  const { events, perModel, tools, turns, bookId } = chosen;
   if (!events.length) {
     console.log(`session ${f.slice(0, 8)} — no tool activity recorded yet`);
     return false;
