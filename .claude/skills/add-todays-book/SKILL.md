@@ -43,11 +43,13 @@ Two gitignored, local-only files:
      "Adding a book" and the user's standing preference). Only stop short if the user said
      "just draft it" or a ship step needs a credential you lack — then report the one blocker.
    - **Tags:** the live catalog (`GET /api/books` on the prod API), not `CLAUDE.md`, is the
-     source of truth for which tags already exist — fetch it and union every book's `tags` array
-     before deciding. Reuse a match whenever one fits; only add a new tag if nothing matches (then
-     optionally add a "when to use" line to the glossary table in `CLAUDE.md` — a documentation
-     courtesy, not a requirement, since the tag itself ships live via Cosmos regardless). The row's
-     "candidate tags" are a hint, not a mandate — finalize them from the actual story.
+     source of truth for which tags already exist. Fetch it with **`node scripts/catalog-tags.cjs
+     --api <prod base URL>`** — one call, not a hand-rolled `curl`/`node -e` parse first (that's
+     redundant spend for the same data the script already gives you). Reuse a match whenever one
+     fits; only add a new tag if nothing matches (then optionally add a "when to use" line to the
+     glossary table in `CLAUDE.md` — a documentation courtesy, not a requirement, since the tag
+     itself ships live via Cosmos regardless). The row's "candidate tags" are a hint, not a
+     mandate — finalize them from the actual story.
    - **Length / audience:** hit the row's target reading time and audience. Kid-friendly rows get
      the easy-reading treatment (simple names, plain words) per `CLAUDE.md` and `create_new_book.md`
      Phase 0.
@@ -107,9 +109,15 @@ Two gitignored, local-only files:
      local and prod runs, the `book-stats` length verdict, the seeded content version, `diff` status,
      and any check that failed or was skipped.
 
-   **You still own the outcome.** Read its report before writing your summary. If it reports a
-   failed or skipped check, or can't get to live, fix it (or escalate the one blocker) — do not
-   pass its optimism through. If it hits a missing credential, report that single blocker per the
+   **You still own the outcome, but that means reading its report, not re-running its work.** The
+   entire point of Phase 5-7 in the subagent is that its checks run at the cheap rate, in a
+   near-empty context — re-running `diff`, `verify-book.cjs`, or any curl/node check yourself
+   after it reports back spends those same tokens again at Opus rates, in your now-200K+-token
+   context, which is the single most expensive place in the run to do it (confirmed happening in
+   the 2026-07-27 run: the main session re-ran the whole prod verification tail after the
+   subagent had already passed it). Trust a clean report. Only re-touch something yourself if the
+   subagent's report says a check **failed or was skipped** — then fix that specific thing, not
+   the whole tail. If it hits a missing credential, report that single blocker per the
    ship-to-live rule above. Keep the fair-play audit (every ending's ≥2 clues actually present)
    with **yourself** — that needs the endings in context.
 
