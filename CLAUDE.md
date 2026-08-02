@@ -155,6 +155,7 @@ When tagging a book, work through these steps in order:
 Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authoritative live list):
 |---|---|
 | `AI` | AI system is a character or central to the plot |
+| `Animals` | an animal is the subject of the mystery (missing, hurt, or the thing everyone is hunting) |
 | `Archaeology` | an excavation/dig setting is central |
 | `Aviation` | an airplane/flight setting is central |
 | `Cozy` | low-stakes, warm-toned, no violence |
