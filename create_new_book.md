@@ -250,6 +250,27 @@ How to use the output:
    across books per the* Voice *default in `CLAUDE.md`. Vary the register; keep the hand. The
    failure mode this axis kills is sameness of opening, not the shared baseline feel.)*
 
+### Detective gender balance (soft — tracked, not gated)
+
+**Track it, nudge it, never force it.** An audit on 2026-08-02 found the site's detectives skewed
+heavily female (roughly 32 female leads vs. 6 male among identifiable protagonists across the
+books shipped by then) — not a deliberate choice, just nothing was tracking it.
+`docs/detective-gender-tally.md` logs one row per shipped book so this self-corrects over time.
+
+- **Before designing the detective**, check that file's running count. If one gender is running
+  well ahead, **lean the new detective toward the other one** when the premise doesn't already
+  imply a gender.
+- **This is a soft nudge, not alternation.** Don't mechanically alternate book to book — that reads
+  as its own pattern and readers can spot it. Aim for the running ratio to drift back toward
+  roughly even *over many books*, not for any single book to "owe" a gender.
+- **Never force it against the story.** A period-specific gendered role (a 1962 submarine
+  sonarman, a Pullman porter, a Victorian cricket umpire) should stay true to the period unless
+  you're deliberately subverting it — historical accuracy and premise fit outrank the tally. Lean
+  on this rule hardest in contemporary/kid-friendly/all-ages books, where the detective's gender
+  is usually a free choice and is exactly where the skew crept in.
+- **Log the result** in `docs/detective-gender-tally.md` when you ship (the `add-todays-book`
+  skill does this alongside the registry row).
+
 ### Sentence-level anti-echo (applies on top of the six axes)
 
 The axes catch *design* sameness; this rule catches *prose* sameness. Books have shipped whose

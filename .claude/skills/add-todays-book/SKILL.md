@@ -130,6 +130,11 @@ Two gitignored, local-only files:
      single distinctness source the next build reads. Fill setting · mystery type · detective method ·
      structure spine · length · audience · tags. **Structural and spoiler-light only** (no codes,
      culprits, or sentinel/special identities). This is what stops the registry going stale.
+   - **Append a row** to
+     [`docs/detective-gender-tally.md`](../../../docs/detective-gender-tally.md) — bookId,
+     detective name, gender, and (if notable) why that gender was picked, e.g. "leaning male, tally
+     running female-heavy" or "period role, historically male." Keeps the soft gender-balance nudge
+     in `create_new_book.md` Phase 0.5 accurate for the next build.
 
 6. **Save a slim memory.** Add a **short pointer** memory file (a few lines: title, bookId, one-line
    premise, "see `docs/book-registry.md` row N for the fingerprint") plus a one-line entry in

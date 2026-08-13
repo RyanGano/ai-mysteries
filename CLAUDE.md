@@ -157,6 +157,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `AI` | AI system is a character or central to the plot |
 | `Animals` | an animal is the subject of the mystery (missing, hurt, or the thing everyone is hunting) |
 | `Archaeology` | an excavation/dig setting is central |
+| `Art` | a painting, artwork, or its authenticity/attribution is central to the mystery |
 | `Aviation` | an airplane/flight setting is central |
 | `Cozy` | low-stakes, warm-toned, no violence |
 | `Death` | a death occurs but murder is ambiguous or contested |
@@ -165,6 +166,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Kid Friendly` | suitable for young readers (simple vocabulary, no violence) |
 | `Medical` | hospital/clinical setting or medical negligence is central |
 | `Murder` | at least one suspect is a deliberate killer |
+| `Music` | music-making, a recording, or a music business (shop, studio, band) is central to the mystery |
 | `Nautical` | a boat, ship, submarine, canal, or open-water setting is central |
 | `No Crime` | no crime has been committed — the mystery is a misunderstanding or loss |
 | `Railway` | a train or rail setting is central |
