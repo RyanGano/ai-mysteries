@@ -8,9 +8,13 @@
 // repo root. Workers AI text-to-image is free within a daily quota — no per-image cost.
 //
 // FLUX (@cf/black-forest-labs/flux-1-schnell) gives the best photographic quality but
-// returns a square image (base64 JSON); we crop it to 2:3. SDXL
+// returns a square image (base64 JSON); we crop it to 2:3. Its schema rejects width/height,
+// so the request must omit them (Cloudflare 400s otherwise) — see callWorkersAi. SDXL
 // (@cf/stabilityai/stable-diffusion-xl-base-1.0) honours width/height natively (binary
 // PNG) so it needs no crop. Default is flux. Run sharp to land on exactly 1024x1536 webp.
+//
+// If a model 400s on an unexpected schema again, --model sdxl is the working fallback and
+// still produces a good house-style cover.
 
 const fs = require("fs");
 const path = require("path");
@@ -67,9 +71,17 @@ async function callWorkersAi(model, prompt, { seed, steps }) {
   const token = process.env.CF_API_TOKEN;
   if (!acct || !token) throw new Error("Set CF_ACCOUNT_ID and CF_API_TOKEN (env or .env).");
   const url = `https://api.cloudflare.com/client/v4/accounts/${acct}/ai/run/${model}`;
-  const body = { prompt, width: W, height: H };
-  if (model === MODELS.flux) body.steps = steps ?? 8; // schnell: 1..8
-  else body.num_steps = steps ?? 20;
+  const body = { prompt };
+  if (model === MODELS.flux) {
+    // FLUX schnell's schema rejects width/height outright ("Additional or unevaluated
+    // properties '/width, /height' not allowed") — it always returns a square, which we
+    // crop to 2:3 below. Only send steps.
+    body.steps = steps ?? 8; // schnell: 1..8
+  } else {
+    body.width = W;
+    body.height = H;
+    body.num_steps = steps ?? 20;
+  }
   if (seed !== undefined) body.seed = seed;
 
   const res = await fetch(url, {

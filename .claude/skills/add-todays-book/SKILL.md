@@ -59,6 +59,9 @@ Two gitignored, local-only files:
      each book's opening register per the Distinctness Contract. Deviate only if the genre truly
      calls for a different voice. Optionally grade a chapter/ending with **check-my-voice** (~80%+).
    - **Content boundaries:** no sexual content, any book (per `CLAUDE.md`).
+   - **Cover:** `node scripts/gen-cover.cjs <bookId>` (FLUX by default). If the image API errors
+     on the model's request schema, fall back to `--model sdxl` — it gives a good house-style
+     cover — rather than debugging the API mid-build. Then flag it per *tooling breakage* below.
    - **Spoiler rules:** all book data + design docs stay in gitignored locations; nothing
      committed names codes, culprits, or clue maps.
    - **Final report:** end your reply with a one-row summary table (see `create_new_book.md`
@@ -192,6 +195,13 @@ once built rows move to the archive — don't reuse a number).
 - **Model split:** the writing phases run on Opus (the session model); Phases 5–7 run on Sonnet in
   the step-4 subagent. Don't spawn extra subagents beyond that one — each cold start re-reads the
   playbooks and gives back most of the saving.
+- **Tooling breakage: work around it, then say so.** If a build script fails for a reason that
+  isn't about this book (an upstream API changing its schema, a flag that no longer works), take
+  the cheapest workaround that still ships the book to the same standard, and then **call it out
+  under a `NOTES / BLOCKERS` heading in your final reply** — name the script, the exact error, and
+  the workaround you used. That report is what gets the script fixed once; a workaround you only
+  remember in-session becomes a flag every future build has to rediscover. Don't stop the build to
+  fix tooling, and don't quietly lower a check to get past it.
 - The queue file and all book content are gitignored — editing them is **not** a site-code
   change and needs no redeploy. Don't commit the queue or book data.
 - If no row is `⬜ queued` and you can't find the file, tell the user the backlog is missing

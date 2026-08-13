@@ -433,13 +433,19 @@ the repo root:
 
 ```
 node scripts/gen-cover.cjs <bookId>              # FLUX (default, best photographic quality)
-node scripts/gen-cover.cjs <bookId> --model sdxl # fallback if FLUX is quota-limited
+node scripts/gen-cover.cjs <bookId> --model sdxl # fallback if FLUX is quota-limited or errors
 ```
 
 It calls **Cloudflare Workers AI** (free daily quota, no per-image cost; creds in a gitignored
 `.env` — `CF_ACCOUNT_ID`/`CF_API_TOKEN`), crops/encodes to the house-style **2:3 / 1024×1536 /
 webp**, and writes `ai-mysteries-web/public/covers/<bookId>.webp`. Re-run with `--seed N` to
-get a different composition; show the user the result and regenerate until it lands. The cover
+get a different composition; show the user the result and regenerate until it lands.
+
+**If Cloudflare 400s on the model's schema**, don't hand-tune the request from the build —
+switch to `--model sdxl` (it produces a good house-style cover) so the book still ships, and
+report the failure so the script gets fixed once. Known instance, already fixed: FLUX schnell
+rejects `width`/`height` ("Additional or unevaluated properties '/width, /height' at '/' not
+allowed"), so the script now omits them for FLUX and crops the square result to 2:3 instead. The cover
 then ships via Phase 7 (upload to blob, set `coverImage` to the public URL). For local preview
 only you can point `coverImage` at the root-relative `/covers/<bookId>.webp` instead.
 
