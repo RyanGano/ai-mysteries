@@ -291,7 +291,9 @@ the reveal-beat scaffold clause, the victim/detective intro, the sentinel reveal
 their distinctive 4–8-word substrings across `ai-mysteries-api/Content/`. Any hit in another book
 means rewrite yours (the new book yields; shipped books stay). A phrase-ownership list of scaffolds
 already claimed by shipped books is kept in `docs/book-registry.md` — add your book's new scaffold
-phrases to it when you ship.
+phrases to it when you ship. (These rows are long and quote-heavy, so appending them often wants a
+throwaway helper script — write it to the OS temp dir, and delete it once it has run. Nothing
+temporary stays in the working tree.)
 
 ### Registry of shipped books (differ from these)
 
@@ -667,7 +669,9 @@ manuscript. Concretely, all of these hold:
 - the **prod** `/api/books` lists the book and one of its ending codes resolves against prod;
 - the cover-art prompt is saved to `docs/<bookId>/CoverPrompt.md`;
 - `git status` shows **nothing** book-specific staged or committed (book data + covers are
-  gitignored).
+  gitignored) **and no leftover temp files** — any throwaway helper the build wrote (a registry
+  splice script, a scratch row file) belongs in the OS temp dir, and is deleted as soon as it has
+  run. A stray `scripts/.tmp-*.cjs` or `docs/.*.tmp` means the build isn't finished.
 
 If the user explicitly asked to stop before shipping, "done" is the local equivalent (verified
 on localhost) plus a clear note of the remaining ship steps. Otherwise, not-live is not-done.

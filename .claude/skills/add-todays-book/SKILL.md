@@ -107,7 +107,9 @@ Two gitignored, local-only files:
      it can't know;
    - the standing rules it could otherwise violate: **nothing book-specific gets committed**
      (`Content/`, `docs/`, `public/covers/` are gitignored — `git status` must come back clean of
-     book data), and no code/culprit/clue detail lands in any committed file;
+     book data), no code/culprit/clue detail lands in any committed file, and **no temp file is
+     left behind anywhere in the repo** (see *Temp files* under Notes) — `git status --short` at
+     the end must show no stray `.tmp*` / scratch helper;
    - a request to report back: `check-xrefs` result, `verify-book` pass/fail counts for **both** the
      local and prod runs, the `book-stats` length verdict, the seeded content version, `diff` status,
      and any check that failed or was skipped.
@@ -187,6 +189,14 @@ once built rows move to the archive — don't reuse a number).
 ## Notes
 
 - One book per invocation unless the user explicitly asks for more.
+- **Temp files: write them outside the repo, and delete them when done.** Long registry/archive
+  rows are awkward to append through the shell, so a build often writes a throwaway helper (a
+  `.cjs` that splices a row in, a `.tmp` holding a phrase-ownership line). Put those in the
+  session scratchpad / OS temp dir — **never** under `scripts/`, `docs/`, or anywhere else in the
+  working tree. If one does land in the repo, `rm` it in the same turn as its last use; a leftover
+  `scripts/.tmp-*.cjs` or `docs/.*.tmp` is a build defect, not harmless residue (two of them sat
+  in the tree for days before 2026-08-13). Before your final report, run `git status --short` and
+  clear anything the build created that isn't book data.
 - **Turn discipline is the main cost lever.** A build session runs at 200K–270K tokens of context,
   re-sent on every turn, so roughly 60% of a run's cost is context re-reads — not the prose. Two
   habits matter more than anything else: batch your edits instead of making many small ones, and
