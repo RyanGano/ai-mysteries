@@ -163,6 +163,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Death` | a death occurs but murder is ambiguous or contested |
 | `Haunted` | a haunting/ghost premise is central (real or staged) |
 | `Historical` | set in a distinct past era (not present-day) |
+| `Journalism` | a newspaper, newsroom, or broadcast news operation is central to the mystery |
 | `Kid Friendly` | suitable for young readers (simple vocabulary, no violence) |
 | `Medical` | hospital/clinical setting or medical negligence is central |
 | `Murder` | at least one suspect is a deliberate killer |
