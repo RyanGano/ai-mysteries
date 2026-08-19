@@ -161,6 +161,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Aviation` | an airplane/flight setting is central |
 | `Cozy` | low-stakes, warm-toned, no violence |
 | `Death` | a death occurs but murder is ambiguous or contested |
+| `Gardening` | growing things is central — an allotment, a garden, a greenhouse, a horticultural show |
 | `Haunted` | a haunting/ghost premise is central (real or staged) |
 | `Historical` | set in a distinct past era (not present-day) |
 | `Journalism` | a newspaper, newsroom, or broadcast news operation is central to the mystery |
