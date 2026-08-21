@@ -161,11 +161,14 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Aviation` | an airplane/flight setting is central |
 | `Cozy` | low-stakes, warm-toned, no violence |
 | `Death` | a death occurs but murder is ambiguous or contested |
+| `Games` | a game, puzzle, or played competition is central — an escape room, a puzzle chain, a games night (not an athletic contest; that's `Sport`) |
 | `Gardening` | growing things is central — an allotment, a garden, a greenhouse, a horticultural show |
 | `Haunted` | a haunting/ghost premise is central (real or staged) |
 | `Historical` | set in a distinct past era (not present-day) |
 | `Journalism` | a newspaper, newsroom, or broadcast news operation is central to the mystery |
 | `Kid Friendly` | suitable for young readers (simple vocabulary, no violence) |
+| `Labor` | a union, strike, or labor dispute is load-bearing to the story's stakes or a suspect's motive |
+| `Library` | a library, archive, or a collection of books/records is the setting or the subject of the mystery |
 | `Medical` | hospital/clinical setting or medical negligence is central |
 | `Murder` | at least one suspect is a deliberate killer |
 | `Music` | music-making, a recording, or a music business (shop, studio, band) is central to the mystery |
