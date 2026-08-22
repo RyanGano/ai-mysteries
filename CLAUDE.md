@@ -160,6 +160,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Art` | a painting, artwork, or its authenticity/attribution is central to the mystery |
 | `Aviation` | an airplane/flight setting is central |
 | `Cozy` | low-stakes, warm-toned, no violence |
+| `Craft` | a hand trade is central — carving, quilting, casting, joinery; the mystery turns on how the thing was made, repaired, or faked |
 | `Death` | a death occurs but murder is ambiguous or contested |
 | `Games` | a game, puzzle, or played competition is central — an escape room, a puzzle chain, a games night (not an athletic contest; that's `Sport`) |
 | `Gardening` | growing things is central — an allotment, a garden, a greenhouse, a horticultural show |
