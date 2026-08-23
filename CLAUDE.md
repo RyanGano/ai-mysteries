@@ -162,6 +162,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Cozy` | low-stakes, warm-toned, no violence |
 | `Craft` | a hand trade is central — carving, quilting, casting, joinery; the mystery turns on how the thing was made, repaired, or faked |
 | `Death` | a death occurs but murder is ambiguous or contested |
+| `Family` | a family relationship — parent and child, siblings, a marriage — is load-bearing to the mystery's stakes or a suspect's motive |
 | `Games` | a game, puzzle, or played competition is central — an escape room, a puzzle chain, a games night (not an athletic contest; that's `Sport`) |
 | `Gardening` | growing things is central — an allotment, a garden, a greenhouse, a horticultural show |
 | `Haunted` | a haunting/ghost premise is central (real or staged) |
