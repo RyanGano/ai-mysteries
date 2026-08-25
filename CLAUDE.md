@@ -172,6 +172,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Labor` | a union, strike, or labor dispute is load-bearing to the story's stakes or a suspect's motive |
 | `Library` | a library, archive, or a collection of books/records is the setting or the subject of the mystery |
 | `Medical` | hospital/clinical setting or medical negligence is central |
+| `Military` | an armed-services setting or chain of command is load-bearing — a wartime post, a ship's company, a unit under orders; the mystery turns on rank, doctrine, or what gets reported up |
 | `Murder` | at least one suspect is a deliberate killer |
 | `Music` | music-making, a recording, or a music business (shop, studio, band) is central to the mystery |
 | `Nautical` | a boat, ship, submarine, canal, or open-water setting is central |
