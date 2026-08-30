@@ -163,6 +163,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Craft` | a hand trade is central — carving, quilting, casting, joinery; the mystery turns on how the thing was made, repaired, or faked |
 | `Death` | a death occurs but murder is ambiguous or contested |
 | `Family` | a family relationship — parent and child, siblings, a marriage — is load-bearing to the mystery's stakes or a suspect's motive |
+| `Film` | movies as a business or a craft are central — a cinema, a drive-in, a projection booth, a print or a reel; the mystery turns on how a picture gets shown, shipped, or stopped (not a stage production; that's `Theater`) |
 | `Games` | a game, puzzle, or played competition is central — an escape room, a puzzle chain, a games night (not an athletic contest; that's `Sport`) |
 | `Gardening` | growing things is central — an allotment, a garden, a greenhouse, a horticultural show |
 | `Haunted` | a haunting/ghost premise is central (real or staged) |
@@ -170,6 +171,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Journalism` | a newspaper, newsroom, or broadcast news operation is central to the mystery |
 | `Kid Friendly` | suitable for young readers (simple vocabulary, no violence) |
 | `Labor` | a union, strike, or labor dispute is load-bearing to the story's stakes or a suspect's motive |
+| `Legal` | a court, trial, jury, or legal proceeding is the setting or the frame — the mystery turns on a process with rules about what may be said, written down, or taken out of a room |
 | `Library` | a library, archive, or a collection of books/records is the setting or the subject of the mystery |
 | `Medical` | hospital/clinical setting or medical negligence is central |
 | `Military` | an armed-services setting or chain of command is load-bearing — a wartime post, a ship's company, a unit under orders; the mystery turns on rank, doctrine, or what gets reported up |
@@ -181,6 +183,7 @@ Tag glossary (meanings — not guaranteed exhaustive; see step 2 for the authori
 | `Romance` | a romance thread is central to the story |
 | `School` | a school setting (classroom, gym, playground, the crossing outside) is central |
 | `Space` | a space station/off-world setting is central |
+| `Spa` | a bathhouse, baths, or curative-water establishment is the setting — the mystery turns on the place where people go to be bathed, heated, or treated |
 | `Sport` | a sporting competition or event is central |
 | `Technology` | tech system or industrial setting is load-bearing to the plot |
 | `Theater` | a stage/theatrical production setting is central |
