@@ -12,5 +12,23 @@
       "Bash(git commit *)",
       "Bash(git log *)"
     ]
+  },
+  "skillOverrides": {
+    "add-modernization-skills": "name-only",
+    "backup-private-data": "name-only",
+    "clean-pr-commits": "name-only",
+    "delete-unused-branches": "name-only",
+    "fix-github-issue": "name-only",
+    "handle-pr-comments": "name-only",
+    "modernize-blazor": "name-only",
+    "modernize-csharp": "name-only",
+    "modernize-dotnet": "name-only",
+    "modernize-github-actions": "name-only",
+    "modernize-node-tooling": "name-only",
+    "modernize-react": "name-only",
+    "modernize-this": "name-only",
+    "modernize-typescript": "name-only",
+    "modernize-use-npm": "name-only",
+    "deploy-find-me-api": "user-invocable-only"
   }
 }
