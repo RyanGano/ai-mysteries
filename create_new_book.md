@@ -383,6 +383,12 @@ Author `Content/<bookId>/meta.json` per the full field reference in
 book-specific marketing voice — write it fresh for the premise; never leave
 within-tolerance phrasing in it.
 
+**For the `tags` field, read [`tag_glossary.md`](tag_glossary.md) first** — the four-step
+procedure and what every existing tag means. It is deliberately not in default context, so
+read it rather than tagging from memory. Short version: tag setting, era, and subject too
+(not just crime type and audience), and check the **live catalog** for an existing match
+before coining a new tag.
+
 **Weighting requirement (site default): simple beats complex.** Solo endings must roll
 noticeably more often than pairs, pairs more often than bigger groups. A good starting
 point for 5 suspects with solos, pairs, and an everyone-ending:

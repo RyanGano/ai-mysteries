@@ -47,9 +47,11 @@ Two gitignored, local-only files:
      --api <prod base URL>`** — one call, not a hand-rolled `curl`/`node -e` parse first (that's
      redundant spend for the same data the script already gives you). Reuse a match whenever one
      fits; only add a new tag if nothing matches (then optionally add a "when to use" line to the
-     glossary table in `CLAUDE.md` — a documentation courtesy, not a requirement, since the tag
-     itself ships live via Cosmos regardless). The row's "candidate tags" are a hint, not a
-     mandate — finalize them from the actual story.
+     glossary table in `tag_glossary.md` — a documentation courtesy, not a requirement, since the
+     tag itself ships live via Cosmos regardless). Read **`tag_glossary.md`** (repo root) for the
+     four-step procedure and what each existing tag means; it is not in context by default. Tag
+     setting, era, and subject too — not just crime type and audience. The row's "candidate tags"
+     are a hint, not a mandate — finalize them from the actual story.
    - **Length / audience:** hit the row's target reading time and audience. Kid-friendly rows get
      the easy-reading treatment (simple names, plain words) per `CLAUDE.md` and `create_new_book.md`
      Phase 0.
