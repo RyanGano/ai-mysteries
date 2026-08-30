@@ -26,7 +26,9 @@ Two gitignored, local-only files:
 2. **Mark it in progress.** Edit that row's status to `🛠 in progress` before you start, so a
    resumed session knows where it was.
 
-3. **Write it (Phases 0–4).** Treat the row's premise + length + audience + candidate tags as the
+3. **Write it (Phases 0–4).** Batch independent file writes **4-6 per message** rather than
+   one per turn — turn count is what a build costs (see the batching ground rule at the top of
+   `create_new_book.md`). Treat the row's premise + length + audience + candidate tags as the
    brief, then follow [`create_new_book.md`](../../../create_new_book.md) through **Phase 4** —
    interpret the brief, pass the Distinctness Contract, design the dossier, author `meta.json`,
    generate the cover image, write the manuscript logging clue quotes as you go, and write the

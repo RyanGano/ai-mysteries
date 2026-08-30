@@ -40,6 +40,18 @@ request.
   pull from an existing book is the **shared opening-beat shape** of an ending (Phase 4) — and
   even then copy the *structure*, never the text. If a `meta.json` field's shape is unclear, the
   contract is `put_book_in_site.md` §2, not another book.
+- **Batch independent file writes into one message — don't write one file per turn.** Every
+  turn re-sends the whole conversation so far, so a 90-turn build pays for its own history
+  ~90 times over; turn count, not word count, is what a book costs. Recent builds averaged
+  **1.00 tool calls per turn** across ~30 chapter/ending writes, which is the single most
+  expensive habit in the process. Chapters and endings are independent files: draft a group of
+  them in your head, then emit **4-6 `Write` calls in a single message**. Same for the generated
+  JSON (`book.json`, `endings.json`, `meta.json`) and for any batch of `Edit` fixes across
+  different files. Only serialize when a step genuinely needs the previous step's *output*
+  (e.g. running `gen-xrefs.cjs` after `EndingClueMap.md` exists, or reading a verify result).
+  Anti-echo is not a reason to serialize — you have every previously written ending in context
+  already.
+
 - **No sexual or sex-related content** in the manuscript or any ending (every book, every
   audience). Romance stays at kissing / dating / hugging / holding hands; anything beyond
   that you do **not** write without asking the user first. See *Content boundaries* in
@@ -463,6 +475,9 @@ Files: `Content/<bookId>/book.json` (reading order, `[{ "slug", "title" }]`) +
 `Content/<bookId>/book/<slug>.md` (markdown body only — the title lives in `book.json`).
 Paragraphs separated by blank lines; `_italics_` and `**bold**` render.
 
+**Write the chapters in batches of 4-6 `Write` calls per message**, not one per turn (see the
+batching ground rule up top) — they are independent files and turn count is what a build costs.
+
 **Before writing a word, re-read the Distinctness Contract (Phase 0.5).** Do **not** open with — or
 paraphrase — another book's first beat, and do **not** reuse its detective-method sentence. Each
 book invents its own opening image and its own way of describing how the sleuth thinks. The
@@ -489,6 +504,10 @@ edit. Aim for: every ending has ≥2 clues; every chapter after the hook carries
 one clue; no clue gives the ending away on its own.
 
 ## Phase 4 — Write the endings
+
+This is the most write-heavy phase — ~20-30 files. **Emit them 4-6 `Write` calls at a time in a
+single message** (see the batching ground rule up top). Having the earlier endings in context is
+what prevents echo; issuing them one per turn adds nothing but cost.
 
 First finish `docs/<bookId>/EndingStyleGuide.md`:
 
