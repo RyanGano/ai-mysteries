@@ -49,6 +49,7 @@ Meanings only — not guaranteed exhaustive; see step 2 for the authoritative li
 | `Archaeology` | an excavation/dig setting is central |
 | `Art` | a painting, artwork, or its authenticity/attribution is central to the mystery |
 | `Aviation` | an airplane/flight setting is central |
+| `Camp` | a summer camp, scout camp, or overnight-camp session is the setting — a temporary community of kids and counselors with its own jobs, rules and rituals |
 | `Cozy` | low-stakes, warm-toned, no violence |
 | `Craft` | a hand trade is central — carving, quilting, casting, joinery; the mystery turns on how the thing was made, repaired, or faked |
 | `Death` | a death occurs but murder is ambiguous or contested |
