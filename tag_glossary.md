@@ -67,6 +67,7 @@ Meanings only — not guaranteed exhaustive; see step 2 for the authoritative li
 | `Medical` | hospital/clinical setting or medical negligence is central |
 | `Military` | an armed-services setting or chain of command is load-bearing — a wartime post, a ship's company, a unit under orders; the mystery turns on rank, doctrine, or what gets reported up |
 | `Murder` | at least one suspect is a deliberate killer |
+| `Museum` | a museum, planetarium, or public collection is the setting — the mystery turns on an accessioned object, its case, its label, or the paperwork behind it |
 | `Music` | music-making, a recording, or a music business (shop, studio, band) is central to the mystery |
 | `Nautical` | a boat, ship, submarine, canal, or open-water setting is central |
 | `No Crime` | no crime has been committed — the mystery is a misunderstanding or loss |
