@@ -19,9 +19,13 @@ Two gitignored, local-only files:
 
 ## Procedure
 
-1. **Read the queue.** Open `docs/book-ideas.md`. Find the **first** row whose status is
-   `⬜ queued` (top to bottom). That's today's book. If the user named a specific title or
-   number, use that row instead.
+1. **Check, then read the queue.** First run `node scripts/queue-check.cjs`. A `FAIL` means an
+   earlier build shipped a book but left its row in the queue: fix that bookkeeping first (delete
+   the row; the archive already has it) and note it under `NOTES / BLOCKERS`. A `warn` about an
+   in-progress row means an earlier build was interrupted, so check whether that book is actually
+   live before choosing today's row. Then open `docs/book-ideas.md` and find the **first** row
+   whose status is `⬜ queued` (top to bottom). That's today's book. If the user named a
+   specific title or number, use that row instead.
 
 2. **Mark it in progress.** Edit that row's status to `🛠 in progress` before you start, so a
    resumed session knows where it was.
@@ -72,6 +76,11 @@ Two gitignored, local-only files:
      cover — rather than debugging the API mid-build. Then flag it per *tooling breakage* below.
    - **Spoiler rules:** all book data + design docs stay in gitignored locations; nothing
      committed names codes, culprits, or clue maps.
+   - **Report only what you observed.** Any tracker you list as updated in the run summary
+     (queue row removed, archive/registry/tally rows added, memory saved) must be something this
+     run **read back** after writing, or confirmed with `queue-check.cjs --end`. Never copy the
+     checklist into the summary as if it were a result. If a step wasn't done or wasn't checked,
+     say so.
    - **Final report:** end your reply with a one-row summary table (see `create_new_book.md`
      → *Final report*):
 
@@ -110,9 +119,10 @@ Two gitignored, local-only files:
        then `node scripts/verify-book.cjs <bookId> --api <prod base URL> --wait 90` to confirm live.
      - Length is **not** its call: if `book-stats` says the book is off-target, report the number.
        Do not trim or pad the prose to chase it.
-   - the **bookkeeping text you have already composed** (see step 5) — the archive row, the registry
-     fingerprint row, and the memory file body — so it only has to write files, not invent content
-     it can't know;
+   - the **bookkeeping you have already composed** (see step 5): the queue row to **delete** from
+     `docs/book-ideas.md`, plus the archive row, registry fingerprint row, gender-tally row and
+     memory file body to append. Then it only has to write files, not invent content it can't
+     know. Name the deletion explicitly, because it is the step that gets dropped;
    - the standing rules it could otherwise violate: **nothing book-specific gets committed**
      (`Content/`, `docs/`, `public/covers/` are gitignored — `git status` must come back clean of
      book data), no code/culprit/clue detail lands in any committed file, and **no temp file is
@@ -135,10 +145,14 @@ Two gitignored, local-only files:
    with **yourself** — that needs the endings in context.
 
 5. **Record it.** Compose these **before** spawning the ship agent in step 4 and pass them in its
-   brief; verify they landed when it reports back. All three are cheap and keep every tracker
-   current:
-   - **Move the queue row:** delete it from `docs/book-ideas.md` and **append** it to the "Built"
-     table in `docs/book-ideas-archive.md` with status `✅ built`, the build date, and final `bookId`.
+   brief. Whoever writes them (you or the ship agent), they are four separate edits. **Removing the
+   queue row is its own action**, not a side effect of appending to the archive. A helper script
+   that only appends has not done it: a 2026-09-14 build appended every row, never deleted the
+   queue row, and reported "row removed" anyway.
+   - **Remove the queue row:** delete today's row from `docs/book-ideas.md` entirely (not just a
+     status change).
+   - **Archive it:** **append** the row to the "Built" table in `docs/book-ideas-archive.md` with
+     status `✅ built`, the build date, and final `bookId`.
    - **Append a fingerprint row** to [`docs/book-registry.md`](../../../docs/book-registry.md) — the
      single distinctness source the next build reads. Fill setting · mystery type · detective method ·
      structure spine · length · audience · tags. **Structural and spoiler-light only** (no codes,
@@ -148,6 +162,10 @@ Two gitignored, local-only files:
      detective name, gender, and (if notable) why that gender was picked, e.g. "leaning male, tally
      running female-heavy" or "period role, historically male." Keeps the soft gender-balance nudge
      in `create_new_book.md` Phase 0.5 accurate for the next build.
+   - **Close it out:** once every tracker is written, run `node scripts/queue-check.cjs --end`. It
+     must print `queue OK`. It fails if today's row is still in the queue, whether marked
+     in progress or not. Then read back the tail of the archive, registry and tally, and list only
+     what you saw in the run summary.
 
 6. **Save a slim memory.** Add a **short pointer** memory file (a few lines: title, bookId, one-line
    premise, "see `docs/book-registry.md` row N for the fingerprint") plus a one-line entry in
