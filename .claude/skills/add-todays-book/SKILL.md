@@ -41,6 +41,10 @@ Two gitignored, local-only files:
      re-roll rather than force a bad fit; if the script says all candidates are weak, read the
      dominant reason it prints. The script reads `docs/book-registry.md` for you, so don't re-read
      other books' memories or `Content/` to "learn the pattern."
+   - **Catalog steering:** read `docs/catalog-steering.md` and pass its per-build rule — at most
+     two *Avoid* buckets, at least two *Seek* buckets (`create_new_book.md` Phase 0.5 → *Catalog
+     steering*). If the queued premise forces more Avoid buckets, build it anyway and name them in
+     the final report.
    - **Ship to live by default** — don't stop at local files or localhost (per `CLAUDE.md`
      "Adding a book" and the user's standing preference). Only stop short if the user said
      "just draft it" or a ship step needs a credential you lack — then report the one blocker.
@@ -156,6 +160,10 @@ Two gitignored, local-only files:
    new `## Batch N — drafted <date>` heading, following the constraints below. Prefer one large,
    infrequent refill (≈25 ideas at a time) over frequent small top-ups — a big review every ~25
    days, not a handful every few days.
+   - **Run the `catalog-census` skill first (all three steps)** so the census includes every
+     shipped book and `docs/catalog-steering.md` is current. Then draft the batch to meet its
+     **quotas** (countries, eras, detective relation, audience, length bands, never-tried buckets).
+     The quotas sit on top of the constraints below; they don't replace them.
    - Read **both** `docs/book-ideas.md` (current queue) **and** `docs/book-ideas-archive.md`
      (built history) first, so no new idea is an exact duplicate of anything queued or built.
    - Then **tell the user the new ideas are ready to review** (quick summary). Do **not** silently

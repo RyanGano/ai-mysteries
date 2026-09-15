@@ -55,8 +55,11 @@ const MYSTERY_TYPES = [
   { id: "death-contested", label: "a death whose cause is contested", match: /\bdeaths?\b|\bdies\b|\bdead\b|murder|drops dead/i },
 ];
 
-// Phase 0.5 flags two methods. "reads a written record" is over-used (~8 books); the retired
-// "goes still and remembers" voice is banned outright and is not offered at all.
+// `overused` flags mirror the catalog census (docs/catalog-steering.md, refreshed by the
+// catalog-census skill): an option is flagged while its census bucket is crowded AND still rising.
+// 2026-09-14: the talk-them-into-a-contradiction / catch-a-live-lie family is flagged (~19 books);
+// "reads a written record" cooled to ~5 books and was unflagged. The retired "goes still and
+// remembers" voice is banned outright and is not offered at all.
 // Order matters — see rule 1 above. Distinctive methods first; the over-used written-record bucket
 // is last and needs an actual document noun (not the metaphorical "reads the water as a ledger").
 const METHODS = [
@@ -68,24 +71,26 @@ const METHODS = [
   { id: "backward-from-impossible", label: "works backward from the one impossible detail", match: /backward|impossible detail/i },
   { id: "reads-numbers", label: "reads numbers and accounts (not prose)", match: /numbers\s*\/\s*accounts|\bnumbers\b|\baccounts\b|arithmetic|reconciles/i },
   { id: "senses", label: "deduces from the senses (taste, smell, sound, temperature)", match: /\bsenses\b|\bsmell|\btaste|by ear|audio forensic|\btemperature\b|super-?taster/i },
-  { id: "catches-lie-live", label: "catches a lie in real time", match: /catch(es)? (a |the )?lie|small lie|giving the right/i },
-  { id: "talks-into-contradiction", label: "talks people into contradicting themselves", match: /talks? (people|them)|contradict|interrogat|into a slip/i },
+  { id: "lab-test", label: "runs a real test or experiment", match: /controlled test|experiment|lab result|assay/i },
+  { id: "whole-room", label: "rebuilds it with the whole room (no lone deduction)", match: /whole room rebuild|rebuilds it together|crowd-?sourc/i },
+  { id: "catches-lie-live", label: "catches a lie in real time", match: /catch(es)? (a |the )?lie|small lie|giving the right/i, overused: true },
+  { id: "talks-into-contradiction", label: "talks people into contradicting themselves", match: /talks? (people|them)|contradict|interrogat|into a slip/i, overused: true },
   { id: "maps-or-draws", label: "maps or draws the scene to reconstruct it", match: /\bdraws?\b|\bmaps?\b|cross-?bearing|geometry of|dead reckoning/i },
   { id: "follows-money", label: "follows the money and the incentives", match: /\bmoney\b|incentive/i },
   { id: "domain-expert", label: "the domain expert who sees what others miss", match: /domain expert|specialist|appraiser|stratigrapher|viticultur|brine-?taster|the object itself|whose whole craft/i },
-  // Over-used (Phase 0.5 puts it at ~8 books). Requires a real document, and only reached when no
-  // more specific method matched.
+  // Was over-used (~8 books); the 2026-09-14 census has it at ~5, so it's unflagged and rarity scoring
+  // keeps it honest. Requires a real document, and only reached when no more specific method matched.
   {
     id: "reads-record",
     label: "reasons from a written record or list",
     match: /\b(records?|ledgers?|logbook|manifest|register|rule-?list|prompt book|written [a-z-]*\s?(list|record|rules?))\b/i,
-    overused: true,
   },
 ];
 
 // Precedence again: the over-used spotlight spine is last so a row describing something more
 // specific isn't miscounted into it.
 const SPINES = [
+  { id: "documents", label: "told in documents — letters, logs, messages, transcripts", match: /epistolary|told in (letters|documents)|the paper trail is the book/i },
   { id: "reverse-chronology", label: "reverse chronology — open at the reveal, walk it back", match: /reverse chronolog|walk(s)? it back|backward hour by hour/i },
   { id: "interleaved", label: "two interleaved timelines (then / now)", match: /interleav|then\s*\/\s*now|two timelines|now\s*\/\s*then/i },
   { id: "frame-story", label: "a frame story — someone recounting it afterwards", match: /frame story|recount/i },

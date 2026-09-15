@@ -54,6 +54,8 @@ node scripts/check-xrefs.cjs [bookId]   # validate the generated JSON against th
 Authoring checks (also from the **repo root**):
 
 ```
+node scripts/census.cjs                              # catalog census: crowded / thin / never-tried buckets across many lenses
+node scripts/census.cjs --check                      # which shipped books still need classifying (--dossier <bookId> to classify one)
 node scripts/pick-axes.cjs --audience adult          # roll 3 candidate axis combos for a new book
 node scripts/pick-axes.cjs --list                    # the axis menus + how crowded each option is
 node scripts/book-stats.cjs <bookId> --target <min>  # word counts + displayed reading time vs the brief

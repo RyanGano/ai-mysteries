@@ -226,16 +226,18 @@ How to use the output:
    reskin a shipped world** — another present-day cozy small-community, another sealed vehicle,
    another period theater/court. Jump era, place, *or* milieu. See the registry's setting column for
    what's taken.
-3. **Detective archetype + method** — *how* they solve it. **Two methods are over-used — avoid
-   unless the premise truly demands one:** *reasons from a written record / list / document* (~8
-   books already) and the retired *"goes still and remembers"* voice (**banned outright**). Reach
-   for a fresher method: maps or **draws** the scene; **talks** people into contradicting
-   themselves; **re-enacts / re-times** the event physically; deduces from the **senses** (taste,
-   smell, sound, temperature); is a **skeptic** out to debunk; works **backward from the one
-   impossible detail**; **follows the money / incentives**; **catches a lie in real time**;
-   reconstructs from what's **absent** (the dog that didn't bark); is the **domain expert** who sees
-   what others miss; **sets a trap** to flush the culprit; reads **numbers / accounts** (not prose);
-   is **fooled first, then realizes**.
+3. **Detective archetype + method** — *how* they solve it. **Over-used — avoid unless the premise
+   truly demands it:** *talks people into contradicting themselves / catches a lie in real time*
+   (~19 books between them as of the 2026-09-14 census, and still rising). The retired *"goes still
+   and remembers"* voice is **banned outright**. *Reasons from a written record* was over-used
+   earlier and has cooled to ~5 books; still don't default to it. Reach for a fresher method: maps
+   or **draws** the scene; **re-enacts / re-times** the event physically; deduces from the
+   **senses** (taste, smell, sound, temperature); is a **skeptic** out to debunk; works **backward
+   from the one impossible detail**; **follows the money / incentives**; reconstructs from what's
+   **absent** (the dog that didn't bark); is the **domain expert** who sees what others miss; **sets
+   a trap** to flush the culprit; reads **numbers / accounts** (not prose); is **fooled first, then
+   realizes**; **runs a real test or experiment**; **rebuilds it with the whole room** (no lone
+   deduction).
 4. **Chapter architecture** — the spine. *"One spotlight per suspect → finale"* is **over-used
    (~10+ books) — don't default to it.** Actively reach for a shape barely used yet: reverse
    chronology (open at the reveal, walk it back); two **interleaved timelines** (then / now);
@@ -261,6 +263,24 @@ How to use the output:
    **not** mean abandoning the house voice: the underlying texture stays warm and plain-spoken
    across books per the* Voice *default in `CLAUDE.md`. Vary the register; keep the hand. The
    failure mode this axis kills is sameness of opening, not the shared baseline feel.)*
+
+### Catalog steering (read before designing)
+
+The six axes stop a book from cloning *one* shipped book. They can't see a slower drift: many
+distinct books that all share the same few buckets, such as the same country, era, or the same kind
+of detective. The `catalog-census` skill measures the whole catalog across many lenses and writes
+the current targets to **`docs/catalog-steering.md`** (gitignored). Read it now, alongside the
+registry.
+
+- **Place your design on every lens it lists.**
+- **Per-build rule:** the design may sit in **at most two *Avoid* buckets** (crowded and still
+  rising), and must land in **at least two *Seek* buckets** (thin, never tried, or newly added).
+- **Cheapest levers first:** the most lopsided lenses are usually *where, when and who*, and moving
+  those rarely costs the premise anything. Relocate it, move it in time, or bring the detective in
+  from outside.
+- **A premise that truly forces more Avoid buckets wins**, but name them and why in the final report.
+- **A brand-new territory counts as a Seek bucket** even if no lens names it yet. Note it in the
+  final report so the next census adds the bucket.
 
 ### Detective gender balance (soft — tracked, not gated)
 
