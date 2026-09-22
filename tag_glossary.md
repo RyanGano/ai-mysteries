@@ -72,6 +72,9 @@ Meanings only — not guaranteed exhaustive; see step 2 for the authoritative li
 | `Music` | music-making, a recording, or a music business (shop, studio, band) is central to the mystery |
 | `Nautical` | a boat, ship, submarine, canal, or open-water setting is central |
 | `No Crime` | no crime has been committed — the mystery is a misunderstanding or loss |
+| `Pageant` | a pageant, coronation, or judged civic competition of people is central — the mystery turns on scoring, judging, a title, or who was crowned (not an athletic contest; that's `Sport`, and not a stage production; that's `Theater`) |
+| `Politics` | government, elections, or a political movement is load-bearing to the mystery's stakes or a suspect's motive |
+| `Prohibition` | the 1920s–33 US alcohol ban is load-bearing — a speakeasy, a still, a rum run, a federal agent; the mystery turns on a place or a trade that is illegal simply for existing |
 | `Railway` | a train or rail setting is central |
 | `Romance` | a romance thread is central to the story |
 | `School` | a school setting (classroom, gym, playground, the crossing outside) is central |
