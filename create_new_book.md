@@ -228,7 +228,8 @@ How to use the output:
    what's taken.
 3. **Detective archetype + method** — *how* they solve it. **Over-used — avoid unless the premise
    truly demands it:** *talks people into contradicting themselves / catches a lie in real time*
-   (~19 books between them as of the 2026-09-14 census, and still rising). The retired *"goes still
+   (~19 books between them as of the 2026-09-27 census; cooling since the flag went up, so keep
+   it off). The retired *"goes still
    and remembers"* voice is **banned outright**. *Reasons from a written record* was over-used
    earlier and has cooled to ~5 books; still don't default to it. Reach for a fresher method: maps
    or **draws** the scene; **re-enacts / re-times** the event physically; deduces from the
@@ -238,8 +239,8 @@ How to use the output:
    a trap** to flush the culprit; reads **numbers / accounts** (not prose); is **fooled first, then
    realizes**; **runs a real test or experiment**; **rebuilds it with the whole room** (no lone
    deduction).
-4. **Chapter architecture** — the spine. *"One spotlight per suspect → finale"* is **over-used
-   (~10+ books) — don't default to it.** Actively reach for a shape barely used yet: reverse
+4. **Chapter architecture** — the spine. *"One spotlight per suspect → finale"* was over-used
+   early (~11 books) and has cooled; it's allowed again, but don't default to it. Actively reach for a shape barely used yet: reverse
    chronology (open at the reveal, walk it back); two **interleaved timelines** (then / now);
    **real-time** single scene (one room, one hour); a **frame story** (someone recounting it);
    **POV that rotates** among the suspects (each chapter one suspect's account); an **inventory**

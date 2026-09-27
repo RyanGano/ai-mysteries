@@ -71,8 +71,8 @@ const METHODS = [
   { id: "backward-from-impossible", label: "works backward from the one impossible detail", match: /backward|impossible detail/i },
   { id: "reads-numbers", label: "reads numbers and accounts (not prose)", match: /numbers\s*\/\s*accounts|\bnumbers\b|\baccounts\b|arithmetic|reconciles/i },
   { id: "senses", label: "deduces from the senses (taste, smell, sound, temperature)", match: /\bsenses\b|\bsmell|\btaste|by ear|audio forensic|\btemperature\b|super-?taster/i },
-  { id: "lab-test", label: "runs a real test or experiment", match: /controlled test|experiment|lab result|assay/i },
-  { id: "whole-room", label: "rebuilds it with the whole room (no lone deduction)", match: /whole room rebuild|rebuilds it together|crowd-?sourc/i },
+  { id: "lab-test", label: "runs a real test or experiment", match: /controlled test|experiment|lab result|assay|runs a real test/i },
+  { id: "whole-room", label: "rebuilds it with the whole room (no lone deduction)", match: /whole room rebuild|rebuilds it (together|with the whole room)|whole-room|crowd-?sourc/i },
   { id: "catches-lie-live", label: "catches a lie in real time", match: /catch(es)? (a |the )?lie|small lie|giving the right/i, overused: true },
   { id: "talks-into-contradiction", label: "talks people into contradicting themselves", match: /talks? (people|them)|contradict|interrogat|into a slip/i, overused: true },
   { id: "maps-or-draws", label: "maps or draws the scene to reconstruct it", match: /\bdraws?\b|\bmaps?\b|cross-?bearing|geometry of|dead reckoning/i },
@@ -100,7 +100,7 @@ const SPINES = [
   { id: "real-time", label: "real time — one room, one hour, one scene", match: /real[- ]time|single scene|one room, one hour/i },
   { id: "leisurely", label: "a leisurely unspool with no clock", match: /leisurely|no clock/i },
   // Over-used (~10+ books) — selectable but penalised so it stops being the default.
-  { id: "spotlight-per-suspect", label: "one spotlight per suspect → finale", match: /spotlight|per suspect|per claimant|per helper|per link|suspect-per-chapter/i, overused: true },
+  { id: "spotlight-per-suspect", label: "one spotlight per suspect → finale", match: /spotlight|per suspect|per claimant|per helper|per link|suspect-per-chapter/i },
 ];
 
 const RESOLUTIONS = [
