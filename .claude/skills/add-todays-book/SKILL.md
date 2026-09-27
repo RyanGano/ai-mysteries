@@ -121,8 +121,8 @@ Two gitignored, local-only files:
        Do not trim or pad the prose to chase it.
    - the **bookkeeping you have already composed** (see step 5): the queue row to **delete** from
      `docs/book-ideas.md`, plus the archive row, registry fingerprint row, gender-tally row and
-     memory file body to append. Then it only has to write files, not invent content it can't
-     know. Name the deletion explicitly, because it is the step that gets dropped;
+     `shipped-books.md` memory line to append. Then it only has to write files, not invent content
+     it can't know. Name the deletion explicitly, because it is the step that gets dropped;
    - the standing rules it could otherwise violate: **nothing book-specific gets committed**
      (`Content/`, `docs/`, `public/covers/` are gitignored — `git status` must come back clean of
      book data), no code/culprit/clue detail lands in any committed file, and **no temp file is
@@ -167,10 +167,12 @@ Two gitignored, local-only files:
      in progress or not. Then read back the tail of the archive, registry and tally, and list only
      what you saw in the run summary.
 
-6. **Save a slim memory.** Add a **short pointer** memory file (a few lines: title, bookId, one-line
-   premise, "see `docs/book-registry.md` row N for the fingerprint") plus a one-line entry in
-   `MEMORY.md`. Don't write the old ~40-line full record — the registry row + the gitignored design
-   docs hold the detail now; the memory just makes the book discoverable across sessions.
+6. **Record the book in memory — one line, no new file.** Append a single line to the
+   `shipped-books.md` memory (the hub of all shipped books), in its existing format:
+   `- <Title> (<bookId>) — Nth book (short setting), shipped <date>`. Do **not** create a
+   per-book memory file and do **not** add anything to `MEMORY.md`: the index is loaded every
+   session and has a size cap, and one line per book is what filled it. The registry row + the
+   gitignored design docs hold the detail.
 
 7. **Refill the queue when it runs out — big batch, infrequently.** After building, count the
    remaining `⬜ queued` rows in `docs/book-ideas.md`. Only when the queue is **empty** (the row
@@ -205,7 +207,7 @@ Two gitignored, local-only files:
    welcome — a reader who likes a given flavor (romance, cozy, period whodunit, kid-friendly)
    should find a few matches. Just don't let a batch cluster on one gimmick (not everything in
    space or the Jurassic), and don't clone a shipped book wholesale. Light overlap is fine. Skim
-   the shipped-book memories (`MEMORY.md`) so you know what already exists.
+   the `shipped-books.md` memory so you know what already exists.
 5. Deliberately spread the **crime type** (death/murder · kid-friendly · theft/loss ·
    no-crime/misunderstanding) **and reader appeal** — keep a recurring romance lane (kept to
    kissing/dating/holding hands per `CLAUDE.md` content boundaries), plus cozy, period, and
