@@ -56,6 +56,7 @@ Meanings only — not guaranteed exhaustive; see step 2 for the authoritative li
 | `Death` | a death occurs but murder is ambiguous or contested |
 | `Family` | a family relationship — parent and child, siblings, a marriage — is load-bearing to the mystery's stakes or a suspect's motive |
 | `Film` | movies as a business or a craft are central — a cinema, a drive-in, a projection booth, a print or a reel; the mystery turns on how a picture gets shown, shipped, or stopped (not a stage production; that's `Theater`) |
+| `Finance` | money itself is the subject: an investment, a fund, a bank book, shares or a wager on lives. The mystery turns on who gets paid, how much and when (a stolen object is `Theft`) |
 | `Food` | cooking, a food stall, a kitchen, or a dish is load-bearing — the mystery turns on what gets made, sold, priced, or given away (a garden that grows it is `Gardening`; a farm is `Farming`) |
 | `Games` | a game, puzzle, or played competition is central — an escape room, a puzzle chain, a games night (not an athletic contest; that's `Sport`) |
 | `Gardening` | growing things is central — an allotment, a garden, a greenhouse, a horticultural show |
