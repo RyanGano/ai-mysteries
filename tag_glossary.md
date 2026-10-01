@@ -59,6 +59,7 @@ Meanings only — not guaranteed exhaustive; see step 2 for the authoritative li
 | `Finance` | money itself is the subject: an investment, a fund, a bank book, shares or a wager on lives. The mystery turns on who gets paid, how much and when (a stolen object is `Theft`) |
 | `Food` | cooking, a food stall, a kitchen, or a dish is load-bearing — the mystery turns on what gets made, sold, priced, or given away (a garden that grows it is `Gardening`; a farm is `Farming`) |
 | `Friendship` | a group of friends, and what they owe each other, is load-bearing — the mystery turns on who knows whom well enough to notice, cover, or impersonate (a blood or married relationship is `Family`) |
+| `Future` | set on Earth in a recognizable future (decades ahead, not off-world) where what has changed — the climate, the machines, how a place runs — is load-bearing to the mystery (a station or ship in space is `Space`) |
 | `Games` | a game, puzzle, or played competition is central — an escape room, a puzzle chain, a games night (not an athletic contest; that's `Sport`) |
 | `Gardening` | growing things is central — an allotment, a garden, a greenhouse, a horticultural show |
 | `Haunted` | a haunting/ghost premise is central (real or staged) |
