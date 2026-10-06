@@ -49,11 +49,13 @@ Meanings only — not guaranteed exhaustive; see step 2 for the authoritative li
 | `Archaeology` | an excavation/dig setting is central |
 | `Art` | a painting, artwork, or its authenticity/attribution is central to the mystery |
 | `Aviation` | an airplane/flight setting is central |
+| `Blackmail` | someone is pressured with a secret — a note, a threat, a "you know what I know" — and the mystery turns on who holds the secret and what it made the victim do |
 | `Camp` | a summer camp, scout camp, or overnight-camp session is the setting — a temporary community of kids and counselors with its own jobs, rules and rituals |
 | `Circus` | a circus, carnival, or traveling show is the setting — the mystery turns on the outfit's own trades, rigging, stock, or the way a show lives and moves together (not a stage production; that's `Theater`) |
 | `Cozy` | low-stakes, warm-toned, no violence |
 | `Craft` | a hand trade is central — carving, quilting, casting, joinery; the mystery turns on how the thing was made, repaired, or faked |
 | `Death` | a death occurs but murder is ambiguous or contested |
+| `Energy` | a power project or energy supply — a wind farm, a dam, a mine, a grid — is load-bearing to the stakes; the mystery turns on who gains or loses when it is built, sited, or stopped (the machinery itself as a system is `Technology`) |
 | `Family` | a family relationship — parent and child, siblings, a marriage — is load-bearing to the mystery's stakes or a suspect's motive |
 | `Film` | movies as a business or a craft are central — a cinema, a drive-in, a projection booth, a print or a reel; the mystery turns on how a picture gets shown, shipped, or stopped (not a stage production; that's `Theater`) |
 | `Finance` | money itself is the subject: an investment, a fund, a bank book, shares or a wager on lives. The mystery turns on who gets paid, how much and when (a stolen object is `Theft`) |
