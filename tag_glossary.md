@@ -84,6 +84,7 @@ Meanings only — not guaranteed exhaustive; see step 2 for the authoritative li
 | `Railway` | a train or rail setting is central |
 | `Romance` | a romance thread is central to the story |
 | `School` | a school setting (classroom, gym, playground, the crossing outside) is central |
+| `Science` | a science experiment, project, or fair is central — the mystery turns on how a real reaction or test works (a lab's machinery or an industrial system is `Technology`) |
 | `Space` | a space station/off-world setting is central |
 | `Spa` | a bathhouse, baths, or curative-water establishment is the setting — the mystery turns on the place where people go to be bathed, heated, or treated |
 | `Sport` | a sporting competition or event is central |
