@@ -16,7 +16,17 @@ on:
     paths:
       - 'ai-mysteries-api/**'
       - '.github/workflows/api.yml'
+  # Pull requests (Dependabot's included) build and publish but never deploy, so a change to the
+  # API is compiled before it merges.
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ai-mysteries-api/**'
+      - '.github/workflows/api.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build_and_deploy:
@@ -36,6 +46,7 @@ jobs:
           -o publish
 
       - name: Deploy to Azure App Service
+        if: github.event_name != 'pull_request'
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}

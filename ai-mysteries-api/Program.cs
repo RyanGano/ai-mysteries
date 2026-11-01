@@ -28,11 +28,20 @@ builder.Services.AddCors(o => o.AddPolicy(CorsPolicy, p =>
 // X-Forwarded-For so the per-IP rate limiter partitions on actual callers. The default
 // ForwardLimit of 1 takes only the rightmost entry — the one App Service itself appended — so
 // a spoofed header can't impersonate someone else's address.
+//
+// That holds only where a trusted proxy appends the entry. App Service sets WEBSITE_SITE_NAME,
+// so the header is trusted from any peer there and nowhere else. Run anywhere else, the
+// forwarded headers are only honoured from loopback (the framework default), and the rate
+// limiter falls back to the socket address instead of whatever the client claims.
+var behindAppService = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"));
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    o.KnownIPNetworks.Clear();
-    o.KnownProxies.Clear();
+    if (behindAppService)
+    {
+        o.KnownIPNetworks.Clear();
+        o.KnownProxies.Clear();
+    }
 });
 
 // Per-IP rate limits. Content is tiny and in-memory, so these exist to deter ending-code

@@ -1,0 +1,62 @@
+# Dependency updates. Each ecosystem gets one grouped PR for minor and patch updates and a
+# separate grouped PR for major updates, so routine bumps stay small and breaking ones are
+# reviewed on their own.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/ai-mysteries-web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      npm-ai-mysteries-web-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+      npm-ai-mysteries-web-major:
+        update-types:
+          - "major"
+
+  - package-ecosystem: "npm"
+    directory: "/scripts"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      npm-scripts-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+      npm-scripts-major:
+        update-types:
+          - "major"
+
+  - package-ecosystem: "nuget"
+    directories:
+      - "/ai-mysteries-api"
+      - "/ai-mysteries-tools"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      nuget-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+      nuget-major:
+        update-types:
+          - "major"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+      actions-major:
+        update-types:
+          - "major"
