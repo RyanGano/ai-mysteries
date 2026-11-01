@@ -15,7 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ai-mysteries-api\AiMysteries.Api.csproj" />
     <!-- Cosmos SDK needs Newtonsoft.Json at runtime (see the API csproj note). -->
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
 </Project>
