@@ -8,7 +8,10 @@ name: Deploy API (App Service)
 # Setup required once (see infra/azure-setup.ps1):
 #   - an App Service web app (Linux F1) with system-assigned managed identity + Cosmos RBAC
 #   - app settings: ContentSource=Cosmos, Cosmos__Endpoint/Database/Container, Cors__AllowedOrigins__0
-#   - repo secrets: AZURE_WEBAPP_NAME, AZURE_WEBAPP_PUBLISH_PROFILE
+#   - repo secret AZURE_WEBAPP_NAME, and repo variables AZURE_CLIENT_ID, AZURE_TENANT_ID,
+#     AZURE_SUBSCRIPTION_ID for an Entra app registration whose federated credential trusts only
+#     this repo's main branch and which holds Website Contributor on the web app (OIDC; no
+#     publish profile)
 
 on:
   push:
@@ -27,6 +30,8 @@ on:
 
 permissions:
   contents: read
+  # OIDC sign-in to Azure for the deploy.
+  id-token: write
 
 jobs:
   build_and_deploy:
@@ -45,10 +50,17 @@ jobs:
           -p:PublishBookContent=false
           -o publish
 
+      - name: Sign in to Azure
+        if: github.event_name != 'pull_request'
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
       - name: Deploy to Azure App Service
         if: github.event_name != 'pull_request'
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: publish
