@@ -592,8 +592,13 @@ scripted in [`infra/azure-setup.ps1`](infra/azure-setup.ps1).
   seeder can write **and delete** stale docs. Both role assignments are scripted in
   `infra/azure-setup.ps1`.
 - **Deploy**: `.github/workflows/api.yml` publishes self-contained (`-r linux-x64
-  --self-contained`, so F1 needs no preinstalled .NET 10 runtime) and pushes via publish
-  profile. Repo secrets: `AZURE_WEBAPP_NAME`, `AZURE_WEBAPP_PUBLISH_PROFILE`. The artifact
+  --self-contained`, so F1 needs no preinstalled .NET 10 runtime) and signs in to Azure with
+  **OIDC** (`azure/login`), not a publish profile: an Entra app registration whose federated
+  credential trusts only `repo:RyanGano/ai-mysteries:ref:refs/heads/main`, holding Website
+  Contributor on the web app. Repo secret `AZURE_WEBAPP_NAME`; repo variables
+  `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`. Pull requests build and
+  publish but never sign in or deploy. Basic-auth publishing is off on the web app, so a
+  publish profile no longer works; don't reintroduce one. The artifact
   carries no book data (`Content/` is gitignored; `-p:PublishBookContent=false` also drops it).
 - **App settings (prod)**: `ContentSource=Cosmos`, `Cosmos__Endpoint/Database/Container`,
   `Cors__AllowedOrigins__0=<SWA origin>` (locks CORS to the front end; localhost stays
