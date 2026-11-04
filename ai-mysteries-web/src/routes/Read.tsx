@@ -14,9 +14,7 @@ import "../styles/read.css";
 const normalize = (s: string) => s.replace(/[_*`]/g, "").replace(/\s+/g, " ").trim();
 
 type NavState =
-  | { status: "loading" }
-  | { status: "ready"; nav: ChapterNav }
-  | { status: "missing" };
+  { status: "loading" } | { status: "ready"; nav: ChapterNav } | { status: "missing" };
 
 export default function Read() {
   const { bookId = "", slug = "" } = useParams<{ bookId: string; slug: string }>();
