@@ -29,7 +29,7 @@ jobs:
       # Static Web Apps uses repo_token to post the preview-environment comment on pull requests.
       pull-requests: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           submodules: true
           lfs: false
@@ -37,7 +37,7 @@ jobs:
       # for them. Build on the runner instead, so a dependency update still proves the build.
       - name: Set up Node.js (Dependabot)
         if: github.actor == 'dependabot[bot]'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
