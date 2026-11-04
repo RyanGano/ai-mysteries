@@ -19,6 +19,11 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // React Compiler rules added in eslint-plugin-react-hooks 7. Existing components
+      // predate them, so they warn until those components are refactored.
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/refs": "warn",
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },

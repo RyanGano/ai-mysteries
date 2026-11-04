@@ -5,6 +5,11 @@ version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/ai-mysteries-web"
+    ignore:
+      # TypeScript 7 runs beside TypeScript 6 through the npm aliases in package.json
+      # until typescript-eslint supports TS 7.1; then drop the aliases and this rule.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
