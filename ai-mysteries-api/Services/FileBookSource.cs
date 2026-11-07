@@ -104,7 +104,12 @@ public sealed class FileBookSource : IBookSource
                 : fallback.Pronunciations,
             ShopItems: d.ShopItems is { } items
                 ? items.Select(i => new ShopItemDto(i.Label ?? "", i.Note ?? "", i.Search ?? "", i.Asin ?? "")).ToList()
-                : fallback.ShopItems), selection, d.Version, d.ContentHash);
+                : fallback.ShopItems,
+            Voices: d.Voices is { } v
+                ? new VoiceCast(
+                    v.Narrator?.ToSpec(),
+                    (v.Cast ?? new Dictionary<string, VoiceSpecDoc>()).ToDictionary(kv => kv.Key, kv => kv.Value.ToSpec())).Sorted()
+                : fallback.Voices), selection, d.Version, d.ContentHash);
     }
 
     private static string ReadMd(string dir, string sub, string slug)
@@ -157,11 +162,21 @@ public sealed class FileBookSource : IBookSource
         string? NarrationGender = null,
         Dictionary<string, string>? Pronunciations = null,
         List<ShopItemDoc>? ShopItems = null,
+        VoicesDoc? Voices = null,
         SelectionDoc? Selection = null,
         string? Version = null,
         string? ContentHash = null);
 
     private sealed record SpecialRevealDoc(string? Headline = null, string? Sub = null);
+
+    // Nullable mirror of meta.json's `voices` read-aloud cast. A voice entry missing its name
+    // loads as "" and fails BookStore.Build's validation, loudly, at startup.
+    private sealed record VoicesDoc(VoiceSpecDoc? Narrator = null, Dictionary<string, VoiceSpecDoc>? Cast = null);
+
+    private sealed record VoiceSpecDoc(string? Voice = null, string? Style = null, string? Rate = null, string? Pitch = null)
+    {
+        public VoiceSpec ToSpec() => new(Voice ?? "", Style, Rate, Pitch);
+    }
 
     private sealed record SelectionDoc(
         string? SentinelCulprit = null,

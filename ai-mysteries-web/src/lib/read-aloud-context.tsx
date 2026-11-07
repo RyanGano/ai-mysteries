@@ -6,7 +6,9 @@
 // the preferred one streams neural-voice MP3 chunks synthesized server-side (fetched via the
 // audio manifest endpoints and played through a pair of reused <audio> elements — one playing,
 // one prefetching the next chunk); when a book has no server audio, or a chunk errors out, it
-// falls back to the browser's built-in speechSynthesis exactly as before.
+// falls back to the browser's built-in speechSynthesis exactly as before. A book with a voice cast
+// sounds multi-voice only through the server audio; the fallback reads everything in one browser
+// voice, an accepted degradation (the text it reads is the same tag-free prose).
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {

@@ -46,6 +46,7 @@ public static class ContentFiles
                 ? m.Pronunciations.OrderBy(kv => kv.Key, StringComparer.Ordinal).ToDictionary(kv => kv.Key, kv => kv.Value)
                 : null,
             m.ShopItems.Count > 0 ? m.ShopItems.ToList() : null,
+            m.Voices,
             selection, book.Version, book.ContentHash));
 
         // book.json + book/<slug>.md (chapter order preserved from the manifest)
@@ -101,6 +102,7 @@ public static class ContentFiles
         string NarrationGender,
         Dictionary<string, string>? Pronunciations,
         List<ShopItemDto>? ShopItems,
+        VoiceCast? Voices,
         SelectionDoc? Selection,
         string? Version,
         string? ContentHash);

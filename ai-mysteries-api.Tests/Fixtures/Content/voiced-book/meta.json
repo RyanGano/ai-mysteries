@@ -1,0 +1,11 @@
+{
+  "title": "Voiced Fixture",
+  "narrationGender": "female",
+  "voices": {
+    "narrator": { "voice": "en-US-AndrewMultilingualNeural" },
+    "cast": {
+      "inspector": { "voice": "en-GB-SoniaNeural", "style": "cheerful" },
+      "cook": { "voice": "en-US-GuyNeural", "rate": "+15%", "pitch": "-5%" }
+    }
+  }
+}

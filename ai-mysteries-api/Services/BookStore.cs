@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using AiMysteries.Api.Models;
 
 namespace AiMysteries.Api.Services;
@@ -285,6 +286,8 @@ public sealed class BookStore
             }
         }
 
+        ValidateVoices(raw);
+
         var markersByCode = raw.Xref.ToDictionary(
             kv => CodeNormalizer.Normalize(kv.Key),
             kv => kv.Value.Markers);
@@ -299,4 +302,68 @@ public sealed class BookStore
             raw.Clues.ToDictionary(kv => kv.Key, kv => kv.Value),
             raw.Glossary.Values.ToList());
     }
+
+    // The read-aloud cast and the speaker tags fail here, at startup (and in the seeder), rather
+    // than on a listener's first play: every voice must look like an Azure neural voice name with
+    // well-formed style / rate / pitch, every tag must name a cast member, and a tagged body must
+    // chunk to the same strings as its tag-free twin (the client highlights by those strings).
+    private static void ValidateVoices(RawBook raw)
+    {
+        var cast = raw.Meta.Voices;
+        var specs = new List<(string Who, VoiceSpec Spec)>();
+        if (cast?.Narrator is { } narrator) specs.Add(("narrator", narrator));
+        foreach (var (id, spec) in cast?.Cast ?? new Dictionary<string, VoiceSpec>())
+        {
+            if (!SpeakerTags.ValidId().IsMatch(id))
+                throw new InvalidOperationException(
+                    $"Book \"{raw.Id}\": voices.cast id \"{id}\" must be a kebab-case id (e.g. \"head-cook\") — check meta.json");
+            specs.Add(($"cast \"{id}\"", spec));
+        }
+        foreach (var (who, spec) in specs)
+        {
+            void Check(bool ok, string field, string? value)
+            {
+                if (!ok)
+                    throw new InvalidOperationException(
+                        $"Book \"{raw.Id}\": voices {who} has an invalid {field} \"{value}\" — check meta.json");
+            }
+            Check(VoiceName.IsMatch(spec.Voice), "voice name", spec.Voice);
+            Check(spec.Style is null || VoiceStyle.IsMatch(spec.Style), "style", spec.Style);
+            Check(spec.Rate is null || VoiceRate.IsMatch(spec.Rate), "rate", spec.Rate);
+            Check(spec.Pitch is null || VoicePitch.IsMatch(spec.Pitch), "pitch", spec.Pitch);
+        }
+
+        var bodies = raw.Chapters.Select(c => ($"chapter \"{c.Slug}\"", c.Body))
+            .Concat(raw.Endings.Select(e => ($"ending \"{e.Slug}\"", e.Body)));
+        foreach (var (where, body) in bodies)
+        {
+            if (!SpeakerTags.HasTags(body)) continue;
+            // A token the strip pattern can't match (e.g. `{{say:cook}`) would reach readers as-is.
+            if (SpeakerTags.HasTags(SpeakerTags.Strip(body)))
+                throw new InvalidOperationException(
+                    $"Book \"{raw.Id}\": {where} has a malformed speaker tag — write {{{{say:<kebab-id>}}}} " +
+                    "(run scripts/check-speakers.cjs)");
+            foreach (var id in SpeakerTags.Ids(body))
+                if (cast is null || !cast.Cast.ContainsKey(id))
+                    throw new InvalidOperationException(
+                        $"Book \"{raw.Id}\": {where} tags speaker \"{id}\", which is not in meta.json voices.cast " +
+                        "(run scripts/check-speakers.cjs)");
+            if (!SpeechText.MarkdownToChunks(body).SequenceEqual(SpeechText.MarkdownToChunks(SpeakerTags.Strip(body))))
+                throw new InvalidOperationException(
+                    $"Book \"{raw.Id}\": a speaker tag in {where} changes how the text reads aloud — put each tag at " +
+                    "the start of a paragraph or right before a quote (run scripts/check-speakers.cjs)");
+        }
+    }
+
+    // Azure neural voice names: locale + name, e.g. en-GB-SoniaNeural or en-US-Ava:DragonHDLatestNeural.
+    private static readonly Regex VoiceName =
+        new(@"^[a-z]{2,3}(-[A-Za-z0-9]+)+(:[A-Za-z0-9]+)?Neural$");
+    // mstts:express-as styles are lowercase words, some hyphenated (e.g. narration-professional).
+    private static readonly Regex VoiceStyle = new(@"^[a-z]+(-[a-z]+)*$");
+    // SSML prosody rate: a named speed, a relative percentage, or a multiplier.
+    private static readonly Regex VoiceRate =
+        new(@"^(x-slow|slow|medium|fast|x-fast|default|[+-]?\d+(\.\d+)?%|\d+(\.\d+)?)$");
+    // SSML prosody pitch: a named level, or a relative %, semitone or Hz change.
+    private static readonly Regex VoicePitch =
+        new(@"^(x-low|low|medium|high|x-high|default|[+-]\d+(\.\d+)?(%|st|Hz))$");
 }

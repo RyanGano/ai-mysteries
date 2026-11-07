@@ -83,6 +83,13 @@ of it in the React components.
   "shopItems": [
     { "label": "A prop from the story", "note": "an in-world aside", "search": "amazon search phrase" }
   ],
+  "voices": {
+    "narrator": { "voice": "en-US-AndrewMultilingualNeural" },
+    "cast": {
+      "speaker-a": { "voice": "en-GB-SoniaNeural", "style": "cheerful" },
+      "speaker-b": { "voice": "en-US-GuyNeural", "rate": "+15%", "pitch": "-5%" }
+    }
+  },
   "selection": {
     "sentinelCulprit": "<culprit value whose solo endings form their own category>",
     "categoryWeights": { "1": 45, "2": 30, "sentinel": 25 },
@@ -106,6 +113,17 @@ of it in the React components.
   the affiliate URL itself with the site-wide associate tag. Keep labels generic, not
   brand-specific, and skip the field entirely where props would feel forced (an absent field
   renders nothing).
+
+- `voices` (optional, **server-only** like `selection`) is the book's **multi-voice read-aloud
+  cast**. `narrator` reads everything outside tagged dialogue (omit it and the narrator is the
+  default voice picked from `narrationGender`); `cast` maps a kebab-case **speaker id** to that
+  character's voice. Each voice is an Azure neural voice name (its locale gives the accent, e.g.
+  `en-GB-…`, `en-IE-…`) plus optional `style` (an `mstts:express-as` style the voice supports, e.g.
+  `cheerful`), `rate` (`+20%`, `-10%`, `slow`, `fast`) and `pitch` (`+5%`, `-2st`, `low`). The API
+  validates the shapes at startup and refuses to load the book on a malformed one; it can't tell
+  whether Azure actually has the voice, so `verify-book.cjs` synthesizes a chunk to prove it. A book
+  without `voices` reads exactly as before, in one voice. Dialogue gets a voice only where the
+  prose tags it — see *Speaker tags* under Chapters below.
 
 - `version` / `contentHash` are **managed by the seeder, not authored by hand** — leave them out.
   The `seed`/`sync` tool stamps `version` (a UTC timestamp) and `contentHash` (a content
@@ -132,6 +150,30 @@ of it in the React components.
 
 `book.json` defines reading order; each entry's `slug` names `book/<slug>.md`.
 Markdown bodies; the title lives in `book.json`, not in the `.md`.
+
+#### Speaker tags (only for a book with a `voices` cast)
+
+Mark who speaks each line of dialogue inline, in chapters and endings alike:
+
+```
+{{say:speaker-a}}"Somebody moved it," she said, setting down her notebook. "I want to know who."
+
+{{say:speaker-b}}"Ask the baker," he said. {{say:speaker-a}}"I will," she said.
+```
+
+- A tag at the **start of a paragraph** gives every quoted span in that paragraph to that speaker;
+  the narration between quotes ("she said, setting down…") stays in the narrator's voice.
+- A tag **right before a quote** switches the speaker from that quote on, for the rare paragraph
+  with two speakers. A quote no tag covers is read by the narrator, so a partly tagged book is safe.
+- Only double quotes (`"…"` or `“…”`) count as dialogue. A quote that runs to the end of its
+  paragraph unclosed keeps its speaker to the paragraph's end; tag the next paragraph again.
+- Tags are **audio-only**: the API strips them when it loads the book, so readers, the glossary and
+  the cross-reference offsets never see them, and `gen-xrefs` / `check-xrefs` / `book-stats` strip
+  them the same way (`scripts/lib/speaker-tags.cjs`). Write clue quotes in the clue map without tags.
+- Put a tag after any Markdown line syntax (`> {{say:x}}"…"`), never before it.
+- `node scripts/check-speakers.cjs <bookId>` fails on a malformed tag, a speaker id missing from the
+  cast, or a tag with no quote after it, and warns on dialogue left untagged. `verify-book.cjs`
+  runs it, and the API refuses to load a book whose tags are malformed or name a speaker the cast lacks.
 
 ### Endings
 

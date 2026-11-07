@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using AiMysteries.Api.Models;
 
 namespace AiMysteries.Api.Services;
@@ -122,7 +123,13 @@ public sealed record BookMeta(
     // Curated "from the story" Amazon shelf items for the landing page. Book-identifying data
     // (props from the story), so it lives here; the web only builds the affiliate URL. Empty for
     // books that don't author one.
-    IReadOnlyList<ShopItemDto> ShopItems)
+    IReadOnlyList<ShopItemDto> ShopItems,
+    // Optional multi-voice read-aloud cast (narrator + one voice per speaking character, keyed by
+    // the ids the {{say:...}} tags use). Server-only, like Pronunciations: GetMeta never maps it.
+    // Null for a book without one, and then omitted when serialized, so a cast-less book's
+    // content fingerprint is exactly what it was before the field existed.
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    VoiceCast? Voices)
 {
     // Fallback used when a book has no meta.json / manifest fields yet: title = id, everything
     // else empty so the API and web still render without throwing.
@@ -143,7 +150,24 @@ public sealed record BookMeta(
         SpecialReveal: new SpecialReveal("", ""),
         NarrationGender: "",
         Pronunciations: new Dictionary<string, string>(),
-        ShopItems: Array.Empty<ShopItemDto>());
+        ShopItems: Array.Empty<ShopItemDto>(),
+        Voices: null);
+}
+
+// One voice in a book's cast: an Azure neural voice name (its locale carries the accent) plus an
+// optional speaking style (SSML mstts:express-as) and prosody rate / pitch ("+20%", "-5%", "slow").
+public sealed record VoiceSpec(string Voice, string? Style = null, string? Rate = null, string? Pitch = null);
+
+// A book's read-aloud cast. `Narrator` speaks everything outside tagged quotes; when absent the
+// narrator is the default voice picked from narrationGender. `Cast` maps speaker ids to voices.
+public sealed record VoiceCast(VoiceSpec? Narrator, IReadOnlyDictionary<string, VoiceSpec> Cast)
+{
+    // Speaker ids key-sorted, so File and Cosmos loads serialize identically (no false
+    // fingerprint drift), the same treatment as the pronunciation map.
+    public VoiceCast Sorted() => this with
+    {
+        Cast = Cast.OrderBy(kv => kv.Key, StringComparer.Ordinal).ToDictionary(kv => kv.Key, kv => kv.Value),
+    };
 }
 
 // The special-ending reveal overlay copy (e.g. "One in a thousand." / "You found it.").

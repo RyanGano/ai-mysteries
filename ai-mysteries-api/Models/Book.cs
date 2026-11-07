@@ -23,6 +23,10 @@ public sealed class Book
     // book-level data, so serving the whole list at once is fine (unlike endings/clues).
     private readonly IReadOnlyList<GlossaryEntryDto> _glossary;
 
+    // The as-authored bodies of chapters/endings that carry {{say:...}} speaker tags, keyed
+    // "chapter:<slug>" / "ending:<slug>". Everything else in the Book holds the tag-free text.
+    private readonly Dictionary<string, string> _taggedBodies = new();
+
     public IReadOnlyList<Ending> Endings { get; }
 
     // The book's special (`special: true`) ending code, or null if it has none. Surfaced on the
@@ -42,7 +46,11 @@ public sealed class Book
         Id = id;
         Meta = meta;
         Selection = selection;
-        _chapters = chapters;
+        // Speaker tags are read-aloud markup only. Strip them here, once, so every endpoint, the
+        // glossary underline and the xref offsets see clean prose; AudioService reads the tagged
+        // originals through TaggedChapterBody / TaggedEndingBody.
+        _chapters = chapters.Select(c => c with { Body = Untag($"chapter:{c.Slug}", c.Body) }).ToList();
+        endings = endings.Select(e => e with { Body = Untag($"ending:{e.Slug}", e.Body) }).ToList();
         _chapterIndex = new Dictionary<string, int>();
         for (var i = 0; i < chapters.Count; i++) _chapterIndex[chapters[i].Slug] = i;
 
@@ -62,6 +70,20 @@ public sealed class Book
 
         SpecialCode = endings.FirstOrDefault(e => e.Special)?.Code;
     }
+
+    private string Untag(string key, string body)
+    {
+        if (!SpeakerTags.HasTags(body)) return body;
+        _taggedBodies[key] = body;
+        return SpeakerTags.Strip(body);
+    }
+
+    // The body as authored, speaker tags included — for read-aloud synthesis only, never a reader.
+    public string TaggedChapterBody(ChapterDto chapter) =>
+        _taggedBodies.GetValueOrDefault($"chapter:{chapter.Slug}") ?? chapter.Body;
+
+    public string TaggedEndingBody(Ending ending) =>
+        _taggedBodies.GetValueOrDefault($"ending:{ending.Slug}") ?? ending.Body;
 
     public BookMetaDto GetMeta() => new(
         Id,

@@ -12,6 +12,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { readBody: readTagFreeBody } = require("./lib/speaker-tags.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const CONTENT_ROOT = path.join(ROOT, "ai-mysteries-api", "Content");
@@ -77,9 +78,9 @@ function diagnosePassage(body, passage) {
   return lines;
 }
 
+// Speaker tags stripped, exactly as the API serves the body, so offsets match what readers see.
 function readBody(dir, slug) {
-  const p = path.join(dir, `${slug}.md`);
-  return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
+  return readTagFreeBody(path.join(dir, `${slug}.md`));
 }
 
 function hasXrefData(bookId) {
