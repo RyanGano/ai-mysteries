@@ -18,6 +18,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { checkSpeakers } = require("./check-speakers.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const CONTENT = path.join(ROOT, "ai-mysteries-api", "Content");
@@ -153,6 +154,9 @@ async function main() {
       if (!r.res.ok || !prose || !prose.trim()) {
         broken++;
         fail(`chapter "${c.slug}" resolves`, `${r.res.status}${r.res.ok ? " but chapter.body was empty" : ""}`);
+      } else if (prose.includes("{{say:")) {
+        broken++;
+        fail(`chapter "${c.slug}" is tag-free`, "the body still carries a {{say:...}} speaker tag — readers would see it");
       }
       lastPayload = r.body;
     }
@@ -290,6 +294,19 @@ async function main() {
   const metaPath = path.join(CONTENT, bookId, "meta.json");
   if (fs.existsSync(metaPath)) {
     const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+
+    // Speaker tags vs the voice cast (multi-voice read-aloud). Passes trivially for a book with
+    // neither; see scripts/check-speakers.cjs for the rules.
+    const speakers = checkSpeakers(bookId, { content: CONTENT });
+    for (const w of speakers.warnings) note(`speaker tags: ${w}`);
+    if (speakers.errors.length) fail("speaker tags", speakers.errors.join("\n          "));
+    else ok("speaker tags", speakers.cast ? `${Object.keys(speakers.cast).length} cast voice(s)` : "no voice cast (single narrator)");
+
+    // A cast book's audio: the first chapter's manifest must carry tag-free chunks, and its first
+    // chunk must actually synthesize (or come from the cache) with the cast's voices.
+    if (meta.voices && toc.body && toc.body.length) {
+      await checkCastAudio(base, bookId, toc.body[0].slug);
+    }
     if (meta.selection && meta.selection.specialEnding === 0) {
       note("selection.specialEnding is 0 — the special ending is reachable only by typing its code");
     }
@@ -299,6 +316,29 @@ async function main() {
   }
 
   return finish();
+}
+
+async function checkCastAudio(base, bookId, slug) {
+  const manifest = await get(base, `/api/books/${bookId}/audio/chapter/${slug}`);
+  if (manifest.res.status === 404) {
+    note("read-aloud audio isn't configured on this API (manifest 404) — cast audio not checked");
+    return;
+  }
+  const chunks = manifest.body && manifest.body.chunks;
+  if (!manifest.res.ok || !Array.isArray(chunks) || !chunks.length || !manifest.body.hash) {
+    fail("cast audio manifest", `${manifest.res.status} — expected { hash, chunks } for chapter "${slug}"`);
+    return;
+  }
+  if (chunks.some((c) => c.includes("{{say:"))) {
+    fail("cast audio manifest", "a chunk still carries a {{say:...}} tag — the highlight would never match the page");
+    return;
+  }
+  ok("cast audio manifest", `chapter "${slug}": ${chunks.length} chunks, tag-free`);
+  // fetch() follows the API's 302 to the cached blob, so either path ends in MP3 bytes.
+  const res = await fetch(`${base.replace(/\/$/, "")}/api/books/${bookId}/audio/chunks/${manifest.body.hash}/0`);
+  const type = res.headers.get("content-type") || "";
+  if (res.ok && type.startsWith("audio/")) ok("cast audio first chunk", `${res.status} ${type}`);
+  else fail("cast audio first chunk", `${res.status} ${type || "(no content-type)"} — synthesis failed? check the alias map's Azure voice names`);
 }
 
 function finish() {

@@ -1,0 +1,11 @@
+{
+  "title": "Voiced Fixture",
+  "narrationGender": "female",
+  "voices": {
+    "narrator": { "voice": "male-us-1" },
+    "cast": {
+      "inspector": { "voice": "female-gb-1", "style": "cheerful" },
+      "cook": { "voice": "male-us-2", "rate": "+15%", "pitch": "-5%" }
+    }
+  }
+}

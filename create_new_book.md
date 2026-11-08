@@ -494,7 +494,9 @@ only you can point `coverImage` at the root-relative `/covers/<bookId>.webp` ins
 
 Files: `Content/<bookId>/book.json` (reading order, `[{ "slug", "title" }]`) +
 `Content/<bookId>/book/<slug>.md` (markdown body only — the title lives in `book.json`).
-Paragraphs separated by blank lines; `_italics_` and `**bold**` render.
+Paragraphs separated by blank lines; `_italics_` and `**bold**` render. If the book has a voice
+cast (see *Voice cast* under Phase 5), tag each dialogue paragraph with `{{say:<speaker-id>}}` as
+you write it.
 
 **Write the chapters in batches of 4-6 `Write` calls per message**, not one per turn (see the
 batching ground rule up top) — they are independent files and turn count is what a build costs.
@@ -621,6 +623,30 @@ Skipping this phase is fine — endings simply render without the binoculars gly
   no file at all (the easy-reading rule already glosses in prose).
 - **`shopItems`** in meta.json — 2–4 generic props from the story for the landing page's
   "From the story" Amazon shelf (label + in-world note + search phrase). Skip where forced.
+
+### Voice cast (optional, data-only)
+
+A book can give each speaking character their own read-aloud voice: a `voices` cast in
+meta.json plus `{{say:<speaker-id>}}` tags on the dialogue (format and rules in
+`put_book_in_site.md` → `voices` and *Speaker tags*). Without it the book reads in one narrator
+voice, which is always fine.
+
+- **Decide before Phase 3, tag as you write.** Tagging a finished manuscript is a slog and misses
+  lines; tag each dialogue paragraph when you write it. Speaker ids are kebab-case roles or first
+  names, never a hint at any ending.
+- **Pick voices that match who the character is.** Name voices by alias (`female-ie-1`,
+  `male-gb-2`), never by Azure voice name; the aliases are in `Audio:VoiceAliases` in
+  `ai-mysteries-api/appsettings.json`. The alias's region carries the accent, so a character from
+  Dublin gets an `-ie-` voice and a fast talker gets `"rate": "+15%"`. If no alias fits, add one to
+  the map (never repurpose an existing one). Keep it to where the prose already sets the character
+  up. **No caricature accents**: if a voice reads as a joke at the character's expense, use a
+  neutral one. Keep the narrator distinct from the cast.
+- **Check styles exist.** Not every voice supports every `style`; leave it out unless you've heard
+  it work.
+- **Listen before shipping.** Run `node scripts/check-speakers.cjs <bookId>`, then play one
+  dialogue-heavy chapter end to end: every speaker should be identifiable by ear, and the "she said"
+  narration between quotes should be in the narrator's voice. A line in the wrong voice is worse
+  than one narrator, so if attribution goes wrong anywhere, drop the tag there.
 
 ## Phase 6 — Verify locally
 

@@ -20,6 +20,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { readBody } = require("./lib/speaker-tags.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const CONTENT = path.join(ROOT, "ai-mysteries-api", "Content");
@@ -64,7 +65,8 @@ function collect(bookId) {
   const chapters = order.map((entry) => {
     const file = path.join(dir, "book", `${entry.slug}.md`);
     if (!fs.existsSync(file)) throw new Error(`book.json lists "${entry.slug}" but ${file} is missing`);
-    return { slug: entry.slug, title: entry.title, words: countWords(fs.readFileSync(file, "utf8")) };
+    // Speaker tags are audio markup, not words a reader reads.
+    return { slug: entry.slug, title: entry.title, words: countWords(readBody(file)) };
   });
 
   // Endings are reported for balance (one runaway ending is worth seeing) but never counted into
@@ -77,7 +79,7 @@ function collect(bookId) {
       return {
         code: e.code,
         slug: e.slug,
-        words: fs.existsSync(file) ? countWords(fs.readFileSync(file, "utf8")) : null,
+        words: fs.existsSync(file) ? countWords(readBody(file)) : null,
       };
     });
   }

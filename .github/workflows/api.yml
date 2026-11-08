@@ -15,6 +15,7 @@ on:
     branches: [main]
     paths:
       - 'ai-mysteries-api/**'
+      - 'ai-mysteries-api.Tests/**'
       - '.github/workflows/api.yml'
   # Pull requests (Dependabot's included) build and publish but never deploy, so a change to the
   # API is compiled before it merges.
@@ -22,6 +23,7 @@ on:
     branches: [main]
     paths:
       - 'ai-mysteries-api/**'
+      - 'ai-mysteries-api.Tests/**'
       - '.github/workflows/api.yml'
   workflow_dispatch:
 
@@ -37,6 +39,9 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
+
+      - name: Test
+        run: dotnet test ai-mysteries-api.Tests/AiMysteries.Api.Tests.csproj
 
       - name: Publish (self-contained, no book content)
         run: >

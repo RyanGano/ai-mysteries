@@ -42,6 +42,10 @@ public sealed class ContentDoc
     public Dictionary<string, string>? Pronunciations { get; set; }
     public List<ShopItemDto>? ShopItems { get; set; }
 
+    // manifest only — the server-only read-aloud voice cast (see VoiceCast). Never mapped into a
+    // response DTO.
+    public VoiceCast? Voices { get; set; }
+
     // manifest only — server-side selection rules (see SelectionRules). Read by the API for
     // the random picker; never mapped into any response DTO.
     public string? SentinelCulprit { get; set; }
@@ -168,6 +172,7 @@ public static class CosmosContent
                     .ToDictionary(kv => kv.Key, kv => kv.Value)
                 : null,
             ShopItems = m.ShopItems.Count > 0 ? m.ShopItems.ToList() : null,
+            Voices = m.Voices?.Sorted(),
             SentinelCulprit = raw.Selection.SentinelCulprit,
             CategoryWeights = raw.Selection.CategoryWeights.Count > 0
                 ? new Dictionary<string, int>(raw.Selection.CategoryWeights)
@@ -246,7 +251,8 @@ public static class CosmosContent
             Pronunciations: manifest.Pronunciations is { } prons
                 ? prons.OrderBy(kv => kv.Key, StringComparer.Ordinal).ToDictionary(kv => kv.Key, kv => kv.Value)
                 : fallback.Pronunciations,
-            ShopItems: manifest.ShopItems ?? fallback.ShopItems.ToList());
+            ShopItems: manifest.ShopItems ?? fallback.ShopItems.ToList(),
+            Voices: manifest.Voices?.Sorted());
 
         var selection = new SelectionRules(
             manifest.SentinelCulprit,

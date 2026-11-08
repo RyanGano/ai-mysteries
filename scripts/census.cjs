@@ -24,6 +24,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { stripSpeakerTags } = require("./lib/speaker-tags.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const CONTENT = path.join(ROOT, "ai-mysteries-api", "Content");
@@ -245,7 +246,7 @@ function dossier(id) {
 
   try {
     const chapters = JSON.parse(rd(path.join(CONTENT, id, "book.json")));
-    const first = rd(path.join(CONTENT, id, "book", `${chapters[0].slug}.md`)).replace(/^#.*\n/, "");
+    const first = stripSpeakerTags(rd(path.join(CONTENT, id, "book", `${chapters[0].slug}.md`))).replace(/^#.*\n/, "");
     out.push(`\nCHAPTER 1 OPENS: ${clip(first, 400)}`);
   } catch {}
   return out.join("\n");

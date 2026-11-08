@@ -16,6 +16,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { readBody: readTagFreeBody } = require("./lib/speaker-tags.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const SNIPPET_LEN = 40; // chars of body kept before each marker, for drift detection at runtime
@@ -29,9 +30,9 @@ const CONTENT = path.join(ROOT, "ai-mysteries-api", "Content", BOOK_ID);
 const ENDINGS_DIR = path.join(CONTENT, "endings");
 const BOOK_DIR = path.join(CONTENT, "book");
 
+// Speaker tags stripped, exactly as the API serves the body, so offsets match what readers see.
 function readBody(dir, slug) {
-  const p = path.join(dir, `${slug}.md`);
-  return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
+  return readTagFreeBody(path.join(dir, `${slug}.md`));
 }
 
 // --- Section slicing ---------------------------------------------------------

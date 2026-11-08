@@ -37,6 +37,11 @@ public sealed record AudioConfig
     public string FemaleVoice { get; init; } = "en-US-AvaMultilingualNeural";
     public string DefaultVoice { get; init; } = "en-US-AvaMultilingualNeural";
 
+    // Voice alias (e.g. "female-us-1") -> Azure neural voice name, for book voice casts. Site chrome:
+    // books only ever name the alias, so a retired Azure voice is fixed here, once, for every book.
+    // Seeded in appsettings.json; see VoiceAliases for the add-or-remap-only rule.
+    public Dictionary<string, string> VoiceAliases { get; init; } = new();
+
     public string OutputFormat { get; init; } = "audio-24khz-96kbitrate-mono-mp3";
 }
 
@@ -44,12 +49,18 @@ public sealed record AudioConfig
 // the blob folder, so an edit to the text (or a voice change) automatically points at fresh
 // blobs — stale audio can never be served for updated prose. `Pronunciations` holds only the
 // book's hints whose word actually occurs in this track (and participates in the hash the same
-// way, so adding a hint re-synthesizes just the tracks it touches).
+// way, so adding a hint re-synthesizes just the tracks it touches). `VoiceRuns` is set only for a
+// book with a voice cast: per chunk, which voice speaks which stretch of it. A book without a cast
+// leaves it null and speaks every chunk in the single `Voice`, exactly as before casts existed.
 public sealed record AudioTrack(
     string Hash,
     string Voice,
     IReadOnlyList<string> Chunks,
-    IReadOnlyDictionary<string, string> Pronunciations);
+    IReadOnlyDictionary<string, string> Pronunciations,
+    IReadOnlyList<IReadOnlyList<VoiceRun>>? VoiceRuns = null);
+
+// One stretch of a chunk and the cast voice that speaks it.
+public sealed record VoiceRun(VoiceSpec Voice, string Text);
 
 // Result of a chunk request: a public blob URL to redirect to (cache hit), or the freshly
 // synthesized bytes (cache miss — they were also uploaded for next time, best-effort).
@@ -71,6 +82,7 @@ public sealed class AudioService
     private readonly ILogger<AudioService> _logger;
     private readonly TokenCredential _credential = new DefaultAzureCredential();
     private readonly BlobContainerClient? _container;
+    private readonly IReadOnlyDictionary<string, string> _aliases;
 
     // Per-book chunk indexes, keyed by the live Book instance so a content reload (which swaps in
     // new Book objects) naturally rebuilds and the old index falls away with the old book.
@@ -89,6 +101,7 @@ public sealed class AudioService
     {
         _config = config;
         _logger = logger;
+        _aliases = VoiceAliases.Build(config.VoiceAliases);
         Enabled = config.SpeechEndpoint.Length > 0
             && config.SpeechResourceId.Length > 0
             && config.BlobContainerUrl.Length > 0;
@@ -174,6 +187,11 @@ public sealed class AudioService
             "female" => _config.FemaleVoice,
             _ => _config.DefaultVoice,
         };
+        // A cast's own narrator wins; without one the gender pick narrates, so the two settings
+        // never fight. The cast's aliases are resolved to Azure voices here, so the track hashes are
+        // built from the real voice: remapping an alias re-synthesizes exactly the audio using it.
+        var cast = book.Meta.Voices is { } authored ? ResolveCast(book, authored, voice) : null;
+        if (cast?.Narrator is { } narrator) voice = narrator.Voice;
 
         var index = new BookAudioIndex();
 
@@ -182,17 +200,18 @@ public sealed class AudioService
             if (!book.TryGetChapterNav(entry.Slug, out var nav)) continue;
             // Paragraph break after the title so it chunks on its own — merged with the first
             // sentence it would contain <h1> text no <p> matches, killing the opening highlight.
-            var track = MakeTrack(voice, SpeechText.MarkdownToChunks($"{nav.Chapter.Title}.\n\n{nav.Chapter.Body}"), book.Meta.Pronunciations);
+            var chunks = SpeechText.MarkdownToVoicedChunks($"{nav.Chapter.Title}.\n\n{book.TaggedChapterBody(nav.Chapter)}");
+            var track = MakeTrack(voice, chunks, book.Meta.Pronunciations, cast);
             index.ByChapterSlug[entry.Slug] = track;
             index.ByHash.TryAdd(track.Hash, track);
         }
 
         foreach (var ending in book.Endings)
         {
-            var chunks = SpeechText.MarkdownToChunks($"{ending.Title}.\n\n{ending.Body}").ToList();
+            var chunks = SpeechText.MarkdownToVoicedChunks($"{ending.Title}.\n\n{book.TaggedEndingBody(ending)}").ToList();
             // Announce the special ending first, same as the on-screen reveal.
-            if (ending.Special) chunks.Insert(0, SpecialAnnounce);
-            var track = MakeTrack(voice, chunks, book.Meta.Pronunciations);
+            if (ending.Special) chunks.Insert(0, new VoicedChunk(SpecialAnnounce, [new SpeechRun(null, SpecialAnnounce)]));
+            var track = MakeTrack(voice, chunks, book.Meta.Pronunciations, cast);
             index.ByEndingCode[CodeNormalizer.Normalize(ending.Code)] = track;
             index.ByHash.TryAdd(track.Hash, track);
         }
@@ -200,22 +219,57 @@ public sealed class AudioService
         return index;
     }
 
+    // Swap each alias in a cast for its Azure voice. An alias the map lacks must never take a book
+    // down (the map is config, editable without touching any book), so it falls back to the book's
+    // default narration voice with a warning; check-speakers.cjs is what catches it while authoring.
+    private VoiceCast ResolveCast(Book book, VoiceCast cast, string fallback)
+    {
+        VoiceSpec Resolve(VoiceSpec spec)
+        {
+            if (_aliases.TryGetValue(VoiceAliases.Normalize(spec.Voice), out var voice)) return spec with { Voice = voice };
+            _logger.LogWarning(
+                "Book {BookId}: voice alias {Alias} is not in Audio:VoiceAliases; using {Fallback}", book.Id, spec.Voice, fallback);
+            return spec with { Voice = fallback };
+        }
+        return new VoiceCast(
+            cast.Narrator is { } n ? Resolve(n) : null,
+            cast.Cast.ToDictionary(kv => kv.Key, kv => Resolve(kv.Value)));
+    }
+
     // Content-addressed track id: voice + chunk texts in, hex out. Endings are looked up by hash
     // (not code) on the chunk route, so audio URLs never carry an ending code — nothing to
     // enumerate, nothing spoilable in a shared address bar.
     // Only the hints whose word occurs in this track join the hash material, so a track without
     // the word keeps its hash (and its cached audio) when a book gains a pronunciation hint.
-    private static AudioTrack MakeTrack(
-        string voice, IReadOnlyList<string> chunks, IReadOnlyDictionary<string, string> pronunciations)
+    // A cast adds each chunk's runs and the voice settings they use; a book without a cast hashes
+    // exactly the material it always did, so none of its cached audio is invalidated.
+    internal static AudioTrack MakeTrack(
+        string voice, IReadOnlyList<VoicedChunk> voiced, IReadOnlyDictionary<string, string> pronunciations, VoiceCast? cast)
     {
+        var chunks = voiced.Select(c => c.Text).ToList();
         var applicable = pronunciations
             .Where(kv => chunks.Any(c => WordRegex(kv.Key).IsMatch(c)))
             .OrderBy(kv => kv.Key, StringComparer.Ordinal)
             .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
         var pronMaterial = string.Join("\0", applicable.Select(kv => $"{kv.Key}>{kv.Value}"));
         var material = voice + "\0" + pronMaterial + "\0" + string.Join("\0", chunks);
+
+        IReadOnlyList<IReadOnlyList<VoiceRun>>? voiceRuns = null;
+        if (cast is not null)
+        {
+            var narrator = cast.Narrator ?? new VoiceSpec(voice);
+            // An id the cast lacks can't get past BookStore.Build; narrating it is the safe default.
+            voiceRuns = voiced
+                .Select(c => (IReadOnlyList<VoiceRun>)c.Runs
+                    .Select(r => new VoiceRun(r.Speaker is { } id ? cast.Cast.GetValueOrDefault(id, narrator) : narrator, r.Text))
+                    .ToList())
+                .ToList();
+            material += "\0voices\0" + string.Join("\0", voiceRuns.Select(runs => string.Join("\u001e",
+                runs.Select(r => string.Join("\u001f", r.Voice.Voice, r.Voice.Style, r.Voice.Rate, r.Voice.Pitch, r.Text)))));
+        }
+
         var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(material)))[..24];
-        return new AudioTrack(hash, voice, chunks, applicable);
+        return new AudioTrack(hash, voice, chunks, applicable, voiceRuns);
     }
 
     // Whole-word, case-insensitive match for one pronunciation-hint term.
@@ -224,7 +278,7 @@ public sealed class AudioService
 
     private async Task<byte[]> SynthesizeAndCacheAsync(AudioTrack track, int index, string blobName)
     {
-        var bytes = await SynthesizeAsync(track.Voice, track.Chunks[index], track.Pronunciations);
+        var bytes = await SynthesizeAsync(BuildSsml(track, index));
 
         if (_container is not null)
         {
@@ -252,12 +306,43 @@ public sealed class AudioService
         return bytes;
     }
 
-    private async Task<byte[]> SynthesizeAsync(string voice, string text, IReadOnlyDictionary<string, string> pronunciations)
+    // The SSML for one chunk. Without a cast: the one voice, exactly the document this always
+    // sent. With a cast: one <voice> per run, each wrapped in the run's speaking style and prosody
+    // where the cast sets them; pronunciation hints apply inside every run.
+    internal static string BuildSsml(AudioTrack track, int index)
     {
-        var ssml =
-            $"<speak version='1.0' xml:lang='en-US'><voice name='{voice}'>" +
-            ToSsmlText(text, pronunciations) +
-            "</voice></speak>";
+        if (track.VoiceRuns is null)
+            return $"<speak version='1.0' xml:lang='en-US'><voice name='{track.Voice}'>" +
+                ToSsmlText(track.Chunks[index], track.Pronunciations) +
+                "</voice></speak>";
+
+        var sb = new StringBuilder(
+            "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' " +
+            "xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='en-US'>");
+        foreach (var run in track.VoiceRuns[index])
+        {
+            var v = run.Voice;
+            var styled = !string.IsNullOrEmpty(v.Style);
+            var prosody = !string.IsNullOrEmpty(v.Rate) || !string.IsNullOrEmpty(v.Pitch);
+            sb.Append("<voice name='").Append(SecurityElement.Escape(v.Voice)).Append("'>");
+            if (styled) sb.Append("<mstts:express-as style='").Append(SecurityElement.Escape(v.Style)).Append("'>");
+            if (prosody)
+            {
+                sb.Append("<prosody");
+                if (!string.IsNullOrEmpty(v.Rate)) sb.Append(" rate='").Append(SecurityElement.Escape(v.Rate)).Append('\'');
+                if (!string.IsNullOrEmpty(v.Pitch)) sb.Append(" pitch='").Append(SecurityElement.Escape(v.Pitch)).Append('\'');
+                sb.Append('>');
+            }
+            sb.Append(ToSsmlText(run.Text, track.Pronunciations));
+            if (prosody) sb.Append("</prosody>");
+            if (styled) sb.Append("</mstts:express-as>");
+            sb.Append("</voice>");
+        }
+        return sb.Append("</speak>").ToString();
+    }
+
+    private async Task<byte[]> SynthesizeAsync(string ssml)
+    {
         var url = $"{_config.SpeechEndpoint.TrimEnd('/')}/tts/cognitiveservices/v1";
 
         // The free Speech tier rate-limits aggressively; a brief backoff rides out a burst (e.g.
