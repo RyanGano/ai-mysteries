@@ -304,9 +304,10 @@ public sealed class BookStore
     }
 
     // The read-aloud cast and the speaker tags fail here, at startup (and in the seeder), rather
-    // than on a listener's first play: every voice must look like an Azure neural voice name with
-    // well-formed style / rate / pitch, every tag must name a cast member, and a tagged body must
-    // chunk to the same strings as its tag-free twin (the client highlights by those strings).
+    // than on a listener's first play: every voice must be a voice alias (e.g. female-us-1, never a
+    // raw Azure voice name, so no book can pin one) with well-formed style / rate / pitch, every tag
+    // must name a cast member, and a tagged body must chunk to the same strings as its tag-free twin
+    // (the client highlights by those strings).
     private static void ValidateVoices(RawBook raw)
     {
         var cast = raw.Meta.Voices;
@@ -327,7 +328,10 @@ public sealed class BookStore
                     throw new InvalidOperationException(
                         $"Book \"{raw.Id}\": voices {who} has an invalid {field} \"{value}\" — check meta.json");
             }
-            Check(VoiceName.IsMatch(spec.Voice), "voice name", spec.Voice);
+            if (!VoiceAliases.Shape().IsMatch(spec.Voice))
+                throw new InvalidOperationException(
+                    $"Book \"{raw.Id}\": voices {who} names voice \"{spec.Voice}\" — use a voice alias such as " +
+                    "\"female-us-1\" (the alias map is Audio:VoiceAliases in appsettings.json), never an Azure voice name");
             Check(spec.Style is null || VoiceStyle.IsMatch(spec.Style), "style", spec.Style);
             Check(spec.Rate is null || VoiceRate.IsMatch(spec.Rate), "rate", spec.Rate);
             Check(spec.Pitch is null || VoicePitch.IsMatch(spec.Pitch), "pitch", spec.Pitch);
@@ -355,11 +359,8 @@ public sealed class BookStore
         }
     }
 
-    // Azure neural voice names: locale + name, e.g. en-GB-SoniaNeural or en-US-Ava:DragonHDLatestNeural.
-    private static readonly Regex VoiceName =
-        new(@"^[a-z]{2,3}(-[A-Za-z0-9]+)+(:[A-Za-z0-9]+)?Neural$");
-    // mstts:express-as styles are lowercase words, some hyphenated (e.g. narration-professional).
-    private static readonly Regex VoiceStyle = new(@"^[a-z]+(-[a-z]+)*$");
+    // mstts:express-as styles are lowercase words, some joined by - or _ (narration-professional).
+    private static readonly Regex VoiceStyle = new(@"^[a-z]+([-_][a-z]+)*$");
     // SSML prosody rate: a named speed, a relative percentage, or a multiplier.
     private static readonly Regex VoiceRate =
         new(@"^(x-slow|slow|medium|fast|x-fast|default|[+-]?\d+(\.\d+)?%|\d+(\.\d+)?)$");

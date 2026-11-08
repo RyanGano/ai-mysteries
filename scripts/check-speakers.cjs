@@ -8,6 +8,9 @@
 //   * a malformed token (`{{say: Ann}}`, `{{say:}}`, `{say:ann}}`, ...)
 //   * a tag whose speaker id isn't in voices.cast (or any tag in a book with no cast)
 //   * a tag with no quote after it in its paragraph (it would voice nothing)
+//   * a cast voice that isn't a voice alias (e.g. female-us-1), or an alias missing from the site's
+//     alias map (Audio.VoiceAliases in ai-mysteries-api/appsettings.json, the committed source of
+//     truth; an App Service override can remap an alias but books may only use ones listed here)
 //   * a tag placed before Markdown line syntax (`#`, `>`, `- `, `1. `) — put it after, right
 //     before the quote, or the read-aloud text stops matching the page
 // Warns on quoted dialogue left untagged in a book that has a cast (it is read by the narrator).
@@ -21,6 +24,16 @@ const path = require("path");
 const { VALID_ID } = require("./lib/speaker-tags.cjs");
 
 const DEFAULT_CONTENT = path.join(__dirname, "..", "ai-mysteries-api", "Content");
+const DEFAULT_SETTINGS = path.join(__dirname, "..", "ai-mysteries-api", "appsettings.json");
+
+// Same shape and key normalization as ai-mysteries-api/Services/VoiceAliases.cs.
+const ALIAS = /^(female|male)-[a-z]{2}-[1-9][0-9]*$/;
+const normalizeAlias = (key) => key.trim().replace(/_/g, "-").toLowerCase();
+
+function loadAliases(settings) {
+  const audio = JSON.parse(fs.readFileSync(settings, "utf8")).Audio || {};
+  return new Set(Object.keys(audio.VoiceAliases || {}).map(normalizeAlias));
+}
 
 // Anything that looks like an attempt at a say-token, well-formed or not.
 const CANDIDATE = /\{+\s*say\s*:[^}\n]*\}*/g;
@@ -28,7 +41,7 @@ const WELL_FORMED = /^\{\{say:([^}]*)\}\}$/;
 const QUOTE = /["“]/;
 const LINE_SYNTAX = /^(#{1,6}\s|>|[-*+]\s|\d+\.\s)/;
 
-function checkSpeakers(bookId, { content = DEFAULT_CONTENT } = {}) {
+function checkSpeakers(bookId, { content = DEFAULT_CONTENT, settings = DEFAULT_SETTINGS } = {}) {
   const dir = path.join(content, bookId);
   const errors = [];
   const warnings = [];
@@ -40,6 +53,24 @@ function checkSpeakers(bookId, { content = DEFAULT_CONTENT } = {}) {
   const read = (f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
   const meta = fs.existsSync(path.join(dir, "meta.json")) ? read("meta.json") : {};
   const cast = meta.voices && meta.voices.cast ? meta.voices.cast : null;
+
+  // Voices are aliases the site maps to Azure voices; a raw Azure name would pin a voice Azure can
+  // retire. The API itself never fails a book over an unmapped alias (it falls back to the default
+  // voice), so this is where a typo or a not-yet-added alias gets caught.
+  if (meta.voices) {
+    const aliases = loadAliases(settings);
+    const voices = [
+      ...(meta.voices.narrator ? [["narrator", meta.voices.narrator]] : []),
+      ...Object.entries(cast || {}).map(([id, v]) => [`cast "${id}"`, v]),
+    ];
+    for (const [who, v] of voices) {
+      const voice = (v && v.voice) || "";
+      if (!ALIAS.test(voice))
+        errors.push(`meta.json: voices ${who} names "${voice}" — use a voice alias such as "female-us-1", never an Azure voice name`);
+      else if (!aliases.has(normalizeAlias(voice)))
+        errors.push(`meta.json: voices ${who} uses alias "${voice}", which is not in Audio.VoiceAliases (${settings})`);
+    }
+  }
 
   const files = [
     ...(fs.existsSync(path.join(dir, "book.json")) ? read("book.json") : []).map((c) => path.join("book", `${c.slug}.md`)),

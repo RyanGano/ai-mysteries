@@ -290,6 +290,13 @@ browser's built-in robot voice. How it fits the architecture:
   per-speaker `<voice>` runs. The chunk strings sent to the client don't change, and a book with no
   cast hashes exactly as before. Format in `put_book_in_site.md`; tests in `ai-mysteries-api.Tests/`
   (`dotnet test`) and `node --test scripts/check-speakers.test.cjs`.
+- **Cast voices are aliases, the alias map is site chrome.** A book names `female-us-1`-style
+  aliases, never an Azure voice (load rejects a raw name). `Audio:VoiceAliases` in
+  `appsettings.json` maps them to real voices, and track hashes use the resolved voice, so a remap
+  re-synthesizes exactly the audio that uses it. **Only ever add an alias or remap it to a voice of
+  the same gender and accent; never remove one or reuse it for a different gender/accent.** An alias
+  missing from the map falls back to the `narrationGender` voice with a warning at runtime (a config
+  edit must never take a book down); `check-speakers.cjs` fails on it while authoring.
 - The web (`lib/read-aloud-context.tsx`) plays chunks through a reused pair of `<audio>`
   elements (one playing, one prefetching the next — the prefetch is also what triggers ahead-of-
   time synthesis on a cache miss), unlocked inside the user's click so playback survives a locked

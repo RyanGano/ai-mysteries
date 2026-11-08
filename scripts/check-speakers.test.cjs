@@ -27,6 +27,28 @@ function withChapter(body) {
   return dir;
 }
 
+// A scratch copy of the voiced fixture with the cook's voice replaced.
+function withCookVoice(voice) {
+  const dir = withChapter(fs.readFileSync(path.join(FIXTURES, "voiced-book", "book", "opening.md"), "utf8"));
+  const metaPath = path.join(dir, "voiced-book", "meta.json");
+  const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+  meta.voices.cast.cook.voice = voice;
+  fs.writeFileSync(metaPath, JSON.stringify(meta));
+  return dir;
+}
+
+test("a raw Azure voice name in the cast fails", () => {
+  const r = run("voiced-book", withCookVoice("en-US-GuyNeural"));
+  assert.strictEqual(r.code, 1, r.out);
+  assert.match(r.out, /voices cast "cook" names "en-US-GuyNeural" — use a voice alias such as "female-us-1"/);
+});
+
+test("an alias missing from the site's alias map fails", () => {
+  const r = run("voiced-book", withCookVoice("male-us-99"));
+  assert.strictEqual(r.code, 1, r.out);
+  assert.match(r.out, /voices cast "cook" uses alias "male-us-99", which is not in Audio\.VoiceAliases/);
+});
+
 test("a correctly tagged book passes", () => {
   const r = run("voiced-book", FIXTURES);
   assert.strictEqual(r.code, 0, r.out);

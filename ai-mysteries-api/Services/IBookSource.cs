@@ -154,7 +154,8 @@ public sealed record BookMeta(
         Voices: null);
 }
 
-// One voice in a book's cast: an Azure neural voice name (its locale carries the accent) plus an
+// One voice in a book's cast: a voice alias such as "female-gb-1" (gender, accent region, number —
+// resolved to a real Azure voice by AudioConfig.VoiceAliases, never named directly) plus an
 // optional speaking style (SSML mstts:express-as) and prosody rate / pitch ("+20%", "-5%", "slow").
 public sealed record VoiceSpec(string Voice, string? Style = null, string? Rate = null, string? Pitch = null);
 

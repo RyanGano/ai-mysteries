@@ -634,10 +634,13 @@ voice, which is always fine.
 - **Decide before Phase 3, tag as you write.** Tagging a finished manuscript is a slog and misses
   lines; tag each dialogue paragraph when you write it. Speaker ids are kebab-case roles or first
   names, never a hint at any ending.
-- **Pick voices that match who the character is.** The voice's locale carries the accent, so a
-  character from Dublin gets an `en-IE` voice and a fast talker gets `"rate": "+15%"`. Keep it to
-  where the prose already sets the character up. **No caricature accents**: if a voice reads as a
-  joke at the character's expense, use a neutral one. Keep the narrator distinct from the cast.
+- **Pick voices that match who the character is.** Name voices by alias (`female-ie-1`,
+  `male-gb-2`), never by Azure voice name; the aliases are in `Audio:VoiceAliases` in
+  `ai-mysteries-api/appsettings.json`. The alias's region carries the accent, so a character from
+  Dublin gets an `-ie-` voice and a fast talker gets `"rate": "+15%"`. If no alias fits, add one to
+  the map (never repurpose an existing one). Keep it to where the prose already sets the character
+  up. **No caricature accents**: if a voice reads as a joke at the character's expense, use a
+  neutral one. Keep the narrator distinct from the cast.
 - **Check styles exist.** Not every voice supports every `style`; leave it out unless you've heard
   it work.
 - **Listen before shipping.** Run `node scripts/check-speakers.cjs <bookId>`, then play one

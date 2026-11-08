@@ -37,6 +37,11 @@ public sealed record AudioConfig
     public string FemaleVoice { get; init; } = "en-US-AvaMultilingualNeural";
     public string DefaultVoice { get; init; } = "en-US-AvaMultilingualNeural";
 
+    // Voice alias (e.g. "female-us-1") -> Azure neural voice name, for book voice casts. Site chrome:
+    // books only ever name the alias, so a retired Azure voice is fixed here, once, for every book.
+    // Seeded in appsettings.json; see VoiceAliases for the add-or-remap-only rule.
+    public Dictionary<string, string> VoiceAliases { get; init; } = new();
+
     public string OutputFormat { get; init; } = "audio-24khz-96kbitrate-mono-mp3";
 }
 
@@ -77,6 +82,7 @@ public sealed class AudioService
     private readonly ILogger<AudioService> _logger;
     private readonly TokenCredential _credential = new DefaultAzureCredential();
     private readonly BlobContainerClient? _container;
+    private readonly IReadOnlyDictionary<string, string> _aliases;
 
     // Per-book chunk indexes, keyed by the live Book instance so a content reload (which swaps in
     // new Book objects) naturally rebuilds and the old index falls away with the old book.
@@ -95,6 +101,7 @@ public sealed class AudioService
     {
         _config = config;
         _logger = logger;
+        _aliases = VoiceAliases.Build(config.VoiceAliases);
         Enabled = config.SpeechEndpoint.Length > 0
             && config.SpeechResourceId.Length > 0
             && config.BlobContainerUrl.Length > 0;
@@ -181,8 +188,9 @@ public sealed class AudioService
             _ => _config.DefaultVoice,
         };
         // A cast's own narrator wins; without one the gender pick narrates, so the two settings
-        // never fight.
-        var cast = book.Meta.Voices;
+        // never fight. The cast's aliases are resolved to Azure voices here, so the track hashes are
+        // built from the real voice: remapping an alias re-synthesizes exactly the audio using it.
+        var cast = book.Meta.Voices is { } authored ? ResolveCast(book, authored, voice) : null;
         if (cast?.Narrator is { } narrator) voice = narrator.Voice;
 
         var index = new BookAudioIndex();
@@ -209,6 +217,23 @@ public sealed class AudioService
         }
 
         return index;
+    }
+
+    // Swap each alias in a cast for its Azure voice. An alias the map lacks must never take a book
+    // down (the map is config, editable without touching any book), so it falls back to the book's
+    // default narration voice with a warning; check-speakers.cjs is what catches it while authoring.
+    private VoiceCast ResolveCast(Book book, VoiceCast cast, string fallback)
+    {
+        VoiceSpec Resolve(VoiceSpec spec)
+        {
+            if (_aliases.TryGetValue(VoiceAliases.Normalize(spec.Voice), out var voice)) return spec with { Voice = voice };
+            _logger.LogWarning(
+                "Book {BookId}: voice alias {Alias} is not in Audio:VoiceAliases; using {Fallback}", book.Id, spec.Voice, fallback);
+            return spec with { Voice = fallback };
+        }
+        return new VoiceCast(
+            cast.Narrator is { } n ? Resolve(n) : null,
+            cast.Cast.ToDictionary(kv => kv.Key, kv => Resolve(kv.Value)));
     }
 
     // Content-addressed track id: voice + chunk texts in, hex out. Endings are looked up by hash

@@ -174,12 +174,70 @@ public sealed class ReadAloudTests(ApiFactory factory) : IClassFixture<ApiFactor
             AudioService.BuildSsml(track, 6));
     }
 
+    // --- voice aliases -------------------------------------------------------------------------
+
+    // The fixture cast names aliases; the SSML test above shows them resolved to the mapped voices.
+    // Remapping one alias must re-synthesize the tracks that use it and nothing else.
+    [Fact]
+    public async Task Remapping_an_alias_changes_only_the_tracks_that_use_it()
+    {
+        using var remapped = new ApiFactory(new Dictionary<string, string?> { ["male-us-2"] = "en-US-DavisNeural" });
+        var client = remapped.CreateClient();
+        async Task<string> Hash(HttpClient c, string route) => (await c.GetFromJsonAsync<Manifest>(route))!.Hash;
+
+        // The cook (male-us-2) speaks in the chapter, so its hash moves...
+        Assert.NotEqual(
+            await Hash(_client, "/api/books/voiced-book/audio/chapter/opening"),
+            await Hash(client, "/api/books/voiced-book/audio/chapter/opening"));
+        // ...but not in the ending, and not anywhere in a book without a cast.
+        Assert.Equal(
+            await Hash(_client, "/api/books/voiced-book/audio/ending/QZ7X"),
+            await Hash(client, "/api/books/voiced-book/audio/ending/QZ7X"));
+        Assert.Equal("6d1c96df467597b2dbe07911", await Hash(client, "/api/books/plain-book/audio/chapter/opening"));
+    }
+
+    // App Service setting names can't hold hyphens, so an override arrives as female_us_1 style.
+    [Fact]
+    public async Task An_underscore_override_remaps_the_hyphenated_alias()
+    {
+        using var hyphen = new ApiFactory(new Dictionary<string, string?> { ["male-us-2"] = "en-US-DavisNeural" });
+        using var underscore = new ApiFactory(new Dictionary<string, string?> { ["male_us_2"] = "en-US-DavisNeural" });
+        const string route = "/api/books/voiced-book/audio/chapter/opening";
+
+        Assert.Equal(
+            (await hyphen.CreateClient().GetFromJsonAsync<Manifest>(route))!.Hash,
+            (await underscore.CreateClient().GetFromJsonAsync<Manifest>(route))!.Hash);
+    }
+
+    // The map is config; dropping an alias from it must never take a book down.
+    [Fact]
+    public async Task An_unmapped_alias_falls_back_to_the_default_voice_without_failing_the_book()
+    {
+        using var unmapped = new ApiFactory(new Dictionary<string, string?> { ["female-gb-1"] = null });
+        var client = unmapped.CreateClient();
+
+        var chapter = await client.GetAsync("/api/books/voiced-book/chapters/opening");
+        Assert.Equal(System.Net.HttpStatusCode.OK, chapter.StatusCode);
+
+        Assert.True(unmapped.Services.GetRequiredService<BookStore>().TryGetBook("voiced-book", out var book));
+        Assert.True(unmapped.Services.GetRequiredService<AudioService>().TryGetChapterTrack(book, "opening", out var track));
+        // The inspector's line drops to the book's narrationGender voice (female -> FemaleVoice).
+        Assert.Equal(
+            "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='en-US'>" +
+            "<voice name='en-US-GuyNeural'><prosody rate='+15%' pitch='-5%'>&quot;Ask the baker,&quot;</prosody></voice>" +
+            "<voice name='en-US-AndrewMultilingualNeural'> he said. </voice>" +
+            "<voice name='en-US-AvaMultilingualNeural'><mstts:express-as style='cheerful'>&quot;I will,&quot;</mstts:express-as></voice>" +
+            "<voice name='en-US-AndrewMultilingualNeural'> she said.</voice>" +
+            "</speak>",
+            AudioService.BuildSsml(track, 6));
+    }
+
     // --- startup validation --------------------------------------------------------------------
 
     [Fact]
     public void Build_rejects_a_tag_whose_speaker_is_not_in_the_cast()
     {
-        var raw = Raw("{{say:stranger}}\"Who am I?\"", new VoiceCast(null, new Dictionary<string, VoiceSpec> { ["cook"] = new("en-US-GuyNeural") }));
+        var raw = Raw("{{say:stranger}}\"Who am I?\"", new VoiceCast(null, new Dictionary<string, VoiceSpec> { ["cook"] = new("male-us-2") }));
 
         var ex = Assert.Throws<InvalidOperationException>(() => BookStore.Build(raw));
         Assert.Contains("tags speaker \"stranger\"", ex.Message);
@@ -190,19 +248,20 @@ public sealed class ReadAloudTests(ApiFactory factory) : IClassFixture<ApiFactor
     [Fact]
     public void Build_rejects_a_tag_the_strip_cannot_remove()
     {
-        var raw = Raw("{{say:cook}\"Who am I?\"", new VoiceCast(null, new Dictionary<string, VoiceSpec> { ["cook"] = new("en-US-GuyNeural") }));
+        var raw = Raw("{{say:cook}\"Who am I?\"", new VoiceCast(null, new Dictionary<string, VoiceSpec> { ["cook"] = new("male-us-2") }));
 
         var ex = Assert.Throws<InvalidOperationException>(() => BookStore.Build(raw));
         Assert.Contains("malformed speaker tag", ex.Message);
     }
 
+    // Book data names aliases only, so no book can pin a voice Azure might retire.
     [Fact]
-    public void Build_rejects_a_malformed_voice_name()
+    public void Build_rejects_a_raw_azure_voice_name()
     {
-        var raw = Raw("\"Hi.\"", new VoiceCast(new VoiceSpec("Andrew"), new Dictionary<string, VoiceSpec>()));
+        var raw = Raw("\"Hi.\"", new VoiceCast(new VoiceSpec("en-GB-SoniaNeural"), new Dictionary<string, VoiceSpec>()));
 
         var ex = Assert.Throws<InvalidOperationException>(() => BookStore.Build(raw));
-        Assert.Contains("invalid voice name \"Andrew\"", ex.Message);
+        Assert.Contains("names voice \"en-GB-SoniaNeural\" — use a voice alias such as \"female-us-1\"", ex.Message);
     }
 
     // --- helpers -------------------------------------------------------------------------------

@@ -84,10 +84,10 @@ of it in the React components.
     { "label": "A prop from the story", "note": "an in-world aside", "search": "amazon search phrase" }
   ],
   "voices": {
-    "narrator": { "voice": "en-US-AndrewMultilingualNeural" },
+    "narrator": { "voice": "male-us-1" },
     "cast": {
-      "speaker-a": { "voice": "en-GB-SoniaNeural", "style": "cheerful" },
-      "speaker-b": { "voice": "en-US-GuyNeural", "rate": "+15%", "pitch": "-5%" }
+      "speaker-a": { "voice": "female-gb-1", "style": "cheerful" },
+      "speaker-b": { "voice": "male-us-2", "rate": "+15%", "pitch": "-5%" }
     }
   },
   "selection": {
@@ -117,13 +117,27 @@ of it in the React components.
 - `voices` (optional, **server-only** like `selection`) is the book's **multi-voice read-aloud
   cast**. `narrator` reads everything outside tagged dialogue (omit it and the narrator is the
   default voice picked from `narrationGender`); `cast` maps a kebab-case **speaker id** to that
-  character's voice. Each voice is an Azure neural voice name (its locale gives the accent, e.g.
-  `en-GB-…`, `en-IE-…`) plus optional `style` (an `mstts:express-as` style the voice supports, e.g.
-  `cheerful`), `rate` (`+20%`, `-10%`, `slow`, `fast`) and `pitch` (`+5%`, `-2st`, `low`). The API
-  validates the shapes at startup and refuses to load the book on a malformed one; it can't tell
-  whether Azure actually has the voice, so `verify-book.cjs` synthesizes a chunk to prove it. A book
-  without `voices` reads exactly as before, in one voice. Dialogue gets a voice only where the
-  prose tags it — see *Speaker tags* under Chapters below.
+  character's voice. Each voice is a **voice alias**, never an Azure voice name:
+  `<gender>-<region>-<n>`, e.g. `female-us-1`, `male-gb-2`, `female-ie-1` (the region is the
+  accent). The alias map, `Audio:VoiceAliases` in `ai-mysteries-api/appsettings.json`, turns each
+  alias into a real Azure neural voice. Pick from the aliases listed there, or add a new one there
+  first. Each voice also takes an optional `style` (an `mstts:express-as` style the mapped voice
+  supports, e.g. `cheerful`), `rate` (`+20%`, `-10%`, `slow`, `fast`) and `pitch` (`+5%`, `-2st`,
+  `low`). The API refuses to load a book that names a raw Azure voice or has a malformed
+  style/rate/pitch. An alias missing from the map does **not** break the book: it falls back to the
+  `narrationGender` default voice with a logged warning. `check-speakers.cjs` and `verify-book.cjs`
+  fail on it, so it never ships that way. A book without `voices` reads exactly as before, in one
+  voice. Dialogue gets a voice only where the prose tags it (see *Speaker tags* under Chapters
+  below).
+
+- **The alias map only grows.** An alias may be **added**, or **remapped** to a new Azure voice of
+  the same gender and accent (for example when Azure retires a voice). Never remove an alias, and
+  never reuse one for a different gender or accent: books that name it would silently change
+  character. Remapping re-synthesizes exactly the audio that uses the alias, because track hashes
+  are built from the resolved voice. `appsettings.json` is the committed source of truth (it's what
+  `check-speakers.cjs` reads). For an emergency remap without a deploy, an App Service setting such
+  as `Audio__VoiceAliases__female_us_1` overrides an entry; underscores stand in for hyphens because
+  setting names can't hold them. Fold the change back into `appsettings.json` afterwards.
 
 - `version` / `contentHash` are **managed by the seeder, not authored by hand** — leave them out.
   The `seed`/`sync` tool stamps `version` (a UTC timestamp) and `contentHash` (a content

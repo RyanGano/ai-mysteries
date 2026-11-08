@@ -338,7 +338,7 @@ async function checkCastAudio(base, bookId, slug) {
   const res = await fetch(`${base.replace(/\/$/, "")}/api/books/${bookId}/audio/chunks/${manifest.body.hash}/0`);
   const type = res.headers.get("content-type") || "";
   if (res.ok && type.startsWith("audio/")) ok("cast audio first chunk", `${res.status} ${type}`);
-  else fail("cast audio first chunk", `${res.status} ${type || "(no content-type)"} — synthesis failed? check the cast's voice names`);
+  else fail("cast audio first chunk", `${res.status} ${type || "(no content-type)"} — synthesis failed? check the alias map's Azure voice names`);
 }
 
 function finish() {
